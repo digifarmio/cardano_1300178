@@ -38,7 +38,7 @@ A collection of NFTs minted during previous milestone projects that demonstrate 
 
 -  **Description:**
 
-A [CSV file](src/DigiFarm_NMKR_previews.csv) designed to support the deliverables by including structured data layers, which detail the digital field boundaries and associated crop performance data.
+A [CSV file](DigiFarm_NMKR_previews.csv) designed to support the deliverables by including structured data layers, which detail the digital field boundaries and associated crop performance data.
 
 -  **Key Features:**
 
