@@ -8,7 +8,7 @@ Blockia Labs has been invited to develop a focused Proof of Concept (PoC) demons
 
 **DigiFarm Objectives and Milestones:**
 
--   Mint 10,000 NFTs representing field boundaries across Kenya and Tanzania.
+-   Pilot Mint 500-1000 NFTs representing field boundaries across Kenya and Tanzania. Final dry-run simulation for full 10,000 NFTs prepared but not minted upfront
 
 -   Attach ten rows of agricultural data (planted area in hectares over three seasons) to each NFT.
 
@@ -20,9 +20,14 @@ Blockia Labs has been invited to develop a focused Proof of Concept (PoC) demons
 
 2.  Successfully produced report in PDF on a randomly selected subset of the 10,000 field boundaries, i.e. 50 field boundaries as an example, documenting the targeted AI accuracy of model and meta-data
 
+3. Complete documentation
+
+4. Source-code handover
+
 **Evidence of Completion:**
 
--   Proof of minted 10,000 NFTS on the blockchain providing to be presented to Catalyst through providing the unique identifiers or attributes attached to the 10,000 NFTs in a CSV or similar format file as well as other links/sites for viewing/validating the NFTs such as [Cardano visual explorer](https://pool.pm/) or other tools
+-  The original idea comes from: Proof of minted 10,000 NFTS on the blockchain providing to be presented to Catalyst through providing the unique identifiers or attributes attached to the 10,000 NFTs in a CSV or similar format file as well as other links/sites for viewing/validating the NFTs such as [Cardano visual explorer](https://pool.pm/) or other tools
+
 
 **Notes:**
 
