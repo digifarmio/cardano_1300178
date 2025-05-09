@@ -1,8 +1,9 @@
 {
-  "name": "api",
+  "name": "digifarm-api",
   "version": "1.0.0",
   "scripts": {
     "build": "tsc",
+    "deploy": "serverless deploy",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
     "format": "prettier --write src/**/*.ts",
