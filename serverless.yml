@@ -1,0 +1,34 @@
+# "org" ensures this Service is used with the correct Serverless Framework Access Key.
+org: blockialabs
+# "app" enables Serverless Framework Dashboard features and sharing them with other Services.
+app: api
+# "service" is the name of this project. This will also be added to your AWS resource names.
+service: api
+
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  environment:
+    NODE_ENV: ${env:NODE_ENV, 'development'} # Auto detect environment
+    NMKR_API_KEY: ${env:NMKR_API_KEY, 'key-local-dev'} # Default for local
+    NMKR_BASE_URL: ${env:NMKR_BASE_URL, 'https://api.nmkr.io/v2'} # NMKR staging URL
+    BATCH_SIZE: ${env:BATCH_SIZE, '25'} # Safe default batch size
+
+plugins:
+  - serverless-offline
+
+custom:
+  serverless-offline:
+    useChildProcesses: false
+    httpPort: 3000
+    lambdaPort: 3002
+    noPrependStageInUrl: true
+    ignoreJWTSignature: true
+
+functions:
+  api:
+    handler: .build/handler.handler
+    events:
+      - httpApi: '*'
