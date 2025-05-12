@@ -5,6 +5,6 @@ export function createGeoNftRoutes() {
   const router = express.Router();
   const controller = new GeoNftController();
 
-  router.get('/process-csv', controller.handleGeoNftProcess);
+  router.get('/get-nft/process-csv', controller.handleGeoNftProcess);
   return router;
 }
