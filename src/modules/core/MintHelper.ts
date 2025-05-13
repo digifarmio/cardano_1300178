@@ -1,39 +1,57 @@
+import csvParser from 'csvtojson';
 import { ValidationError } from '../../modules/core/errors';
 import { BatchMintRequest } from '../../types';
 
+interface ParsedCsvRow {
+  nftUid: string;
+  lovelace: string;
+  tokencount: string;
+}
+
 export class MintHelper {
   /**
-   * Generate mint payload from CSV string
+   * Generate mint payload from CSV string using csvtojson library
    * @param csv CSV format: "nftUid,lovelace,tokencount\n..."
    */
-  static fromCSV(csv: string): BatchMintRequest {
-    const lines = csv.trim().split('\n');
-    const reserveNfts = lines
-      .map((line, i) => {
-        // Skip empty lines
-        if (!line.trim()) return null;
+  static async fromCSV(csv: string): Promise<BatchMintRequest> {
+    try {
+      const parseOpts = {
+        noheader: false,
+        headers: ['nftUid', 'lovelace', 'tokencount'],
+        trim: true,
+        ignoreEmpty: true,
+      };
 
-        const [nftUid, lovelace, tokencount] = line.split(',');
+      const parsedData: ParsedCsvRow[] = await csvParser(parseOpts).fromString(csv);
 
-        if (!nftUid || !lovelace || !tokencount) {
+      if (parsedData.length === 0) {
+        throw new ValidationError('CSV file contains no valid entries');
+      }
+
+      const reserveNfts = parsedData.map((item: ParsedCsvRow, index: number) => {
+        if (!item.nftUid || !item.lovelace) {
           throw new ValidationError(
-            `Invalid CSV format at line ${i + 1}. Expected: nftUid,lovelace,tokencount`
+            `Missing required fields at row ${index + 1}. Both nftUid and lovelace are required.`
           );
         }
 
         return {
-          nftUid: nftUid.trim(),
-          lovelace: Number(lovelace),
-          tokencount: Number(tokencount) || 1,
+          nftUid: item.nftUid.trim(),
+          lovelace: Number(item.lovelace),
+          tokencount: Number(item.tokencount) || 1,
         } as const;
-      })
-      .filter((entry): entry is Exclude<typeof entry, null> => entry !== null);
+      });
 
-    if (reserveNfts.length === 0) {
-      throw new ValidationError('CSV file contains no valid entries');
+      return { reserveNfts };
+    } catch (error: unknown) {
+      if (error instanceof ValidationError) {
+        throw error;
+      }
+      if (error && typeof error === 'object' && 'message' in error) {
+        throw new ValidationError(`Failed to parse CSV: ${error.message}`);
+      }
+      throw new ValidationError('Failed to parse CSV: Unknown error');
     }
-
-    return { reserveNfts };
   }
 
   /**

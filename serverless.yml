@@ -16,7 +16,7 @@ provider:
     NMKR_BASE_URL: ${env:NMKR_BASE_URL, 'https://studio-api.preprod.nmkr.io'} # NMKR staging URL
     NMKR_CUSTOMER_ID: ${env:NMKR_CUSTOMER_ID} # NMKR Customer Id
     NMKR_PROJECT_UID: ${env:NMKR_PROJECT_UID} # NMKR Project id
-    RECEIVER_ADDRESS: ${env:RECEIVER_ADDRESS} # Blockchain
+    RECEIVER_ADDRESS: ${env:RECEIVER_ADDRESS} # Wallet address
     BLOCKCHAIN: ${env:BLOCKCHAIN, 'Cardano'} # Blockchain
     BATCH_SIZE: ${env:BATCH_SIZE, '500'} # Safe default batch size
 

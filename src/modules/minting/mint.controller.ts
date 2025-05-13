@@ -82,7 +82,7 @@ export class MintController {
       let payload: BatchMintRequest;
 
       if (req.file) {
-        payload = MintHelper.fromCSV(req.file.buffer.toString());
+        payload = await MintHelper.fromCSV(req.file.buffer.toString());
       } else if (req.body.bulkTemplate) {
         const { nftUid, count, lovelace } = req.body.bulkTemplate;
         payload = MintHelper.bulkTemplate(nftUid, count, lovelace);

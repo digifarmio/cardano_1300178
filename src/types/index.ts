@@ -81,12 +81,6 @@ export interface GetNftsParams {
   page: number;
 }
 
-// TODO:
-export interface UploadedFile {
-  id: string;
-  name: string;
-}
-
 export interface BatchMintParams {
   projectUid: string;
   count?: string;
@@ -106,6 +100,12 @@ export interface BatchMintResponse {
   error: string;
   success: string;
   data: unknown;
+}
+
+// TODO:
+export interface UploadedFile {
+  id: string;
+  name: string;
 }
 
 export interface MintingOptions {
