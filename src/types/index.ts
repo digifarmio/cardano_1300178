@@ -1,17 +1,5 @@
 export type BlockchainType = 'Cardano' | 'Solana' | 'Ethereum';
 
-export interface NmkrConfig {
-  apiKey: string;
-  baseUrl: string;
-  customerId: string;
-  walletAddress: string;
-}
-
-export interface NmkrProject {
-  projectUid: string;
-  policyId: string;
-}
-
 /**
  * Cardano NFT Metadata Structure for Field NFTs
  * Following CIP-25 standard for NFT metadata
@@ -31,9 +19,7 @@ export interface FieldData {
   image: string;
   mediaType: string;
   description: string;
-  // Static fields
   version: string;
-  // Dynamic fields
   area: string;
   crop: string;
   last: string;
@@ -56,7 +42,6 @@ export interface FieldData {
   id: string;
   id_long: string;
   center: string;
-  // Sub-files
   files: Array<{
     name: string;
     mediaType: string;
@@ -66,12 +51,6 @@ export interface FieldData {
 
 export interface PlaceholderCSV extends FieldData {
   file_name: string;
-}
-
-export interface GetAllUploadedFilesParams {
-  customerId: string;
-  maxCount: number;
-  page: number;
 }
 
 export interface GetNftsParams {
@@ -96,38 +75,83 @@ export interface BatchMintRequest {
   }[];
 }
 
-export interface BatchMintResponse {
-  error: string;
-  success: string;
-  data: unknown;
-}
-
-// TODO:
-export interface UploadedFile {
-  id: string;
-  name: string;
-}
-
-export interface MintingOptions {
-  projectUid: string;
-  totalToMint: number;
-  startIndex: number;
-  receiver: string;
-  batchSize: number;
-  blockchain?: 'Cardano' | 'Ethereum' | 'Solana';
-}
-
-export interface MintingResult {
+/**
+ * NMKR API Response Interface for all service responses
+ */
+export interface APIResponse<T = unknown> {
   success: boolean;
-  nftUid?: string;
-  transactionId?: string;
   error?: string;
+  data?: T;
 }
 
-export interface MintAndSendResult {
-  transactionId: string;
-  mintedNfts: {
-    nftUid: string;
-    tokenName: string;
-  }[];
+/**
+ * Mint Coupon Balance Response
+ */
+export interface MintCouponBalanceResponse {
+  balance: number;
+}
+
+/**
+ * Sale Conditions Response
+ */
+export interface SaleConditionsResponse {
+  conditionsMet: boolean;
+}
+
+/**
+ * NFT Project Details Response
+ */
+export interface NftProjectDetails {
+  id: number;
+  projectname: string;
+  projecturl: string | null;
+  projectLogo: string | null;
+  state: string | null;
+  free: number;
+  sold: number;
+  reserved: number;
+  total: number;
+  blocked: number;
+  totalBlocked: number;
+  totalTokens: number;
+  error: number;
+  unknownOrBurnedState: number;
+  uid: string;
+  maxTokenSupply: number;
+  description: string | null;
+  addressReservationTime: number;
+  policyId: string;
+  enableCrossSaleOnPaymentGateway: boolean;
+  adaPayoutWalletAddress: string;
+  usdcPayoutWalletAddress: string | null;
+  enableFiatPayments: boolean;
+  paymentGatewaySaleStart: string | null;
+  enableDecentralPayments: boolean;
+  policyLocks: string;
+  royaltyAddress: string | null;
+  royaltyPercent: number | null;
+  lockslot: number;
+  disableManualMintingbutton: boolean;
+  disableRandomSales: boolean;
+  disableSpecificSales: boolean;
+  twitterHandle: string | null;
+  nmkrAccountOptions: string;
+  crossmintCollectiondId: string | null;
+  created: string;
+  blockchains: BlockchainType[];
+  solanaProjectDetails: SolanaProjectDetails | null;
+  aptosProjectDetails: AptosProjectDetails | null;
+  solanaPayoutWalletAddress: string | null;
+}
+
+export interface SolanaProjectDetails {
+  symbol: string;
+  collectionFamily: string;
+  collectionimage: string;
+  sellerFeeBasisPoints: number;
+}
+
+export interface AptosProjectDetails {
+  collectionImage: string;
+  collectionName: string;
 }

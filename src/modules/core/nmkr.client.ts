@@ -1,18 +1,24 @@
 import {
+  APIResponse,
   BatchMintParams,
   BatchMintRequest,
-  BatchMintResponse,
   GetNftsParams,
-  UploadedFile,
+  MintCouponBalanceResponse,
+  NftProjectDetails,
+  SaleConditionsResponse,
 } from '../../types';
-import { handleAxiosError } from '../core/utils';
+import { handleAxiosError } from './errorHandler';
 import { HttpClient } from './http.client';
 
 export enum NmkrEndpoints {
+  ServerState = '/v2/GetServerState',
+  MintCouponBalance = '/v2/GetMintCouponBalance',
+  ProjectDetails = '/v2/GetProjectDetails',
+  NftCount = '/v2/GetCounts',
   NftCollection = '/v2/GetNfts',
+  SaleConditions = '/v2/CheckIfSaleConditionsMet',
   MintRandom = '/v2/MintAndSendRandom',
   MintSpecific = '/v2/MintAndSendSpecific',
-  ServerState = '/v2/GetServerState',
 }
 
 export class NmkrClient extends HttpClient {
@@ -25,7 +31,37 @@ export class NmkrClient extends HttpClient {
     }
   }
 
-  async getNftCollection(params: GetNftsParams): Promise<UploadedFile[]> {
+  async getMintCouponBalance(): Promise<number> {
+    try {
+      const url = `${NmkrEndpoints.MintCouponBalance}`;
+      const response = await this.instance.get<MintCouponBalanceResponse>(url);
+      return response.data.balance;
+    } catch (error) {
+      handleAxiosError(error);
+    }
+  }
+
+  async getProjectDetails(projectUid: string): Promise<NftProjectDetails> {
+    try {
+      const url = `${NmkrEndpoints.ProjectDetails}/${projectUid}`;
+      const response = await this.instance.get<NftProjectDetails>(url);
+      return response.data;
+    } catch (error) {
+      handleAxiosError(error);
+    }
+  }
+
+  async getNftCount(projectUid: string): Promise<number> {
+    try {
+      const url = `${NmkrEndpoints.ProjectDetails}/${projectUid}`;
+      const response = await this.instance.get<{ free: number }>(url);
+      return response.data.free;
+    } catch (error) {
+      handleAxiosError(error);
+    }
+  }
+
+  async getNftCollection(params: GetNftsParams): Promise<APIResponse> {
     try {
       const { projectUid, state, count = 100, page = 1 } = params;
       const url = `${NmkrEndpoints.NftCollection}/${projectUid}/${state}/${count}/${page}`;
@@ -36,12 +72,26 @@ export class NmkrClient extends HttpClient {
     }
   }
 
-  async mintRandomBatch(params: BatchMintParams): Promise<BatchMintResponse> {
+  async checkSaleConditions(
+    projectUid: string,
+    address: string,
+    countnft: number
+  ): Promise<boolean> {
+    try {
+      const url = `${NmkrEndpoints.SaleConditions}/${projectUid}/${address}/${countnft}`;
+      const response = await this.instance.get<SaleConditionsResponse>(url);
+      return response.data.conditionsMet;
+    } catch (error) {
+      handleAxiosError(error);
+    }
+  }
+
+  async mintRandomBatch(params: BatchMintParams): Promise<APIResponse> {
     try {
       const { projectUid, count, receiver, blockchain } = params;
       const query = new URLSearchParams({ blockchain });
       const url = `${NmkrEndpoints.MintRandom}/${projectUid}/${count}/${receiver}?${query.toString()}`;
-      const response = await this.instance.get<BatchMintResponse>(url);
+      const response = await this.instance.get<APIResponse>(url);
       return response.data;
     } catch (error) {
       handleAxiosError(error);
@@ -51,12 +101,12 @@ export class NmkrClient extends HttpClient {
   async mintSpecificBatch(
     params: BatchMintParams,
     payload: BatchMintRequest
-  ): Promise<BatchMintResponse> {
+  ): Promise<APIResponse> {
     try {
       const { projectUid, receiver, blockchain } = params;
       const query = new URLSearchParams({ blockchain });
       const url = `${NmkrEndpoints.MintSpecific}/${projectUid}/${receiver}?${query.toString()}`;
-      const response = await this.instance.post<BatchMintResponse>(url, payload);
+      const response = await this.instance.post<APIResponse>(url, payload);
       return response.data;
     } catch (error) {
       handleAxiosError(error);

@@ -1,12 +1,6 @@
 import { ConfigService } from '../../config/config.service';
-import {
-  BatchMintParams,
-  BatchMintRequest,
-  BatchMintResponse,
-  GetNftsParams,
-  UploadedFile,
-} from '../../types';
-import { ValidationError } from '../core/errors';
+import { APIResponse, BatchMintParams, BatchMintRequest, GetNftsParams } from '../../types';
+import { NMKRAPIError, ValidationError } from '../core/errors';
 import { NmkrClient } from '../core/nmkr.client';
 
 export class MintService {
@@ -15,22 +9,24 @@ export class MintService {
     private readonly configService = new ConfigService()
   ) {}
 
-  async getNftCollection(params: GetNftsParams): Promise<UploadedFile[]> {
+  async getNftCollection(params: GetNftsParams): Promise<APIResponse> {
     this.validateGetNftsParams(params);
     return this.nmkrClient.getNftCollection(params);
   }
 
-  async mintRandomBatch(params: BatchMintParams): Promise<BatchMintResponse> {
+  async mintRandomBatch(params: BatchMintParams): Promise<APIResponse> {
     this.validateBatchMintParams(params);
+    await this.validateMintConditions(params);
     return this.nmkrClient.mintRandomBatch(params);
   }
 
   async mintSpecificBatch(
     params: BatchMintParams,
     payload: BatchMintRequest
-  ): Promise<BatchMintResponse> {
+  ): Promise<APIResponse> {
     this.validateBatchMintParams(params);
     this.validateBatchMintPayload(payload);
+    await this.validateMintConditions(params);
     return this.nmkrClient.mintSpecificBatch(params, payload);
   }
 
@@ -75,5 +71,64 @@ export class MintService {
           `reserveNfts[${index}].tokencount`
         );
     });
+  }
+
+  private async validateMintConditions(params: BatchMintParams): Promise<void> {
+    const countToMint = Number(params.count || 1);
+
+    if (!['Cardano', 'Ethereum', 'Solana'].includes(params.blockchain)) {
+      throw new ValidationError('Unsupported blockchain type', 'blockchain');
+    }
+
+    if (!params.receiver?.trim()) {
+      throw new ValidationError('Receiver address cannot be empty', 'receiver');
+    }
+
+    try {
+      // Check project details
+      const projectDetails = await this.nmkrClient.getProjectDetails(params.projectUid);
+      if (projectDetails.uid !== params.projectUid) {
+        throw new ValidationError('Invalid or non-existent Project UID', 'projectUid');
+      }
+
+      // Check available NFTs
+      const freeNftCount = await this.nmkrClient.getNftCount(params.projectUid);
+      if (freeNftCount < countToMint) {
+        throw new ValidationError(
+          `Insufficient NFTs available to mint. Requested: ${countToMint}, Available: ${freeNftCount}`,
+          'count'
+        );
+      }
+
+      // Check mint coupon balance
+      const balance = await this.nmkrClient.getMintCouponBalance();
+      if (balance < countToMint) {
+        throw new ValidationError(
+          `Insufficient mint coupon balance. Required: ${countToMint}, Available: ${balance}`,
+          'count'
+        );
+      }
+
+      // Check sale conditions last
+      const conditionsMet = await this.nmkrClient.checkSaleConditions(
+        params.projectUid,
+        params.receiver,
+        countToMint
+      );
+
+      if (!conditionsMet) {
+        throw new ValidationError('Sale conditions not met for this address', 'receiver');
+      }
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        throw error;
+      }
+
+      throw new NMKRAPIError(
+        'Failed to validate mint conditions',
+        500,
+        error instanceof Error ? error.message : 'Unknown error'
+      );
+    }
   }
 }

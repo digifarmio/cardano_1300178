@@ -2,6 +2,7 @@ export class NotFoundError extends Error {
   constructor(message: string) {
     super(message);
     this.name = 'NotFoundError';
+    Error.captureStackTrace(this, this.constructor);
   }
 }
 
@@ -12,13 +13,14 @@ export class ValidationError extends Error {
   ) {
     super(message);
     this.name = 'ValidationError';
+    Error.captureStackTrace(this, this.constructor);
   }
 }
 
 export class NMKRError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = this.constructor.name;
+    this.name = 'NMKRError';
     Error.captureStackTrace(this, this.constructor);
   }
 }
@@ -30,5 +32,7 @@ export class NMKRAPIError extends NMKRError {
     public details?: unknown
   ) {
     super(message);
+    this.name = 'NMKRAPIError';
+    Error.captureStackTrace(this, this.constructor);
   }
 }
