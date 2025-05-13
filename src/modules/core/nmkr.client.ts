@@ -12,9 +12,19 @@ export enum NmkrEndpoints {
   NftCollection = '/v2/GetNfts',
   MintRandom = '/v2/MintAndSendRandom',
   MintSpecific = '/v2/MintAndSendSpecific',
+  ServerState = '/v2/GetServerState',
 }
 
 export class NmkrClient extends HttpClient {
+  async getServerState(): Promise<{ status: string; version: string; timestamp: string }> {
+    try {
+      const response = await this.instance.get(NmkrEndpoints.ServerState);
+      return response.data;
+    } catch (error) {
+      handleAxiosError(error);
+    }
+  }
+
   async getNftCollection(params: GetNftsParams): Promise<UploadedFile[]> {
     try {
       const { projectUid, state, count = 100, page = 1 } = params;

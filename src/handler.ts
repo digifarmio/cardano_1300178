@@ -2,6 +2,7 @@ import express from 'express';
 import serverless from 'serverless-http';
 import { globalErrorHandler } from './modules/core/errorHandler';
 import { createGeoNftRoutes } from './modules/geonft/geonft.routes';
+import { createHealthCheckRoutes } from './modules/healthcheck/healthcheck.routes';
 import { createMintRoutes } from './modules/minting/mint.routes';
 
 const app = express();
@@ -10,6 +11,7 @@ const app = express();
 app.use(express.json());
 
 // Module routes
+app.use('/', createHealthCheckRoutes());
 app.use('/', createGeoNftRoutes());
 app.use('/', createMintRoutes());
 
