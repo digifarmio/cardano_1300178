@@ -88,9 +88,13 @@ Ensure the following are installed on your machine:
 
    ```env
    NODE_ENV=development
-   NMKR_API_KEY=your_api_key_here
-   NMKR_BASE_URL=https://api.nmkr.io/v2
-   BATCH_SIZE=50
+   NMKR_API_KEY=<your-nmkr-api-key>
+   NMKR_BASE_URL=https://studio-api.preprod.nmkr.io
+   NMKR_CUSTOMER_ID=<your-nmkr-customer-id>
+   NMKR_PROJECT_UID=<your-nmkr-project-id>
+   RECEIVER_ADDRESS=<your-wallet-address>
+   BLOCKCHAIN=Cardano
+   BATCH_SIZE=500
    ```
 
 4. **Build and Deploy:**

@@ -1,7 +1,7 @@
-import { FieldData } from '../../types/geonft.types';
+import { FieldData } from '../../types';
 
 export class GeoNftProcessor {
-  validateAndTransform(data: unknown): Promise<FieldData> {
+  validateAndTransform(): Promise<FieldData> {
     return Promise.resolve({} as FieldData);
   }
 }

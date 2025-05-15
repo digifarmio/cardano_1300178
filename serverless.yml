@@ -13,19 +13,15 @@ provider:
   environment:
     NODE_ENV: ${env:NODE_ENV, 'development'} # Auto detect environment
     NMKR_API_KEY: ${env:NMKR_API_KEY, 'key-local-dev'} # Default for local
-    NMKR_BASE_URL: ${env:NMKR_BASE_URL, 'https://api.nmkr.io/v2'} # NMKR staging URL
-    BATCH_SIZE: ${env:BATCH_SIZE, '25'} # Safe default batch size
+    NMKR_BASE_URL: ${env:NMKR_BASE_URL, 'https://studio-api.preprod.nmkr.io'} # NMKR staging URL
+    NMKR_CUSTOMER_ID: ${env:NMKR_CUSTOMER_ID} # NMKR Customer Id
+    NMKR_PROJECT_UID: ${env:NMKR_PROJECT_UID} # NMKR Project id
+    RECEIVER_ADDRESS: ${env:RECEIVER_ADDRESS} # Wallet address
+    BLOCKCHAIN: ${env:BLOCKCHAIN, 'Cardano'} # Blockchain
+    BATCH_SIZE: ${env:BATCH_SIZE, '500'} # Safe default batch size
 
 plugins:
   - serverless-offline
-
-custom:
-  serverless-offline:
-    useChildProcesses: false
-    httpPort: 3000
-    lambdaPort: 3002
-    noPrependStageInUrl: true
-    ignoreJWTSignature: true
 
 functions:
   api:
