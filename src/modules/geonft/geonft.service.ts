@@ -1,10 +1,9 @@
 import { GetObjectCommand, S3Client, ListObjectsV2Command } from '@aws-sdk/client-s3';
-import { AwsClientProvider, AwsClientType } from '../../utils/aws_clients';
+import { AwsClientProvider, AwsClientType } from '../core/AwsClients';
 import { ConfigService } from '../../config/config.service';
 import csv from 'csvtojson';
 import { NmkrClient } from '../core/nmkr.client';
 import { APIResponse, BucketObject, ImageNft, UploadFiles } from '../../types';
-import { v4 as uuidv4 } from 'uuid';
 
 export class GeoNftService {
   private readonly s3Client: S3Client;
@@ -23,21 +22,20 @@ export class GeoNftService {
       let uploadResponse;
 
       for (let i = 0; i < files.length; i++) {
-        const uuid = uuidv4().substring(0, 8);
-        const response = await this.transformNft(files[i]);
+        const [response, fileName] = await this.transformNft(files[i]);
         const { mimetype, fileFromBase64 } = response;
 
         const policyId = this.configService.policyId;
         const cip25Metadata = {
           '721': {
             [policyId]: {
-              [uuid]: bucketItems[i],
+              [fileName]: bucketItems[i],
             },
             version: '1.0',
           },
         };
         const params: UploadFiles = {
-          tokenname: uuid,
+          tokenname: fileName,
           previewImageNft: {
             mimetype: mimetype,
             fileFromBase64: fileFromBase64,
@@ -86,12 +84,17 @@ export class GeoNftService {
     }
   }
 
-  private async transformNft(file: Express.Multer.File): Promise<ImageNft> {
+  private async transformNft(file: Express.Multer.File): Promise<[ImageNft, string]> {
     const mimeType = file.mimetype;
+    const fullFileName = file.originalname;
+    const fileName = fullFileName.split('.').slice(0, -1).join('.');
     const base64 = file.buffer.toString('base64');
-    return {
-      mimetype: mimeType,
-      fileFromBase64: base64,
-    } as ImageNft;
+    return [
+      {
+        mimetype: mimeType,
+        fileFromBase64: base64,
+      } as ImageNft,
+      fileName,
+    ];
   }
 }

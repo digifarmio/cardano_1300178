@@ -28,15 +28,8 @@ provider:
 plugins:
   - serverless-offline
 
-custom:
-  serverless-offline:
-    httpTimeoutMs: 300000 # 5 minutes in milliseconds for local development
-    lambdaTimeout: 300 # 5 minutes in seconds
-
 functions:
   api:
     handler: .build/handler.handler
-    timeout: 300 # Add this line - function-specific timeout
-    memorySize: 1024 # Add this line - function-specific memory
     events:
       - httpApi: '*'

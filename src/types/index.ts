@@ -7,7 +7,7 @@ export type BlockchainType = 'Cardano' | 'Solana' | 'Ethereum';
 export interface CIP25Metadata {
   '721': {
     [policyId: string]: {
-      [assetName: string]: FieldData;
+      [assetName: string]: unknown;
     } & {
       version: string;
     };
@@ -18,47 +18,8 @@ export interface BucketObject {
   [key: string]: unknown;
 }
 
-export interface FieldData {
-  name: string;
-  image: string;
-  mediaType: string;
-  description: string;
-  version: string;
-  area: string;
-  crop: string;
-  last: string;
-  tile: string;
-  dates: string;
-  SustInd: string;
-  country: string;
-  flatness: string;
-  src_proj: string;
-  perimeter: string;
-  center_lat: string;
-  center_lng: string;
-  confidence: string;
-  exterior_area: string;
-  number_of_vertices: string;
-  number_of_vertices_simplified: string;
-  herbaceous_vegetation: string;
-  shrubs: string;
-  open_forest: string;
-  id: string;
-  id_long: string;
-  center: string;
-  files: Array<{
-    name: string;
-    mediaType: string;
-    src: string;
-  }>;
-}
-
 export interface CsvHeaders {
   [key: string]: string;
-}
-
-export interface PlaceholderCSV extends FieldData {
-  file_name: string;
 }
 
 export interface GetNftsParams {

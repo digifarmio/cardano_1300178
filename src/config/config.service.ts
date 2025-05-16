@@ -50,14 +50,14 @@ export class ConfigService {
   }
 
   get awsRegion(): string {
-    return process.env.AWS_REGION || '';
+    return this.validateEnvVar('AWS_REGION', process.env.AWS_REGION);
   }
 
   get bucketName(): string {
-    return process.env.BUCKET_NAME || '';
+    return this.validateEnvVar('BUCKET_NAME', process.env.BUCKET_NAME);
   }
 
   get bucketKey(): string {
-    return process.env.BUCKET_KEY || '';
+    return this.validateEnvVar('BUCKET_KEY', process.env.BUCKET_KEY);
   }
 }
