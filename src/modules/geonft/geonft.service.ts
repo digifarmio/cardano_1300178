@@ -18,7 +18,6 @@ export class GeoNftService {
 
   async process(files: Express.Multer.File[]): Promise<APIResponse> {
     try {
-      console.log('Processing files:', files);
       const projectUid = this.configService.projectUid;
       const bucketItems = await this.getBucketObjects();
       let uploadResponse;
@@ -28,7 +27,7 @@ export class GeoNftService {
         const response = await this.transformNft(files[i]);
         const { mimetype, fileFromBase64 } = response;
 
-        const policyId = '71108a77295b6e85404e1d3b6427e47d0a68b62fbbaaf9a6092d917c';
+        const policyId = this.configService.policyId;
         const cip25Metadata = {
           '721': {
             [policyId]: {

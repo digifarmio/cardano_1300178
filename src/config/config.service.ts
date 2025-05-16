@@ -25,6 +25,10 @@ export class ConfigService {
     return this.validateEnvVar('NMKR_PROJECT_UID', process.env.NMKR_PROJECT_UID);
   }
 
+  get policyId(): string {
+    return this.validateEnvVar('NMKR_POLICY_ID', process.env.NMKR_POLICY_ID);
+  }
+
   get receiverAddress(): string {
     return this.validateEnvVar('RECEIVER_ADDRESS', process.env.RECEIVER_ADDRESS);
   }
