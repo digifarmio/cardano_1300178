@@ -25,6 +25,10 @@ export class ConfigService {
     return this.validateEnvVar('NMKR_PROJECT_UID', process.env.NMKR_PROJECT_UID);
   }
 
+  get policyId(): string {
+    return this.validateEnvVar('NMKR_POLICY_ID', process.env.NMKR_POLICY_ID);
+  }
+
   get receiverAddress(): string {
     return this.validateEnvVar('RECEIVER_ADDRESS', process.env.RECEIVER_ADDRESS);
   }
@@ -43,5 +47,17 @@ export class ConfigService {
       throw new ValidationError('BATCH_SIZE must be a positive number');
     }
     return size;
+  }
+
+  get awsRegion(): string {
+    return process.env.AWS_REGION || '';
+  }
+
+  get bucketName(): string {
+    return process.env.BUCKET_NAME || '';
+  }
+
+  get bucketKey(): string {
+    return process.env.BUCKET_KEY || '';
   }
 }

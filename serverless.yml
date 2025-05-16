@@ -1,5 +1,5 @@
 # "org" ensures this Service is used with the correct Serverless Framework Access Key.
-org: blockialabs
+org: blockia
 # "app" enables Serverless Framework Dashboard features and sharing them with other Services.
 app: api
 # "service" is the name of this project. This will also be added to your AWS resource names.
@@ -10,21 +10,33 @@ useDotenv: true
 provider:
   name: aws
   runtime: nodejs20.x
+  timeout: 300 # Add this line - global default timeout (5 minutes)
+  memorySize: 1024 # Add this line - increase memory allocation
   environment:
     NODE_ENV: ${env:NODE_ENV, 'development'} # Auto detect environment
     NMKR_API_KEY: ${env:NMKR_API_KEY, 'key-local-dev'} # Default for local
     NMKR_BASE_URL: ${env:NMKR_BASE_URL, 'https://studio-api.preprod.nmkr.io'} # NMKR staging URL
     NMKR_CUSTOMER_ID: ${env:NMKR_CUSTOMER_ID} # NMKR Customer Id
     NMKR_PROJECT_UID: ${env:NMKR_PROJECT_UID} # NMKR Project id
+    NMKR_POLICY_ID: ${env:NMKR_POLICY_ID} # NMKR Policy id
     RECEIVER_ADDRESS: ${env:RECEIVER_ADDRESS} # Wallet address
     BLOCKCHAIN: ${env:BLOCKCHAIN, 'Cardano'} # Blockchain
     BATCH_SIZE: ${env:BATCH_SIZE, '500'} # Safe default batch size
+    AWS_REGION: ${env:AWS_REGION, 'us-east-1'} # Default AWS region
+    BUCKET_NAME: ${env:BUCKET_NAME, ''} # Default bucket name
 
 plugins:
   - serverless-offline
 
+custom:
+  serverless-offline:
+    httpTimeoutMs: 300000 # 5 minutes in milliseconds for local development
+    lambdaTimeout: 300 # 5 minutes in seconds
+
 functions:
   api:
     handler: .build/handler.handler
+    timeout: 300 # Add this line - function-specific timeout
+    memorySize: 1024 # Add this line - function-specific memory
     events:
       - httpApi: '*'

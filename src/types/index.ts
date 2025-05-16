@@ -14,6 +14,10 @@ export interface CIP25Metadata {
   };
 }
 
+export interface BucketObject {
+  [key: string]: unknown;
+}
+
 export interface FieldData {
   name: string;
   image: string;
@@ -47,6 +51,10 @@ export interface FieldData {
     mediaType: string;
     src: string;
   }>;
+}
+
+export interface CsvHeaders {
+  [key: string]: string;
 }
 
 export interface PlaceholderCSV extends FieldData {
@@ -154,4 +162,15 @@ export interface SolanaProjectDetails {
 export interface AptosProjectDetails {
   collectionImage: string;
   collectionName: string;
+}
+
+export interface ImageNft {
+  mimetype: string;
+  fileFromBase64: string;
+}
+
+export interface UploadFiles {
+  tokenname: string;
+  previewImageNft: ImageNft;
+  metadataOverride: string;
 }

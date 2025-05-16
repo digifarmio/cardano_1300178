@@ -8,7 +8,10 @@ export class GeoNftController {
 
   async handleGeoNftProcess(req: Request, res: Response, next: NextFunction) {
     try {
-      const data = await this.geoNftService.process(req.params.id);
+      if (!req.files) {
+        throw new Error('No file uploaded');
+      }
+      const data = await this.geoNftService.process(req.files as Express.Multer.File[]);
       res.json(data);
     } catch (error) {
       next(error);
