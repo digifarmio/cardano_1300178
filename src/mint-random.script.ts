@@ -28,7 +28,7 @@ class MintRandomScript {
       const params: BatchMintParams = {
         projectUid: this.config.projectUid,
         receiver: this.config.receiverAddress,
-        count: this.config.batchSize.toString(),
+        count: this.config.mintTotalCount,
         blockchain: this.config.blockchain,
       };
 

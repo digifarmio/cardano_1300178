@@ -10,6 +10,7 @@ useDotenv: true
 provider:
   name: aws
   runtime: nodejs20.x
+  timeout: 30
   environment:
     NODE_ENV: ${env:NODE_ENV, 'development'} # Auto detect environment
     NMKR_API_KEY: ${env:NMKR_API_KEY, 'key-local-dev'} # Default for local
@@ -18,7 +19,8 @@ provider:
     NMKR_PROJECT_UID: ${env:NMKR_PROJECT_UID} # NMKR Project id
     RECEIVER_ADDRESS: ${env:RECEIVER_ADDRESS} # Wallet address
     BLOCKCHAIN: ${env:BLOCKCHAIN, 'Cardano'} # Blockchain
-    BATCH_SIZE: ${env:BATCH_SIZE, '500'} # Safe default batch size
+    MINT_BATCH_SIZE: ${env:MINT_BATCH_SIZE, 10} # Safe default batch size
+    MINT_TOTAL_COUNT: ${env:MINT_TOTAL_COUNT, 500} # Safe default batch total
 
 plugins:
   - serverless-offline

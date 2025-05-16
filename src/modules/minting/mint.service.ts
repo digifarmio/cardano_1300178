@@ -4,30 +4,87 @@ import { NMKRAPIError, ValidationError } from '../core/errors';
 import { NmkrClient } from '../core/nmkr.client';
 
 export class MintService {
-  constructor(
-    private readonly nmkrClient = new NmkrClient(),
-    private readonly configService = new ConfigService()
-  ) {}
+  private readonly nmkrClient = new NmkrClient();
+  private readonly config = new ConfigService();
 
   async getNftCollection(params: GetNftsParams): Promise<APIResponse> {
     this.validateGetNftsParams(params);
     return this.nmkrClient.getNftCollection(params);
   }
 
-  async mintRandomBatch(params: BatchMintParams): Promise<APIResponse> {
+  async mintRandomBatch(params: BatchMintParams) {
     this.validateBatchMintParams(params);
     await this.validateMintConditions(params);
-    return this.nmkrClient.mintRandomBatch(params);
+
+    const totalCount = params.count;
+
+    if (totalCount <= this.config.mintBatchSize) {
+      return this.nmkrClient.mintRandomBatch(params);
+    }
+
+    return this.processBatchRequests(totalCount, (batchSize) => {
+      const batchParams = { ...params, count: batchSize };
+      return this.nmkrClient.mintRandomBatch(batchParams);
+    });
   }
 
-  async mintSpecificBatch(
-    params: BatchMintParams,
-    payload: BatchMintRequest
-  ): Promise<APIResponse> {
+  async mintSpecificBatch(params: BatchMintParams, payload: BatchMintRequest) {
     this.validateBatchMintParams(params);
     this.validateBatchMintPayload(payload);
     await this.validateMintConditions(params);
-    return this.nmkrClient.mintSpecificBatch(params, payload);
+
+    const nfts = payload.reserveNfts;
+    const totalCount = nfts.length;
+
+    if (totalCount <= this.config.mintBatchSize) {
+      return this.nmkrClient.mintSpecificBatch(params, payload);
+    }
+
+    return this.processBatchRequests(totalCount, (_, startIdx, endIdx) => {
+      const batchNfts = nfts.slice(startIdx, endIdx);
+      const batchParams = { ...params, count: batchNfts.length };
+      const batchPayload = { ...payload, reserveNfts: batchNfts };
+      return this.nmkrClient.mintSpecificBatch(batchParams, batchPayload);
+    });
+  }
+
+  private async processBatchRequests<T>(
+    totalCount: number,
+    processFn: (batchSize: number, startIndex: number, endIndex: number) => Promise<T>
+  ) {
+    const batchSize = this.config.mintBatchSize;
+    const batches = Math.ceil(totalCount / batchSize);
+    const promises: Promise<T>[] = [];
+
+    for (let i = 0; i < batches; i++) {
+      const startIdx = i * batchSize;
+      const endIdx = Math.min(startIdx + batchSize, totalCount);
+      const currentBatchSize = endIdx - startIdx;
+
+      if (currentBatchSize > 0) {
+        promises.push(processFn(currentBatchSize, startIdx, endIdx));
+      }
+    }
+
+    const results = await Promise.allSettled(promises);
+    return this.processBatchResults(results);
+  }
+
+  private processBatchResults<T>(results: PromiseSettledResult<T>[]) {
+    const success = results
+      .filter((result): result is PromiseFulfilledResult<T> => result.status === 'fulfilled')
+      .map((result) => result.value);
+
+    const errors = results
+      .filter((result): result is PromiseRejectedResult => result.status === 'rejected')
+      .map((result) => result.reason);
+
+    return {
+      successCount: success.length,
+      errorCount: errors.length,
+      success,
+      errors,
+    };
   }
 
   // ======== Validation Methods ========
@@ -40,18 +97,14 @@ export class MintService {
 
   private validateBatchMintParams(params: BatchMintParams): void {
     if (!params.projectUid) throw new ValidationError('Project UID is required', 'projectUid');
-    if (!params.receiver) throw new ValidationError('Receiver addr is required', 'receiver');
+    if (!params.receiver) throw new ValidationError('Receiver address is required', 'receiver');
+    if (!params.count) throw new ValidationError('Count is required', 'count');
     if (!params.blockchain) throw new ValidationError('Blockchain is required', 'blockchain');
   }
 
   private validateBatchMintPayload(payload: BatchMintRequest): void {
     if (!payload?.reserveNfts?.length) {
       throw new ValidationError('At least one NFT must be specified', 'reserveNfts');
-    }
-
-    const batchSize = this.configService.batchSize;
-    if (payload.reserveNfts.length > batchSize) {
-      throw new ValidationError(`Maximum batch size is ${batchSize}`, 'reserveNfts');
     }
 
     payload.reserveNfts.forEach((nft, index) => {
@@ -74,56 +127,35 @@ export class MintService {
   }
 
   private async validateMintConditions(params: BatchMintParams): Promise<void> {
-    const countToMint = Number(params.count || 1);
-
-    if (!['Cardano', 'Ethereum', 'Solana'].includes(params.blockchain)) {
-      throw new ValidationError('Unsupported blockchain type', 'blockchain');
-    }
-
-    if (!params.receiver?.trim()) {
-      throw new ValidationError('Receiver address cannot be empty', 'receiver');
-    }
+    const countToMint = params.count;
 
     try {
-      // Check project details
-      const projectDetails = await this.nmkrClient.getProjectDetails(params.projectUid);
+      const [projectDetails, nftCount, balance, saleConditionsMet] = await Promise.all([
+        this.nmkrClient.getProjectDetails(params.projectUid),
+        this.nmkrClient.getNftCount(params.projectUid),
+        this.nmkrClient.getMintCouponBalance(),
+        this.nmkrClient.checkSaleConditions(params.projectUid, params.receiver, countToMint),
+      ]);
       if (projectDetails.uid !== params.projectUid) {
         throw new ValidationError('Invalid or non-existent Project UID', 'projectUid');
       }
-
-      // Check available NFTs
-      const freeNftCount = await this.nmkrClient.getNftCount(params.projectUid);
-      if (freeNftCount < countToMint) {
+      if (nftCount.free < countToMint) {
         throw new ValidationError(
-          `Insufficient NFTs available to mint. Requested: ${countToMint}, Available: ${freeNftCount}`,
+          `Insufficient NFTs available. Requested: ${countToMint}, Available: ${nftCount.free}`,
           'count'
         );
       }
-
-      // Check mint coupon balance
-      const balance = await this.nmkrClient.getMintCouponBalance();
       if (balance < countToMint) {
         throw new ValidationError(
           `Insufficient mint coupon balance. Required: ${countToMint}, Available: ${balance}`,
           'count'
         );
       }
-
-      // Check sale conditions last
-      const conditionsMet = await this.nmkrClient.checkSaleConditions(
-        params.projectUid,
-        params.receiver,
-        countToMint
-      );
-
-      if (!conditionsMet) {
+      if (!saleConditionsMet) {
         throw new ValidationError('Sale conditions not met for this address', 'receiver');
       }
     } catch (error) {
-      if (error instanceof ValidationError) {
-        throw error;
-      }
-
+      if (error instanceof ValidationError) throw error;
       throw new NMKRAPIError(
         'Failed to validate mint conditions',
         500,

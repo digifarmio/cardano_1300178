@@ -2,7 +2,8 @@ import { AxiosError } from 'axios';
 import { ErrorRequestHandler } from 'express';
 import { NMKRAPIError, NotFoundError, ValidationError } from './errors';
 
-export const globalErrorHandler: ErrorRequestHandler = (err, req, res) => {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const globalErrorHandler: ErrorRequestHandler = (err, req, res, _next) => {
   console.error(`[${new Date().toISOString()}] ${req.method} ${req.path}`, {
     error: err.name,
     message: err.message,

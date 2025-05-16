@@ -94,7 +94,8 @@ Ensure the following are installed on your machine:
    NMKR_PROJECT_UID=<your-nmkr-project-id>
    RECEIVER_ADDRESS=<your-wallet-address>
    BLOCKCHAIN=Cardano
-   BATCH_SIZE=500
+   MINT_BATCH_SIZE=10
+   MINT_TOTAL_COUNT=500
    ```
 
 4. **Build and Deploy:**
