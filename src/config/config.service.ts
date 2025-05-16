@@ -44,4 +44,16 @@ export class ConfigService {
     }
     return size;
   }
+
+  get awsRegion(): string {
+    return process.env.AWS_REGION || '';
+  }
+
+  get bucketName(): string {
+    return process.env.BUCKET_NAME || '';
+  }
+
+  get bucketKey(): string {
+    return process.env.BUCKET_KEY || '';
+  }
 }

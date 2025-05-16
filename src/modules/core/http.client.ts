@@ -8,7 +8,7 @@ export class HttpClient {
   constructor() {
     this.instance = axios.create({
       baseURL: this.config.baseUrl,
-      timeout: 10000,
+      timeout: 140000,
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${this.config.apiKey}`,

@@ -6,6 +6,7 @@ import {
   MintCouponBalanceResponse,
   NftProjectDetails,
   SaleConditionsResponse,
+  UploadFiles,
 } from '../../types';
 import { handleAxiosError } from './errorHandler';
 import { HttpClient } from './http.client';
@@ -19,6 +20,7 @@ export enum NmkrEndpoints {
   SaleConditions = '/v2/CheckIfSaleConditionsMet',
   MintRandom = '/v2/MintAndSendRandom',
   MintSpecific = '/v2/MintAndSendSpecific',
+  UploadFiles = '/v2/UploadNft',
 }
 
 export class NmkrClient extends HttpClient {
@@ -106,6 +108,16 @@ export class NmkrClient extends HttpClient {
       const { projectUid, receiver, blockchain } = params;
       const query = new URLSearchParams({ blockchain });
       const url = `${NmkrEndpoints.MintSpecific}/${projectUid}/${receiver}?${query.toString()}`;
+      const response = await this.instance.post<APIResponse>(url, payload);
+      return response.data;
+    } catch (error) {
+      handleAxiosError(error);
+    }
+  }
+
+  async uploadNft(projectUid: string, payload: UploadFiles): Promise<APIResponse> {
+    try {
+      const url = `${NmkrEndpoints.UploadFiles}/${projectUid}`;
       const response = await this.instance.post<APIResponse>(url, payload);
       return response.data;
     } catch (error) {

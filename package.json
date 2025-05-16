@@ -12,12 +12,14 @@
     "start": "NODE_OPTIONS='--enable-source-maps' serverless offline start"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.806.0",
     "axios": "^1.9.0",
     "csvtojson": "^2.0.10",
     "dotenv": "^16.5.0",
     "express": "^4.21.2",
     "multer": "^1.4.5-lts.2",
-    "serverless-http": "^3.2.0"
+    "serverless-http": "^3.2.0",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.149",
