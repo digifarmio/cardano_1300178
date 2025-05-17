@@ -1,6 +1,6 @@
+import { ValidationError } from '@/modules/core/errors';
+import { BatchMintRequest } from '@/types';
 import csvParser from 'csvtojson';
-import { ValidationError } from '../../modules/core/errors';
-import { BatchMintRequest } from '../../types';
 
 interface ParsedCsvRow {
   nftUid: string;

@@ -1,9 +1,9 @@
+import { ConfigService } from '@/config/config.service';
+import { ValidationError } from '@/modules/core/errors';
+import { MintHelper } from '@/modules/core/MintHelper';
+import { MintService } from '@/modules/minting/mint.service';
+import { BatchMintParams, BatchMintRequest, GetNftsParams } from '@/types';
 import { NextFunction, Request, Response } from 'express';
-import { ConfigService } from '../../config/config.service';
-import { ValidationError } from '../../modules/core/errors';
-import { BatchMintParams, BatchMintRequest, GetNftsParams } from '../../types';
-import { MintHelper } from '../core/MintHelper';
-import { MintService } from './mint.service';
 
 export class MintController {
   private readonly mintService: MintService;

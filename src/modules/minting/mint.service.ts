@@ -1,7 +1,7 @@
-import { ConfigService } from '../../config/config.service';
-import { APIResponse, BatchMintParams, BatchMintRequest, GetNftsParams } from '../../types';
-import { NMKRAPIError, ValidationError } from '../core/errors';
-import { NmkrClient } from '../core/nmkr.client';
+import { ConfigService } from '@/config/config.service';
+import { NMKRAPIError, ValidationError } from '@/modules/core/errors';
+import { NmkrClient } from '@/modules/core/nmkr.client';
+import { APIResponse, BatchMintParams, BatchMintRequest, GetNftsParams } from '@/types';
 
 export class MintService {
   private readonly nmkrClient = new NmkrClient();

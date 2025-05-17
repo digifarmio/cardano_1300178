@@ -1,5 +1,5 @@
-import { ValidationError } from '../modules/core/errors';
-import { Blockchain } from '../types';
+import { ValidationError } from '@/modules/core/errors';
+import { Blockchain } from '@/types';
 
 export class ConfigService {
   private validateEnvVar(name: string, value: string | undefined): string {

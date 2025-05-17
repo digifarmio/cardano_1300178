@@ -1,6 +1,6 @@
-import { ConfigService } from '../../config/config.service';
-import { ValidationError } from '../../modules/core/errors';
-import { Blockchain, BlockchainType } from '../../types';
+import { ConfigService } from '@/config/config.service';
+import { ValidationError } from '@/modules/core/errors';
+import { Blockchain, BlockchainType } from '@/types';
 
 export class BlockchainExplorerService {
   private readonly configService: ConfigService;

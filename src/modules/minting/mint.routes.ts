@@ -1,6 +1,6 @@
+import { csvUpload } from '@/config/multer-config';
+import { MintController } from '@/modules/minting/mint.controller';
 import express from 'express';
-import { csvUpload } from '../../config/multer-config';
-import { MintController } from './mint.controller';
 
 export function createMintRoutes() {
   const router = express.Router();

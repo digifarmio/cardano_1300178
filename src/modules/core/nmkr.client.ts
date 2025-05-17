@@ -1,4 +1,7 @@
-import { ConfigService } from '../../config/config.service';
+import { ConfigService } from '@/config/config.service';
+import { handleAxiosError } from '@/modules/core/errorHandler';
+import { NMKRAPIError } from '@/modules/core/errors';
+import { HttpClient } from '@/modules/core/http.client';
 import {
   APIResponse,
   BatchMintParams,
@@ -9,10 +12,7 @@ import {
   NftCount,
   NftProjectDetails,
   SaleConditionsResponse,
-} from '../../types';
-import { NMKRAPIError } from '../core/errors';
-import { handleAxiosError } from './errorHandler';
-import { HttpClient } from './http.client';
+} from '@/types';
 
 export enum NmkrEndpoints {
   ServerState = '/v2/GetServerState',

@@ -1,5 +1,5 @@
+import { NmkrClient } from '@/modules/core/nmkr.client';
 import { Request, Response } from 'express';
-import { NmkrClient } from '../core/nmkr.client';
 
 export class HealthCheckController {
   private readonly nmkrClient: NmkrClient;

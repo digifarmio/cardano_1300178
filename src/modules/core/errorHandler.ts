@@ -1,6 +1,6 @@
+import { NMKRAPIError, NotFoundError, ValidationError } from '@/modules/core/errors';
 import { AxiosError } from 'axios';
 import { ErrorRequestHandler } from 'express';
-import { NMKRAPIError, NotFoundError, ValidationError } from './errors';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const globalErrorHandler: ErrorRequestHandler = (err, req, res, _next) => {

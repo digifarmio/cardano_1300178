@@ -2,7 +2,7 @@
   "name": "digifarm-api",
   "version": "1.0.0",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && tsc-alias",
     "deploy": "serverless deploy",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
@@ -32,6 +32,7 @@
     "eslint-plugin-prettier": "^5.4.0",
     "prettier": "^3.5.3",
     "serverless-offline": "^14.4.0",
+    "tsc-alias": "^1.8.16",
     "typescript": "^5.8.3"
   }
 }
