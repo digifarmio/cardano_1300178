@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { ConfigService } from '../../config/config.service';
 import { ValidationError } from '../../modules/core/errors';
-import { BatchMintParams, BatchMintRequest, BlockchainType, GetNftsParams } from '../../types';
+import { BatchMintParams, BatchMintRequest, GetNftsParams } from '../../types';
 import { MintHelper } from '../core/MintHelper';
 import { MintService } from './mint.service';
 
@@ -16,7 +16,6 @@ export class MintController {
     // Auto-bind methods
     this.getNftCollection = this.getNftCollection.bind(this);
     this.mintRandom = this.mintRandom.bind(this);
-    this.mintRandomWithParams = this.mintRandomWithParams.bind(this);
     this.mintSpecific = this.mintSpecific.bind(this);
   }
 
@@ -40,7 +39,7 @@ export class MintController {
     try {
       const params: BatchMintParams = {
         projectUid: this.configService.projectUid,
-        count: this.configService.batchSize.toString(),
+        count: this.configService.mintTotalCount,
         receiver: this.configService.receiverAddress,
         blockchain: this.configService.blockchain,
       };
@@ -52,31 +51,13 @@ export class MintController {
     }
   }
 
-  async mintRandomWithParams(req: Request, res: Response, next: NextFunction) {
-    try {
-      const blockchain = this.validateBlockchain(req.query.blockchain);
-
-      const params: BatchMintParams = {
-        projectUid: req.params.projectUid,
-        count: req.params.count,
-        receiver: req.params.receiver,
-        blockchain,
-      };
-
-      const result = await this.mintService.mintRandomBatch(params);
-      res.json({ success: true, data: result });
-    } catch (error) {
-      next(error);
-    }
-  }
-
   async mintSpecific(req: Request, res: Response, next: NextFunction) {
     try {
-      const blockchain = this.validateBlockchain(req.query.blockchain);
       const params: BatchMintParams = {
-        projectUid: req.params.projectUid,
-        receiver: req.params.receiver,
-        blockchain,
+        projectUid: this.configService.projectUid,
+        count: this.configService.mintTotalCount,
+        receiver: this.configService.receiverAddress,
+        blockchain: this.configService.blockchain,
       };
 
       let payload: BatchMintRequest;
@@ -97,12 +78,5 @@ export class MintController {
     } catch (error) {
       next(error);
     }
-  }
-
-  private validateBlockchain(blockchain: unknown): BlockchainType {
-    if (!blockchain || typeof blockchain !== 'string') {
-      throw new ValidationError('Blockchain parameter is required');
-    }
-    return blockchain as BlockchainType;
   }
 }

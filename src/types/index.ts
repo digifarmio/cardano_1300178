@@ -1,4 +1,5 @@
-export type BlockchainType = 'Cardano' | 'Solana' | 'Ethereum';
+export type Blockchain = 'Cardano' | 'Solana' | 'Ethereum';
+export type BlockchainType = { testnet: string; mainnet: string };
 
 /**
  * Cardano NFT Metadata Structure for Field NFTs
@@ -62,9 +63,9 @@ export interface GetNftsParams {
 
 export interface BatchMintParams {
   projectUid: string;
-  count?: string;
+  count: number;
   receiver: string;
-  blockchain: BlockchainType;
+  blockchain: Blockchain;
 }
 
 export interface BatchMintRequest {
@@ -138,7 +139,7 @@ export interface NftProjectDetails {
   nmkrAccountOptions: string;
   crossmintCollectiondId: string | null;
   created: string;
-  blockchains: BlockchainType[];
+  blockchains: Blockchain[];
   solanaProjectDetails: SolanaProjectDetails | null;
   aptosProjectDetails: AptosProjectDetails | null;
   solanaPayoutWalletAddress: string | null;
@@ -154,4 +155,37 @@ export interface SolanaProjectDetails {
 export interface AptosProjectDetails {
   collectionImage: string;
   collectionName: string;
+}
+
+export interface TransactionNFT {
+  assetName: string; // Hex-encoded field ID
+  fingerprint: string; // Token ID
+  txHashSolanaTransaction: string;
+}
+
+export interface CustomerTransaction {
+  transactionid: string;
+  transactiontype: string;
+  state: string;
+  created: string;
+  confirmed: boolean;
+  blockchain: Blockchain;
+  nftProjectUid: string;
+  projectname: string;
+  senderaddress: string;
+  receiveraddress: string;
+  nftcount: number;
+  transactionNfts: TransactionNFT[];
+}
+
+export interface NftCount {
+  nftTotal: number;
+  sold: number;
+  free: number;
+  reserved: number;
+  error: number;
+  blocked: number;
+  totalTokens: number;
+  totalBlocked: number;
+  unknownOrBurnedState: number;
 }
