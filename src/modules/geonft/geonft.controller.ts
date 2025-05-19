@@ -1,5 +1,5 @@
+import { GeoNftService } from '@/modules/geonft/geonft.service';
 import { NextFunction, Request, Response } from 'express';
-import { GeoNftService } from './geonft.service';
 
 export class GeoNftController {
   constructor(private readonly geoNftService = new GeoNftService()) {

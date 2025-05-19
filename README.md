@@ -96,6 +96,14 @@ Ensure the following are installed on your machine:
    BLOCKCHAIN=Cardano
    MINT_BATCH_SIZE=10
    MINT_TOTAL_COUNT=500
+   CONCURRENCY_LIMIT=5
+   RETRY_COUNT=3
+   AWS_REGION=us-east-1
+   AWS_S3_BUCKET=your-s3-bucket-name
+   AWS_DYNAMO_TABLE_BATCH_RECORDS=your-dynamo-table
+   AWS_DYNAMO_TABLE_RECORDS_STATUS=your-dynamo-table
+   AWS_ACCESS_KEY_ID=your-access-key-id
+   AWS_SECRET_ACCESS_KEY=your-secret-access-key
    ```
 
 4. **Build and Deploy:**

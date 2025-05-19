@@ -1,38 +1,60 @@
-export class NotFoundError extends Error {
-  constructor(message: string) {
+export class ApplicationError extends Error {
+  constructor(
+    public readonly message: string,
+    public readonly code: string,
+    public readonly details?: unknown
+  ) {
     super(message);
-    this.name = 'NotFoundError';
+    this.name = this.constructor.name;
     Error.captureStackTrace(this, this.constructor);
   }
 }
 
-export class ValidationError extends Error {
+export class ValidationError extends ApplicationError {
   constructor(
     message: string,
-    public field?: string
+    public readonly field?: string,
+    details?: unknown
   ) {
-    super(message);
-    this.name = 'ValidationError';
-    Error.captureStackTrace(this, this.constructor);
+    super(message, 'VALIDATION_ERROR', details);
   }
 }
 
-export class NMKRError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'NMKRError';
-    Error.captureStackTrace(this, this.constructor);
+export class NotFoundError extends ApplicationError {
+  constructor(resource: string, id?: string) {
+    super(id ? `${resource} with ID ${id} not found` : `${resource} not found`, 'NOT_FOUND', {
+      resource,
+      id,
+    });
   }
 }
 
-export class NMKRAPIError extends NMKRError {
+export class ApiError extends ApplicationError {
   constructor(
-    public message: string,
-    public statusCode: number = 500,
-    public details?: unknown
+    message: string,
+    public readonly statusCode: number = 500,
+    public readonly originalError?: unknown
   ) {
-    super(message);
-    this.name = 'NMKRAPIError';
-    Error.captureStackTrace(this, this.constructor);
+    super(message, 'API_ERROR', originalError);
+  }
+}
+
+export class ReportGenerationError extends ApplicationError {
+  constructor(
+    message: string,
+    public readonly reportId?: string,
+    details?: unknown
+  ) {
+    super(message, 'REPORT_GENERATION_ERROR', details);
+  }
+}
+
+export class BatchProcessingError extends ApplicationError {
+  constructor(
+    message: string,
+    public readonly batchId?: string,
+    details?: unknown
+  ) {
+    super(message, 'BATCH_PROCESSING_ERROR', details);
   }
 }

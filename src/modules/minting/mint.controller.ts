@@ -1,80 +1,101 @@
+import { ConfigService } from '@/config/config.service';
+import { ValidationError } from '@/modules/core/errors';
+import { BatchProcessingService } from '@/modules/minting/batch-processing.service';
+import { MintService } from '@/modules/minting/mint.service';
 import { NextFunction, Request, Response } from 'express';
-import { ConfigService } from '../../config/config.service';
-import { ValidationError } from '../../modules/core/errors';
-import { BatchMintParams, BatchMintRequest, GetNftsParams } from '../../types';
-import { MintHelper } from '../core/MintHelper';
-import { MintService } from './mint.service';
 
 export class MintController {
-  private readonly mintService: MintService;
-  private readonly configService: ConfigService;
-
-  constructor() {
-    this.mintService = new MintService();
-    this.configService = new ConfigService();
-
-    // Auto-bind methods
+  constructor(
+    private readonly mintService = new MintService(),
+    private readonly configService = new ConfigService(),
+    private readonly batchService = new BatchProcessingService()
+  ) {
     this.getNftCollection = this.getNftCollection.bind(this);
-    this.mintRandom = this.mintRandom.bind(this);
-    this.mintSpecific = this.mintSpecific.bind(this);
+    this.mintRandomBatch = this.mintRandomBatch.bind(this);
+    this.mintSpecificBatch = this.mintSpecificBatch.bind(this);
+    this.generateReport = this.generateReport.bind(this);
+    this.getReportStatus = this.getReportStatus.bind(this);
+    this.downloadReport = this.downloadReport.bind(this);
   }
 
-  async getNftCollection(req: Request, res: Response, next: NextFunction) {
+  async getNftCollection({ params }: Request, res: Response, next: NextFunction) {
     try {
-      const params: GetNftsParams = {
-        projectUid: req.params.projectUid,
-        state: req.params.state,
-        count: Number(req.params.count) || 100,
-        page: Number(req.params.page) || 1,
-      };
-
-      const collection = await this.mintService.getNftCollection(params);
+      const { projectUid, state, count = 100, page = 1 } = params;
+      const collection = await this.mintService.getNftCollection({
+        projectUid,
+        state,
+        count: Number(count),
+        page: Number(page),
+      });
       res.json({ success: true, data: collection });
     } catch (error) {
       next(error);
     }
   }
 
-  async mintRandom(req: Request, res: Response, next: NextFunction) {
+  async mintRandomBatch(_: Request, res: Response, next: NextFunction) {
     try {
-      const params: BatchMintParams = {
-        projectUid: this.configService.projectUid,
-        count: this.configService.mintTotalCount,
-        receiver: this.configService.receiverAddress,
-        blockchain: this.configService.blockchain,
-      };
-
-      const result = await this.mintService.mintRandomBatch(params);
+      const { projectUid, mintTotalCount, receiverAddress, blockchain } = this.configService;
+      const result = await this.mintService.mintRandomBatch({
+        projectUid,
+        count: mintTotalCount,
+        receiver: receiverAddress,
+        blockchain,
+      });
       res.json({ success: true, data: result });
     } catch (error) {
       next(error);
     }
   }
 
-  async mintSpecific(req: Request, res: Response, next: NextFunction) {
+  async mintSpecificBatch(req: Request, res: Response, next: NextFunction) {
     try {
-      const params: BatchMintParams = {
-        projectUid: this.configService.projectUid,
-        count: this.configService.mintTotalCount,
-        receiver: this.configService.receiverAddress,
-        blockchain: this.configService.blockchain,
-      };
+      const { projectUid, mintTotalCount, receiverAddress, blockchain } = this.configService;
+      const params = { projectUid, count: mintTotalCount, receiver: receiverAddress, blockchain };
 
-      let payload: BatchMintRequest;
+      let payload;
 
       if (req.file) {
-        payload = await MintHelper.fromCSV(req.file.buffer.toString());
+        payload = await this.batchService.createMintRequestFromCSV(req.file.buffer.toString());
       } else if (req.body.bulkTemplate) {
         const { nftUid, count, lovelace } = req.body.bulkTemplate;
-        payload = MintHelper.bulkTemplate(nftUid, count, lovelace);
+        payload = this.batchService.createMintRequestFromTemplate(nftUid, count, lovelace);
       } else if (req.body.reserveNfts) {
         payload = req.body;
       } else {
-        throw new ValidationError('Either provide a CSV file, bulk template, or reserveNfts array');
+        throw new ValidationError('Provide a CSV file, bulk template, or reserveNfts array');
       }
 
       const result = await this.mintService.mintSpecificBatch(params, payload);
       res.json({ success: true, data: result });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async generateReport(_: Request, res: Response, next: NextFunction) {
+    try {
+      const { reportId, statusUrl } = await this.mintService.initiateReportGeneration();
+      res.json({ success: true, data: { reportId, statusUrl } });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getReportStatus({ params }: Request, res: Response, next: NextFunction) {
+    try {
+      const status = await this.mintService.getReportStatus(params.reportId);
+      res.json({ success: true, data: status });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async downloadReport({ params }: Request, res: Response, next: NextFunction) {
+    try {
+      const type = params.type === 'csv' || params.type === 'pdf' ? params.type : 'csv';
+      const fileUrl = await this.mintService.getReportFile(params.reportId, type);
+      res.redirect(fileUrl);
     } catch (error) {
       next(error);
     }
