@@ -1,134 +1,104 @@
-import { ConfigService } from '../../config/config.service';
-import { APIResponse, BatchMintParams, BatchMintRequest, GetNftsParams } from '../../types';
-import { NMKRAPIError, ValidationError } from '../core/errors';
-import { NmkrClient } from '../core/nmkr.client';
+import { ConfigService } from '@/config/config.service';
+import { NmkrClient } from '@/modules/core/nmkr.client';
+import { BatchProcessingService } from '@/modules/minting/batch-processing.service';
+import { ReportService } from '@/modules/minting/report.service';
+import { ValidationService } from '@/modules/minting/validation.service';
+import {
+  APIResponse,
+  BatchMintParams,
+  BatchMintRequest,
+  BatchProcessingSummary,
+  BatchRecord,
+  GetNftsParams,
+  MintAndSendResult,
+  ReportStatus,
+} from '@/types';
 
 export class MintService {
   constructor(
-    private readonly nmkrClient = new NmkrClient(),
-    private readonly configService = new ConfigService()
+    private nmkrClient = new NmkrClient(),
+    private config = new ConfigService(),
+    private reportService = new ReportService(),
+    private validationService = new ValidationService(),
+    private batchService = new BatchProcessingService()
   ) {}
 
   async getNftCollection(params: GetNftsParams): Promise<APIResponse> {
-    this.validateGetNftsParams(params);
+    this.validationService.validateGetNftsParams(params);
     return this.nmkrClient.getNftCollection(params);
   }
 
-  async mintRandomBatch(params: BatchMintParams): Promise<APIResponse> {
-    this.validateBatchMintParams(params);
-    await this.validateMintConditions(params);
-    return this.nmkrClient.mintRandomBatch(params);
+  async mintRandomBatch(params: BatchMintParams): Promise<BatchProcessingSummary> {
+    await this.validateAndCheck(params);
+    return this.processMintBatch(params.count, (batchSize: number) =>
+      this.nmkrClient.mintRandomBatch({ ...params, count: batchSize })
+    );
   }
 
   async mintSpecificBatch(
     params: BatchMintParams,
     payload: BatchMintRequest
-  ): Promise<APIResponse> {
-    this.validateBatchMintParams(params);
-    this.validateBatchMintPayload(payload);
-    await this.validateMintConditions(params);
-    return this.nmkrClient.mintSpecificBatch(params, payload);
+  ): Promise<BatchProcessingSummary> {
+    await this.validateAndCheck(params, payload);
+    const { reserveNfts } = payload;
+    const count = reserveNfts.length;
+
+    let mintFn;
+
+    if (count <= this.config.mintBatchSize) {
+      mintFn = () => this.nmkrClient.mintSpecificBatch({ ...params, count }, payload);
+    } else {
+      mintFn = (batchSize: number, startIndex = 0) => {
+        const slicedNfts = reserveNfts.slice(startIndex, startIndex + batchSize);
+        return this.nmkrClient.mintSpecificBatch(
+          { ...params, count: batchSize },
+          { ...payload, reserveNfts: slicedNfts }
+        );
+      };
+    }
+
+    return this.processMintBatch(count, mintFn);
   }
 
-  // ======== Validation Methods ========
-  private validateGetNftsParams(params: GetNftsParams): void {
-    if (!params.projectUid) throw new ValidationError('Project UID is required', 'projectUid');
-    if (!params.state) throw new ValidationError('State is required', 'state');
-    if (params.count <= 0) throw new ValidationError('Count must be positive', 'count');
-    if (params.page <= 0) throw new ValidationError('Page must be positive', 'page');
+  async initiateReportGeneration(): Promise<{ reportId: string; statusUrl: string }> {
+    return this.reportService.generateReport();
   }
 
-  private validateBatchMintParams(params: BatchMintParams): void {
-    if (!params.projectUid) throw new ValidationError('Project UID is required', 'projectUid');
-    if (!params.receiver) throw new ValidationError('Receiver addr is required', 'receiver');
-    if (!params.blockchain) throw new ValidationError('Blockchain is required', 'blockchain');
+  async getReportStatus(reportId: string): Promise<ReportStatus> {
+    return this.reportService.getReportStatus(reportId);
   }
 
-  private validateBatchMintPayload(payload: BatchMintRequest): void {
-    if (!payload?.reserveNfts?.length) {
-      throw new ValidationError('At least one NFT must be specified', 'reserveNfts');
-    }
-
-    const batchSize = this.configService.batchSize;
-    if (payload.reserveNfts.length > batchSize) {
-      throw new ValidationError(`Maximum batch size is ${batchSize}`, 'reserveNfts');
-    }
-
-    payload.reserveNfts.forEach((nft, index) => {
-      if (!nft.nftUid)
-        throw new ValidationError(
-          `NFT UID required for item ${index}`,
-          `reserveNfts[${index}].nftUid`
-        );
-      if (nft.lovelace < 0)
-        throw new ValidationError(
-          `Lovelace must be positive for item ${index}`,
-          `reserveNfts[${index}].lovelace`
-        );
-      if (nft.tokencount <= 0)
-        throw new ValidationError(
-          `Token count must be positive for item ${index}`,
-          `reserveNfts[${index}].tokencount`
-        );
-    });
+  async getReportFile(reportId: string, type: 'csv' | 'pdf'): Promise<string> {
+    return this.reportService.getReportFile(reportId, type);
   }
 
-  private async validateMintConditions(params: BatchMintParams): Promise<void> {
-    const countToMint = Number(params.count || 1);
+  private async validateAndCheck(params: BatchMintParams, payload?: BatchMintRequest) {
+    this.validationService.validateBatchMintParams(params);
+    if (payload) this.validationService.validateBatchMintPayload(payload);
+    return this.validationService.validateMintConditions(params);
+  }
 
-    if (!['Cardano', 'Ethereum', 'Solana'].includes(params.blockchain)) {
-      throw new ValidationError('Unsupported blockchain type', 'blockchain');
-    }
+  private async processMintBatch(
+    count: number,
+    mintFn: (batchSize: number, startIndex?: number) => Promise<MintAndSendResult>
+  ): Promise<BatchProcessingSummary> {
+    const batchRecords = await this.batchService.processInBatches(count, mintFn);
+    return this.combineBatchResults(batchRecords);
+  }
 
-    if (!params.receiver?.trim()) {
-      throw new ValidationError('Receiver address cannot be empty', 'receiver');
-    }
-
-    try {
-      // Check project details
-      const projectDetails = await this.nmkrClient.getProjectDetails(params.projectUid);
-      if (projectDetails.uid !== params.projectUid) {
-        throw new ValidationError('Invalid or non-existent Project UID', 'projectUid');
-      }
-
-      // Check available NFTs
-      const freeNftCount = await this.nmkrClient.getNftCount(params.projectUid);
-      if (freeNftCount < countToMint) {
-        throw new ValidationError(
-          `Insufficient NFTs available to mint. Requested: ${countToMint}, Available: ${freeNftCount}`,
-          'count'
-        );
-      }
-
-      // Check mint coupon balance
-      const balance = await this.nmkrClient.getMintCouponBalance();
-      if (balance < countToMint) {
-        throw new ValidationError(
-          `Insufficient mint coupon balance. Required: ${countToMint}, Available: ${balance}`,
-          'count'
-        );
-      }
-
-      // Check sale conditions last
-      const conditionsMet = await this.nmkrClient.checkSaleConditions(
-        params.projectUid,
-        params.receiver,
-        countToMint
-      );
-
-      if (!conditionsMet) {
-        throw new ValidationError('Sale conditions not met for this address', 'receiver');
-      }
-    } catch (error) {
-      if (error instanceof ValidationError) {
-        throw error;
-      }
-
-      throw new NMKRAPIError(
-        'Failed to validate mint conditions',
-        500,
-        error instanceof Error ? error.message : 'Unknown error'
-      );
-    }
+  private combineBatchResults(batchRecords: BatchRecord[]): BatchProcessingSummary {
+    return {
+      totalBatches: batchRecords.length,
+      successfulBatches: batchRecords.filter((r) => r.success).length,
+      failedBatches: batchRecords.filter((r) => !r.success).length,
+      firstError: batchRecords.find((r) => !r.success)?.error,
+      transactionIds: batchRecords
+        .flatMap((r) => r.result.sendedNft?.map((nft) => nft.txHashSolanaTransaction) || [])
+        .filter((txId): txId is string => typeof txId === 'string'),
+      failedItems: batchRecords
+        .filter((r) => !r.success)
+        .map((r) => ({ error: r.error || 'Unknown error', batchId: r.id })),
+      batches: batchRecords,
+    };
   }
 }

@@ -1,101 +1,78 @@
+import { ConfigService } from '@/config/config.service';
+import { handleAxiosError } from '@/modules/core/errorHandler';
+import { NotFoundError } from '@/modules/core/errors';
+import { HttpClient } from '@/modules/core/http.client';
 import {
   APIResponse,
   BatchMintParams,
   BatchMintRequest,
+  CustomerTransaction,
   GetNftsParams,
-  MintCouponBalanceResponse,
+  MintAndSendResult,
+  NftCountResponse,
+  NftDetailsResponse,
   NftProjectDetails,
-  SaleConditionsResponse,
   UploadFiles,
-} from '../../types';
-import { handleAxiosError } from './errorHandler';
-import { HttpClient } from './http.client';
-
-export enum NmkrEndpoints {
-  ServerState = '/v2/GetServerState',
-  MintCouponBalance = '/v2/GetMintCouponBalance',
-  ProjectDetails = '/v2/GetProjectDetails',
-  NftCount = '/v2/GetCounts',
-  NftCollection = '/v2/GetNfts',
-  SaleConditions = '/v2/CheckIfSaleConditionsMet',
-  MintRandom = '/v2/MintAndSendRandom',
-  MintSpecific = '/v2/MintAndSendSpecific',
-  UploadFiles = '/v2/UploadNft',
-}
+} from '@/types';
+import { AxiosError } from 'axios';
+import pLimit from 'p-limit';
+import pRetry from 'p-retry';
 
 export class NmkrClient extends HttpClient {
+  private readonly configService = new ConfigService();
+  private readonly limit = pLimit(this.configService.concurrencyLimit);
+  private readonly retryCount = this.configService.retryCount;
+
   async getServerState(): Promise<{ status: string; version: string; timestamp: string }> {
     try {
-      const response = await this.instance.get(NmkrEndpoints.ServerState);
+      const response = await this.instance.get('/v2/GetServerState');
       return response.data;
-    } catch (error) {
+    } catch (error: unknown) {
       handleAxiosError(error);
     }
   }
 
   async getMintCouponBalance(): Promise<number> {
     try {
-      const url = `${NmkrEndpoints.MintCouponBalance}`;
-      const response = await this.instance.get<MintCouponBalanceResponse>(url);
+      const response = await this.instance.get('/v2/GetMintCouponBalance');
       return response.data.balance;
-    } catch (error) {
+    } catch (error: unknown) {
       handleAxiosError(error);
     }
   }
 
   async getProjectDetails(projectUid: string): Promise<NftProjectDetails> {
     try {
-      const url = `${NmkrEndpoints.ProjectDetails}/${projectUid}`;
-      const response = await this.instance.get<NftProjectDetails>(url);
+      const response = await this.instance.get(`/v2/GetProjectDetails/${projectUid}`);
       return response.data;
-    } catch (error) {
+    } catch (error: unknown) {
+      if (error instanceof AxiosError && error.response?.status === 404) {
+        throw new NotFoundError('Project', projectUid);
+      }
       handleAxiosError(error);
     }
   }
 
-  async getNftCount(projectUid: string): Promise<number> {
+  async checkSaleConditions(projectUid: string, address: string, count: number): Promise<boolean> {
     try {
-      const url = `${NmkrEndpoints.ProjectDetails}/${projectUid}`;
-      const response = await this.instance.get<{ free: number }>(url);
-      return response.data.free;
-    } catch (error) {
-      handleAxiosError(error);
-    }
-  }
-
-  async getNftCollection(params: GetNftsParams): Promise<APIResponse> {
-    try {
-      const { projectUid, state, count = 100, page = 1 } = params;
-      const url = `${NmkrEndpoints.NftCollection}/${projectUid}/${state}/${count}/${page}`;
-      const response = await this.instance.get(url);
-      return response.data;
-    } catch (error) {
-      handleAxiosError(error);
-    }
-  }
-
-  async checkSaleConditions(
-    projectUid: string,
-    address: string,
-    countnft: number
-  ): Promise<boolean> {
-    try {
-      const url = `${NmkrEndpoints.SaleConditions}/${projectUid}/${address}/${countnft}`;
-      const response = await this.instance.get<SaleConditionsResponse>(url);
+      const response = await this.instance.get(
+        `/v2/CheckIfSaleConditionsMet/${projectUid}/${address}/${count}`
+      );
       return response.data.conditionsMet;
-    } catch (error) {
+    } catch (error: unknown) {
       handleAxiosError(error);
     }
   }
 
-  async mintRandomBatch(params: BatchMintParams): Promise<APIResponse> {
+  async mintRandomBatch(params: BatchMintParams): Promise<MintAndSendResult> {
     try {
       const { projectUid, count, receiver, blockchain } = params;
-      const query = new URLSearchParams({ blockchain });
-      const url = `${NmkrEndpoints.MintRandom}/${projectUid}/${count}/${receiver}?${query.toString()}`;
-      const response = await this.instance.get<APIResponse>(url);
+      const response = await this.instance.get<MintAndSendResult>(
+        `/v2/MintAndSendRandom/${projectUid}/${count}/${receiver}`,
+        { params: { blockchain } }
+      );
       return response.data;
-    } catch (error) {
+    } catch (error: unknown) {
       handleAxiosError(error);
     }
   }
@@ -103,21 +80,121 @@ export class NmkrClient extends HttpClient {
   async mintSpecificBatch(
     params: BatchMintParams,
     payload: BatchMintRequest
-  ): Promise<APIResponse> {
+  ): Promise<MintAndSendResult> {
     try {
       const { projectUid, receiver, blockchain } = params;
-      const query = new URLSearchParams({ blockchain });
-      const url = `${NmkrEndpoints.MintSpecific}/${projectUid}/${receiver}?${query.toString()}`;
-      const response = await this.instance.post<APIResponse>(url, payload);
+      const response = await this.instance.post<MintAndSendResult>(
+        `/v2/MintAndSendSpecific/${projectUid}/${receiver}`,
+        payload,
+        { params: { blockchain } }
+      );
       return response.data;
-    } catch (error) {
+    } catch (error: unknown) {
       handleAxiosError(error);
     }
   }
 
+  async getTransactions(): Promise<CustomerTransaction[]> {
+    try {
+      const response = await this.instance.get(
+        `/v2/GetCustomerTransactions/${this.configService.customerId}`,
+        { params: { exportOptions: 'Json' } }
+      );
+      return response.data;
+    } catch (error: unknown) {
+      handleAxiosError(error);
+    }
+  }
+
+  async getTransaction(transactionId: string): Promise<CustomerTransaction> {
+    try {
+      const transactions = await this.getTransactions();
+      const transaction = transactions.find((t) => t.transactionid === transactionId);
+
+      if (!transaction) {
+        throw new NotFoundError('Transaction', transactionId);
+      }
+
+      return transaction;
+    } catch (error: unknown) {
+      if (error instanceof NotFoundError) throw error;
+      handleAxiosError(error);
+    }
+  }
+
+  async getLatestTransaction(): Promise<CustomerTransaction> {
+    try {
+      const transactions = await this.getTransactions();
+      if (transactions.length === 0) {
+        throw new NotFoundError('Transaction');
+      }
+      return transactions[0];
+    } catch (error: unknown) {
+      if (error instanceof NotFoundError) throw error;
+      handleAxiosError(error);
+    }
+  }
+
+  async getNftCount(projectUid: string): Promise<NftCountResponse> {
+    try {
+      const response = await this.instance.get(`/v2/GetCounts/${projectUid}`);
+      return response.data;
+    } catch (error: unknown) {
+      handleAxiosError(error);
+    }
+  }
+
+  async getNftCollection(params: GetNftsParams): Promise<APIResponse> {
+    try {
+      const { projectUid, state, count = 100, page = 1 } = params;
+      const response = await this.instance.get(
+        `/v2/GetNfts/${projectUid}/${state}/${count}/${page}`
+      );
+      return response.data;
+    } catch (error: unknown) {
+      handleAxiosError(error);
+    }
+  }
+
+  async getNftDetailsById(nftUid: string): Promise<NftDetailsResponse> {
+    try {
+      const response = await this.instance.get(`/v2/GetNftDetailsById/${nftUid}`);
+      return response.data;
+    } catch (error: unknown) {
+      if (error instanceof AxiosError && error.response?.status === 404) {
+        throw new NotFoundError('NFT', nftUid);
+      }
+      handleAxiosError(error);
+    }
+  }
+
+  async getNftDetailsByToken(projectUid: string, tokenName: string): Promise<NftDetailsResponse> {
+    try {
+      const response = await this.instance.get(
+        `/v2/GetNftDetailsByTokenname/${projectUid}/${tokenName}`
+      );
+      return response.data;
+    } catch (error: unknown) {
+      handleAxiosError(error);
+    }
+  }
+
+  async getNftDetailsThrottled(nftUid: string) {
+    return this.limit(() =>
+      pRetry(() => this.getNftDetailsById(nftUid), {
+        retries: this.retryCount,
+        onFailedAttempt: (error) => {
+          console.log(
+            `Retrying getNftDetails for ${nftUid}. Attempt ${error.attemptNumber} failed. ${error.retriesLeft} retries left.`
+          );
+        },
+      })
+    );
+  }
+
   async uploadNft(projectUid: string, payload: UploadFiles): Promise<APIResponse> {
     try {
-      const url = `${NmkrEndpoints.UploadFiles}/${projectUid}`;
+      const url = `/v2/UploadNft/${projectUid}`;
       const response = await this.instance.post<APIResponse>(url, payload);
       return response.data;
     } catch (error) {

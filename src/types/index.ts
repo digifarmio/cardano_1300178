@@ -1,27 +1,61 @@
-export type BlockchainType = 'Cardano' | 'Solana' | 'Ethereum';
+// ==================== Blockchain Types ====================
+export type Blockchain = 'Cardano';
 
-/**
- * Cardano NFT Metadata Structure for Field NFTs
- * Following CIP-25 standard for NFT metadata
- */
+export interface BlockchainType {
+  testnet: string;
+  mainnet: string;
+}
+
+export interface BlockchainInfo {
+  name: string;
+  symbol: string;
+  network: string;
+}
+
+// ==================== CIP-25 Metadata ====================
 export interface CIP25Metadata {
   '721': {
     [policyId: string]: {
       [assetName: string]: unknown;
-    } & {
-      version: string;
     };
   };
 }
 
-export interface BucketObject {
-  [key: string]: unknown;
+// ==================== Common Interfaces ====================
+export interface APIResponse<T = unknown> {
+  success: boolean;
+  error?: string | string[];
+  data?: T;
 }
 
-export interface CsvHeaders {
-  [key: string]: string;
+export interface NFT {
+  assetName: string;
+  fingerprint?: string;
+  tokenCount: number;
+  multiplier: number;
+  txHashSolanaTransaction?: string;
+  confirmed: boolean;
+  id: number;
+  uid: string;
+  name: string;
+  displayname: string;
+  detaildata: string;
+  ipfsLink: string;
+  gatewayLink: string;
+  state: string;
+  minted: boolean;
+  policyId: string;
+  assetId: string;
+  initialMintTxHash: string;
+  series: string;
+  price: number;
+  selldate: string;
+  paymentGatewayLinkForSpecificSale: string;
+  priceSolana: number;
+  priceAptos: number;
 }
 
+// ==================== Minting Interfaces ====================
 export interface GetNftsParams {
   projectUid: string;
   state: string;
@@ -31,9 +65,9 @@ export interface GetNftsParams {
 
 export interface BatchMintParams {
   projectUid: string;
-  count?: string;
+  count: number;
   receiver: string;
-  blockchain: BlockchainType;
+  blockchain: Blockchain;
 }
 
 export interface BatchMintRequest {
@@ -44,38 +78,126 @@ export interface BatchMintRequest {
   }[];
 }
 
-/**
- * NMKR API Response Interface for all service responses
- */
-export interface APIResponse<T = unknown> {
-  success: boolean;
-  error?: string;
-  data?: T;
+export interface BatchProcessingSummary {
+  totalBatches: number;
+  successfulBatches: number;
+  failedBatches: number;
+  firstError?: string;
+  transactionIds: string[];
+  failedItems: Array<{ error: string; batchId: string }>;
+  batches: BatchRecord[];
 }
 
-/**
- * Mint Coupon Balance Response
- */
-export interface MintCouponBalanceResponse {
-  balance: number;
+export interface MintAndSendResult {
+  mintAndSendId?: number;
+  sendedNft?: NFT[];
 }
 
-/**
- * Sale Conditions Response
- */
-export interface SaleConditionsResponse {
-  conditionsMet: boolean;
+export interface NftDetailsResponse {
+  id: number;
+  uid: string;
+  name: string;
+  displayname: string;
+  title: string;
+  series: string;
+  state: string;
+  detaildata: string;
+  minted: boolean;
+  uploadSource: string;
+  receiveraddress: string;
+  policyid: string;
+  assetid: string;
+  assetname: string;
+  fingerprint: string;
+  initialminttxhash: string;
+  ipfshash: string;
+  ipfsGatewayAddress: string;
+  metadata: string;
+  singlePrice: number;
+  singlePriceSolana: number;
+  priceInLovelaceCentralPayments: number;
+  priceInLamportCentralPayments: number;
+  priceInOctsCentralPayments: number;
+  sendBackCentralPaymentInLovelace: number;
+  paymentGatewayLinkForSpecificSale: string;
+  mintedOnBlockchain: 'Cardano';
+  mintingfees: number;
+  selldate: string; // ISO Date string
+  reserveduntil: string; // ISO Date string
+  soldby: string;
 }
 
-/**
- * NFT Project Details Response
- */
+export interface NftCountResponse {
+  nftTotal: number;
+  sold: number;
+  free: number;
+  reserved: number;
+  error: number;
+  blocked: number;
+  totalTokens: number;
+  totalBlocked: number;
+  unknownOrBurnedState: number;
+}
+
+// ==================== Transaction Interfaces ====================
+export interface TransactionNFT {
+  assetName: string;
+  fingerprint: string;
+  txHashSolanaTransaction: string;
+}
+
+export interface GetTransactionNfts {
+  assetName?: string;
+  fingerprint?: string;
+  tokenCount: number;
+  multiplier: number;
+  txHashSolanaTransaction?: string;
+  confirmed: boolean;
+}
+
+export interface CustomerTransaction {
+  created: string;
+  state?: string;
+  nftprojectId: number;
+  ada: number;
+  fee: number;
+  mintingcostsada: number;
+  projectada: number;
+  projectincomingtxhash?: string;
+  receiveraddress?: string;
+  senderaddress?: string;
+  transactionid?: string;
+  transactiontype?: string;
+  projectaddress?: string;
+  eurorate: number;
+  nftcount: number;
+  tokencount: number;
+  originatoraddress?: string;
+  stakereward: number;
+  stakeaddress?: string;
+  additionalPayoutWallets: number;
+  confirmed: boolean;
+  priceintokensquantity: number;
+  priceintokenspolicyid?: string;
+  priceintokenstokennamehex?: string;
+  priceintokensmultiplier: number;
+  nmkrcosts: number;
+  discount: number;
+  customerProperty?: string;
+  blockchain: Blockchain;
+  transactionNfts?: GetTransactionNfts[];
+  coin?: string;
+  projectname?: string;
+  nftProjectUid?: string;
+}
+
+// ==================== Project Interfaces ====================
 export interface NftProjectDetails {
   id: number;
   projectname: string;
-  projecturl: string | null;
-  projectLogo: string | null;
-  state: string | null;
+  projecturl?: string;
+  projectLogo?: string;
+  state?: string;
   free: number;
   sold: number;
   reserved: number;
@@ -87,30 +209,30 @@ export interface NftProjectDetails {
   unknownOrBurnedState: number;
   uid: string;
   maxTokenSupply: number;
-  description: string | null;
+  description?: string;
   addressReservationTime: number;
   policyId: string;
   enableCrossSaleOnPaymentGateway: boolean;
   adaPayoutWalletAddress: string;
-  usdcPayoutWalletAddress: string | null;
+  usdcPayoutWalletAddress?: string;
   enableFiatPayments: boolean;
-  paymentGatewaySaleStart: string | null;
+  paymentGatewaySaleStart?: string;
   enableDecentralPayments: boolean;
   policyLocks: string;
-  royaltyAddress: string | null;
-  royaltyPercent: number | null;
+  royaltyAddress?: string;
+  royaltyPercent?: number;
   lockslot: number;
   disableManualMintingbutton: boolean;
   disableRandomSales: boolean;
   disableSpecificSales: boolean;
-  twitterHandle: string | null;
+  twitterHandle?: string;
   nmkrAccountOptions: string;
-  crossmintCollectiondId: string | null;
+  crossmintCollectiondId?: string;
   created: string;
-  blockchains: BlockchainType[];
-  solanaProjectDetails: SolanaProjectDetails | null;
-  aptosProjectDetails: AptosProjectDetails | null;
-  solanaPayoutWalletAddress: string | null;
+  blockchains: Blockchain[];
+  solanaProjectDetails?: SolanaProjectDetails;
+  aptosProjectDetails?: AptosProjectDetails;
+  solanaPayoutWalletAddress?: string;
 }
 
 export interface SolanaProjectDetails {
@@ -125,6 +247,78 @@ export interface AptosProjectDetails {
   collectionName: string;
 }
 
+// ==================== Report Interfaces ====================
+export interface ReportPaths {
+  csvPath: string;
+  pdfPath: string;
+}
+
+export interface ReportStatus {
+  id: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  createdAt: string;
+  updatedAt?: string;
+  csvPath?: string;
+  pdfPath?: string;
+  error?: {
+    message: string;
+    code: string;
+    details?: unknown;
+  };
+}
+
+export interface BatchRecord {
+  id: string;
+  size: number;
+  startIdx: number;
+  endIdx: number;
+  success: boolean;
+  result: MintAndSendResult;
+  status: string;
+  error?: string;
+  createdAt: string;
+}
+
+export interface CsvRecord {
+  fieldID: string;
+  tokenID: string;
+  txID: string;
+  explorerURL: string;
+}
+
+export interface PdfRecord {
+  batchId: string;
+  status: string;
+  createdAt: string;
+  error?: string;
+  nfts: {
+    name: string;
+    assetName: string;
+    fingerprint: string;
+    txID: string;
+    explorerURL: string;
+    metadata: string;
+    policyId: string;
+    receiverAddress: string;
+    ipfsHash: string;
+    ipfsGatewayAddress: string;
+  }[];
+}
+
+// ==================== Error Interfaces ====================
+export interface ErrorResponse {
+  success: false;
+  error: {
+    code: string;
+    message: string;
+    details?: unknown;
+    field?: string;
+    reportId?: string;
+    batchId?: string;
+  };
+  timestamp: string;
+}
+
 export interface ImageNft {
   mimetype: string;
   fileFromBase64: string;
@@ -134,4 +328,12 @@ export interface UploadFiles {
   tokenname: string;
   previewImageNft: ImageNft;
   metadataOverride: string;
+}
+
+export interface BucketObject {
+  [key: string]: unknown;
+}
+
+export interface CsvHeaders {
+  [key: string]: string;
 }

@@ -1,5 +1,5 @@
+import { GeoNftController } from '@/modules/geonft/geonft.controller';
 import express from 'express';
-import { GeoNftController } from './geonft.controller';
 import { fileUploads } from '../../config/multer-config';
 
 export function createGeoNftRoutes() {
