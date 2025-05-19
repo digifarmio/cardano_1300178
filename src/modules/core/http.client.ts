@@ -1,17 +1,12 @@
 import { ConfigService } from '@/config/config.service';
-import axios, { AxiosInstance } from 'axios';
+import axios from 'axios';
 
 export class HttpClient {
-  protected readonly instance: AxiosInstance;
-  private config = new ConfigService();
-
-  constructor() {
-    this.instance = axios.create({
-      baseURL: this.config.baseUrl,
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${this.config.apiKey}`,
-      },
-    });
-  }
+  protected readonly instance = axios.create({
+    baseURL: new ConfigService().baseUrl,
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${new ConfigService().apiKey}`,
+    },
+  });
 }

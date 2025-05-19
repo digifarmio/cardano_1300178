@@ -2,44 +2,31 @@ import { NmkrClient } from '@/modules/core/nmkr.client';
 import { Request, Response } from 'express';
 
 export class HealthCheckController {
-  private readonly nmkrClient: NmkrClient;
+  private readonly nmkrClient = new NmkrClient();
 
-  constructor() {
-    this.nmkrClient = new NmkrClient();
-
-    // Auto-bind methods
-    this.liveness = this.liveness.bind(this);
-    this.checkHealth = this.checkHealth.bind(this);
-  }
-
-  async liveness(_req: Request, res: Response) {
+  liveness = (_req: Request, res: Response) => {
     res.status(200).json({ status: 'alive' });
-  }
+  };
 
-  async checkHealth(_req: Request, res: Response) {
+  checkHealth = async (_req: Request, res: Response) => {
     try {
-      const healthStatus = {
+      const nmkrService = await this.nmkrClient.getServerState();
+      res.status(200).json({
         api: 'healthy',
-        dependencies: {
-          nmkrService: await this.nmkrClient.getServerState(),
-        },
+        dependencies: { nmkrService },
         timestamp: new Date().toISOString(),
-      };
-
-      res.status(200).json(healthStatus);
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-
+      });
+    } catch (error) {
       res.status(503).json({
         api: 'healthy',
         dependencies: {
           nmkrService: {
             status: 'unavailable',
-            error: errorMessage,
+            error: error instanceof Error ? error.message : 'Unknown error occurred',
           },
         },
         timestamp: new Date().toISOString(),
       });
     }
-  }
+  };
 }

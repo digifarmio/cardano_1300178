@@ -2,16 +2,17 @@ import { csvUpload } from '@/config/multer-config';
 import { MintController } from '@/modules/minting/mint.controller';
 import express from 'express';
 
-export function createMintRoutes() {
+export const createMintRoutes = () => {
   const router = express.Router();
   const controller = new MintController();
 
-  // NFT Collection endpoints
-  router.get('/collections/:projectUid/:state/:count/:page', controller.getNftCollection);
-
-  // Minting endpoints
-  router.get('/mint/random-batch', controller.mintRandom);
-  router.post('/mint/specific-batch', csvUpload, controller.mintSpecific);
+  router
+    .get('/collections/:projectUid/:state/:count/:page', controller.getNftCollection)
+    .post('/mint/random-batch', controller.mintRandomBatch)
+    .post('/mint/specific-batch', csvUpload, controller.mintSpecificBatch)
+    .post('/reports', controller.generateReport)
+    .get('/reports/:reportId', controller.getReportStatus)
+    .get('/reports/:reportId/download/:type', controller.downloadReport);
 
   return router;
-}
+};
