@@ -318,3 +318,22 @@ export interface ErrorResponse {
   };
   timestamp: string;
 }
+
+export interface ImageNft {
+  mimetype: string;
+  fileFromBase64: string;
+}
+
+export interface UploadFiles {
+  tokenname: string;
+  previewImageNft: ImageNft;
+  metadataOverride: string;
+}
+
+export interface BucketObject {
+  [key: string]: unknown;
+}
+
+export interface CsvHeaders {
+  [key: string]: string;
+}

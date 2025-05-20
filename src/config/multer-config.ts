@@ -17,4 +17,12 @@ const upload = multer({
   },
 });
 
+const multiUpload = multer({
+  storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+});
+
 export const csvUpload = upload.single('csvFile');
+export const fileUploads = multiUpload.array('files');

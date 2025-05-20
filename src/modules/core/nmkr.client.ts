@@ -12,6 +12,7 @@ import {
   NftCountResponse,
   NftDetailsResponse,
   NftProjectDetails,
+  UploadFiles,
 } from '@/types';
 import { AxiosError } from 'axios';
 import pLimit from 'p-limit';
@@ -189,5 +190,15 @@ export class NmkrClient extends HttpClient {
         },
       })
     );
+  }
+
+  async uploadNft(projectUid: string, payload: UploadFiles): Promise<APIResponse> {
+    try {
+      const url = `/v2/UploadNft/${projectUid}`;
+      const response = await this.instance.post<APIResponse>(url, payload);
+      return response.data;
+    } catch (error) {
+      handleAxiosError(error);
+    }
   }
 }

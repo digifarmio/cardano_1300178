@@ -2,3 +2,5 @@ node_modules
 .build
 .serverless
 .env
+.DS_Store
+
