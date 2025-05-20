@@ -99,8 +99,4 @@ export class ConfigService {
   get bucketName(): string {
     return this.validateEnvVar('BUCKET_NAME', process.env.BUCKET_NAME);
   }
-
-  get bucketKey(): string {
-    return this.validateEnvVar('BUCKET_KEY', process.env.BUCKET_KEY);
-  }
 }
