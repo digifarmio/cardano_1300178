@@ -1,3 +1,4 @@
+import { StyleProvider } from '@ant-design/cssinjs';
 import { Button, ConfigProvider, Space, theme, type ThemeConfig } from 'antd';
 
 const config: ThemeConfig = {
@@ -13,12 +14,14 @@ const config: ThemeConfig = {
 
 const App = () => {
   return (
-    <ConfigProvider theme={config}>
-      <Space>
-        <Button type="primary">Primary</Button>
-        <Button>Default</Button>
-      </Space>
-    </ConfigProvider>
+    <StyleProvider layer>
+      <ConfigProvider theme={config}>
+        <Space>
+          <Button type="primary">Primary</Button>
+          <Button>Default</Button>
+        </Space>
+      </ConfigProvider>
+    </StyleProvider>
   );
 };
 
