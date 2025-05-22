@@ -1,3 +1,5 @@
+import type { JwtPayload } from 'jwt-decode';
+
 export interface AuthContextType {
   token: string | null;
   login: (token: string) => void;
@@ -6,7 +8,7 @@ export interface AuthContextType {
   isLoading: boolean;
 }
 
-export interface DecodedToken {
+export interface DecodedToken extends JwtPayload {
   role?: string | string[];
   [key: string]: unknown;
 }

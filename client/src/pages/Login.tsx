@@ -1,5 +1,6 @@
 import { InfoCircleOutlined, LoginOutlined } from '@ant-design/icons';
-import { Button, Card, Col, Flex, Form, Input, Row, Space, Typography } from 'antd';
+import { Button, Card, Col, Flex, Form, Row, Space, Typography } from 'antd';
+import TextArea from 'antd/es/input/TextArea';
 import { useNavigate } from 'react-router';
 import { useAuth } from '../hooks/useAuth';
 
@@ -30,10 +31,10 @@ const Login = () => {
 
   return (
     <Row justify="center" align="middle" className="min-h-screen p-4">
-      <Col xs={24} sm={20} md={16} lg={12} xl={10}>
+      <Col xs={24} sm={20} md={16} lg={6}>
         <Card
           className="w-full rounded-xl shadow-lg border-none"
-          styles={{ body: { padding: '2rem', borderRadius: '12px' } }}
+          styles={{ body: { padding: '2rem' } }}
         >
           <Space direction="vertical" size="large" className="w-full text-center mb-8">
             <Space direction="vertical" size="middle" align="center" className="w-full">
@@ -54,8 +55,8 @@ const Login = () => {
                 name="token"
                 label={<Text className="text-sm font-medium">Access Token</Text>}
                 rules={[{ required: true, message: 'Please enter a valid access token' }]}
-                help={
-                  <Space align="start" size="small" className="text-xs mt-2">
+                extra={
+                  <Space align="start" size="small" className="text-xs">
                     <InfoCircleOutlined className="mt-0.5" />
                     <Text type="secondary">
                       The token was provided to you for this demonstration
@@ -63,12 +64,13 @@ const Login = () => {
                   </Space>
                 }
               >
-                <Input
+                <TextArea
                   placeholder="Enter your provided token"
                   autoComplete="off"
                   spellCheck="false"
                   autoFocus
-                  className="py-3 px-4 rounded-lg"
+                  rows={4}
+                  className="py-3 px-4 rounded-lg resize-none"
                 />
               </Form.Item>
 
