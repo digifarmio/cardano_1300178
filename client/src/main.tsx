@@ -1,9 +1,10 @@
-import './main.css';
+import '@ant-design/v5-patch-for-react-19';
+import './assets/global.css';
 
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
-import App from './App.tsx';
+import App from './App';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

@@ -1,25 +1,19 @@
+import { ConfigProvider } from 'antd';
+import { RouterProvider } from 'react-router';
+
 import { StyleProvider } from '@ant-design/cssinjs';
-import { Button, ConfigProvider, Space, theme, type ThemeConfig } from 'antd';
 
-const config: ThemeConfig = {
-  algorithm: [theme.defaultAlgorithm, theme.compactAlgorithm],
-  token: {
-    // Seed Token
-    colorPrimary: '#00b96b',
-
-    // Alias Token
-    colorBgContainer: '#f6ffed',
-  },
-};
+import AuthProvider from './context/AuthProvider';
+import router from './router';
+import themeConfig from './theme';
 
 const App = () => {
   return (
     <StyleProvider layer>
-      <ConfigProvider theme={config}>
-        <Space>
-          <Button type="primary">Primary</Button>
-          <Button>Default</Button>
-        </Space>
+      <ConfigProvider theme={themeConfig}>
+        <AuthProvider>
+          <RouterProvider router={router} />
+        </AuthProvider>
       </ConfigProvider>
     </StyleProvider>
   );
