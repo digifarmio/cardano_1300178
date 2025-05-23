@@ -1,5 +1,5 @@
 # "org" ensures this Service is used with the correct Serverless Framework Access Key.
-org: blockia
+org: ${env:SERVERLESS_ORG}
 # "app" enables Serverless Framework Dashboard features and sharing them with other Services.
 app: api
 # "service" is the name of this project. This will also be added to your AWS resource names.
@@ -11,14 +11,12 @@ provider:
   name: aws
   runtime: nodejs20.x
   timeout: 300 # Add this line - global default timeout (5 minutes)
-  memorySize: 1024 # Add this line - increase memory allocation
   environment:
     NODE_ENV: ${env:NODE_ENV, 'development'} # Auto detect environment
     NMKR_API_KEY: ${env:NMKR_API_KEY, 'key-local-dev'} # Default for local
     NMKR_BASE_URL: ${env:NMKR_BASE_URL, 'https://studio-api.preprod.nmkr.io'} # NMKR staging URL
     NMKR_CUSTOMER_ID: ${env:NMKR_CUSTOMER_ID} # NMKR Customer Id
     NMKR_PROJECT_UID: ${env:NMKR_PROJECT_UID} # NMKR Project id
-    NMKR_POLICY_ID: ${env:NMKR_POLICY_ID} # NMKR Policy id
     RECEIVER_ADDRESS: ${env:RECEIVER_ADDRESS} # Wallet address
     BLOCKCHAIN: ${env:BLOCKCHAIN, 'Cardano'} # Blockchain
     MINT_BATCH_SIZE: ${env:MINT_BATCH_SIZE, 10} # Safe default batch size
@@ -31,13 +29,46 @@ provider:
     AWS_ACCESS_KEY_ID: ${env:AWS_ACCESS_KEY_ID}
     AWS_SECRET_ACCESS_KEY: ${env:AWS_SECRET_ACCESS_KEY}
     AWS_REGION: ${env:AWS_REGION, 'us-east-1'} # Default AWS region
-    BUCKET_NAME: ${env:BUCKET_NAME, ''} # Default bucket name
-
+    AWS_BUCKET_NAME_CSV: ${env:AWS_BUCKET_NAME_CSV, ''} # Default bucket name
+    AWS_BUCKET_NAME_NFT: ${env:AWS_BUCKET_NAME_NFT, ''} # Default bucket name
+    AWS_SQS_QUEUE_URL: ${env:AWS_SQS_QUEUE_URL, ''} # Default queue URL
+    SFTP_HOST: ${env:SFTP_HOST, ''} # Default SFTP host
+    SFTP_PORT: ${env:SFTP_PORT, '22'} # Default SFTP port
+    SFTP_USERNAME: ${env:SFTP_USERNAME, ''} # Default SFTP username
+    SFTP_PASSWORD: ${env:SFTP_PASSWORD, ''} # Default SFTP password
+    REMOTE_PATH: ${env:REMOTE_PATH, ''} # Defau
 plugins:
+  - serverless-offline-sqs
   - serverless-offline
+
+custom:
+  serverless-offline-sqs:
+    autoCreate: true
+    apiVersion: '2012-11-05'
+    endpoint: http://0.0.0.0:9324
+    region: us-east-1
+    accessKeyId: root
+    secretAccessKey: root
+    skipCacheInvalidation: false
 
 functions:
   api:
     handler: .build/handler.handler
     events:
       - httpApi: '*'
+
+  processNfts:
+    handler: .build/handler.lambdaHandler
+    events:
+      - sqs:
+          arn:  
+            Fn::GetAtt:
+              - DigifarmNftQueue
+              - Arn
+
+resources:
+  Resources:
+    DigifarmNftQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: Digifarm-nft              
