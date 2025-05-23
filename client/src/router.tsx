@@ -1,5 +1,6 @@
 import ErrorBoundary from 'antd/es/alert/ErrorBoundary';
 import { createBrowserRouter } from 'react-router';
+
 import AppLayout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminDashboard from './pages/AdminDashboard';

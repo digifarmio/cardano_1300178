@@ -16,3 +16,17 @@ export interface DecodedToken extends JwtPayload {
 export interface ProtectedRouteProps {
   allowedRoles: string[];
 }
+
+export interface FieldRecord {
+  fieldId: string;
+  size: number;
+  sustainability: string;
+  status: string;
+}
+
+export interface MintReport {
+  date: string;
+  totalFields: number;
+  minted: number;
+  failed: number;
+}

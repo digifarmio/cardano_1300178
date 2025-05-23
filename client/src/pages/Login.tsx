@@ -1,7 +1,9 @@
-import { InfoCircleOutlined, LoginOutlined } from '@ant-design/icons';
 import { Button, Card, Col, Flex, Form, Row, Space, Typography } from 'antd';
 import TextArea from 'antd/es/input/TextArea';
 import { useNavigate } from 'react-router';
+
+import { InfoCircleOutlined, LoginOutlined } from '@ant-design/icons';
+
 import { useAuth } from '../hooks/useAuth';
 
 const { Title, Text } = Typography;
@@ -30,12 +32,9 @@ const Login = () => {
   };
 
   return (
-    <Row justify="center" align="middle" className="min-h-screen p-4">
-      <Col xs={24} sm={20} md={16} lg={6}>
-        <Card
-          className="w-full rounded-xl shadow-lg border-none"
-          styles={{ body: { padding: '2rem' } }}
-        >
+    <Row justify="center" align="middle" className="min-h-screen p-2 sm:p-4">
+      <Col xs={24} sm={22} md={18} lg={12} xl={8} xxl={6}>
+        <Card className="w-full rounded-xl shadow-lg border-none p-0 sm:p-4">
           <Space direction="vertical" size="large" className="w-full text-center mb-8">
             <Space direction="vertical" size="middle" align="center" className="w-full">
               <Title level={2} className="!mb-0">

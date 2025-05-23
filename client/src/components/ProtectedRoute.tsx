@@ -2,10 +2,9 @@ import { jwtDecode } from 'jwt-decode';
 import { Navigate, Outlet, useLocation } from 'react-router';
 
 import { useAuth } from '../hooks/useAuth';
-
-import type { DecodedToken, ProtectedRouteProps } from '../lib/types';
 import PageSpinner from './PageSpinner';
 
+import type { DecodedToken, ProtectedRouteProps } from '../lib/types';
 const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
   const { token, isLoading } = useAuth();
   const { pathname } = useLocation();
