@@ -26,10 +26,6 @@ export class ConfigService {
     return this.validateEnvVar('NMKR_PROJECT_UID', process.env.NMKR_PROJECT_UID);
   }
 
-  get policyId(): string {
-    return this.validateEnvVar('NMKR_POLICY_ID', process.env.NMKR_POLICY_ID);
-  }
-
   get receiverAddress(): string {
     return this.validateEnvVar('RECEIVER_ADDRESS', process.env.RECEIVER_ADDRESS);
   }
@@ -96,7 +92,39 @@ export class ConfigService {
     return this.validateEnvVar('AWS_SECRET_ACCESS_KEY', process.env.AWS_SECRET_ACCESS_KEY);
   }
 
-  get bucketName(): string {
-    return this.validateEnvVar('BUCKET_NAME', process.env.BUCKET_NAME);
+  get bucketNameCsv(): string {
+    return this.validateEnvVar('AWS_BUCKET_NAME_CSV', process.env.AWS_BUCKET_NAME_CSV);
+  }
+
+  get bucketNameNft(): string {
+    return this.validateEnvVar('AWS_BUCKET_NAME_NFT', process.env.AWS_BUCKET_NAME_NFT);
+  }
+
+  get sqsQueueUrl(): string {
+    return this.validateEnvVar('AWS_SQS_QUEUE_URL', process.env.AWS_SQS_QUEUE_URL);
+  }
+
+  get sftpHost(): string {
+    return this.validateEnvVar('SFTP_HOST', process.env.SFTP_HOST);
+  }
+
+  get sftpPort(): number {
+    const port = parseInt(process.env.SFTP_PORT || '');
+    if (isNaN(port) || port <= 0) {
+      throw new ValidationError('SFTP_PORT must be a positive number');
+    }
+    return port;
+  }
+
+  get sftpUsername(): string {
+    return this.validateEnvVar('SFTP_USERNAME', process.env.SFTP_USERNAME);
+  }
+
+  get sftpPassword(): string {
+    return this.validateEnvVar('SFTP_PASSWORD', process.env.SFTP_PASSWORD);
+  }
+
+  get remotePath(): string {
+    return this.validateEnvVar('REMOTE_PATH', process.env.REMOTE_PATH);
   }
 }

@@ -1,11 +1,13 @@
 import { S3, S3Client } from '@aws-sdk/client-s3';
 import { ConfigService } from '../../config/config.service';
+import { SQSClient } from '@aws-sdk/client-sqs';
 
 export enum AwsClientType {
   S3 = 'S3',
+  SQS = 'SQS',
 }
 
-type AwsClientInstance = S3Client;
+type AwsClientInstance = S3Client | SQSClient;
 
 type AwsClientMap = Partial<Record<AwsClientType, AwsClientInstance>>;
 
@@ -21,6 +23,11 @@ export class AwsClientProvider {
       switch (type) {
         case AwsClientType.S3:
           this.clients[type] = new S3({
+            region: region,
+          });
+          break;
+        case AwsClientType.SQS:
+          this.clients[type] = new SQSClient({
             region: region,
           });
           break;
