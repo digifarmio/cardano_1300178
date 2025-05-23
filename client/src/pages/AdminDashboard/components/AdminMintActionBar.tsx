@@ -1,7 +1,7 @@
 import { CheckOutlined, SettingOutlined } from '@ant-design/icons';
 import { Button, Card, Checkbox, Flex, InputNumber, Space, Tooltip } from 'antd';
 
-interface MintActionBarProps {
+interface AdminMintActionBarProps {
   selectAll: boolean;
   onSelectAllChange: (checked: boolean) => void;
   fieldCount: number;
@@ -10,14 +10,14 @@ interface MintActionBarProps {
   onMintSelected: () => void;
 }
 
-const MintActionBar = ({
+const AdminMintActionBar = ({
   selectAll,
   onSelectAllChange,
   fieldCount,
   onFieldCountChange,
   onMintRandom,
   onMintSelected,
-}: MintActionBarProps) => {
+}: AdminMintActionBarProps) => {
   return (
     <Card variant="borderless">
       <Flex align="center" justify="space-between" gap={16}>
@@ -44,4 +44,4 @@ const MintActionBar = ({
   );
 };
 
-export default MintActionBar;
+export default AdminMintActionBar;

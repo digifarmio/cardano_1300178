@@ -20,13 +20,14 @@ export interface ProtectedRouteProps {
 export interface FieldRecord {
   fieldId: string;
   size: number;
-  sustainability: string;
+  sustainability: string | number;
   status: string;
 }
 
-export interface MintReport {
+export interface MintingReport {
   date: string;
   totalFields: number;
   minted: number;
   failed: number;
+  csvUrl?: string;
 }

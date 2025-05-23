@@ -1,21 +1,14 @@
 import { DownloadOutlined } from '@ant-design/icons';
 import { Button, Table } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import type { MintingReport } from '../../../lib/types';
 
-interface MintingReport {
-  date: string;
-  totalFields: number;
-  minted: number;
-  failed: number;
-  csvUrl?: string; // Optional direct download link
-}
-
-interface ReportsTableProps {
+interface AdminMintReportsTableProps {
   data: MintingReport[];
   onDownload: (report: MintingReport) => void;
 }
 
-const ReportsTable = ({ data, onDownload }: ReportsTableProps) => {
+const AdminMintReportsTable = ({ data, onDownload }: AdminMintReportsTableProps) => {
   const columns: ColumnsType<MintingReport> = [
     {
       title: 'DATE',
@@ -62,4 +55,4 @@ const ReportsTable = ({ data, onDownload }: ReportsTableProps) => {
   );
 };
 
-export default ReportsTable;
+export default AdminMintReportsTable;

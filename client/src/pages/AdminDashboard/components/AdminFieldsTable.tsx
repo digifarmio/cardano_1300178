@@ -4,7 +4,7 @@ import type { ColumnsType } from 'antd/es/table';
 import { useState } from 'react';
 import type { FieldRecord } from '../../../lib/types';
 
-interface FieldsTableProps {
+interface AdminFieldsTableProps {
   dataSource: FieldRecord[];
   onView: (id: string) => void;
   onMint: (id: string) => void;
@@ -15,13 +15,13 @@ interface FieldsTableProps {
   };
 }
 
-const FieldsTable = ({
+const AdminFieldsTable = ({
   dataSource,
   onView,
   onMint,
   onExport,
   selected: { selectedRowKeys, setSelectedRowKeys },
-}: FieldsTableProps) => {
+}: AdminFieldsTableProps) => {
   const [pagination, setPagination] = useState({ current: 1, pageSize: 5 });
 
   const columns: ColumnsType<FieldRecord> = [
@@ -42,12 +42,12 @@ const FieldsTable = ({
     {
       title: 'SUSTAINABILITY',
       dataIndex: 'sustainability',
-      filters: ['High', 'Medium', 'Low'].map((val) => ({ text: val, value: val })),
-      onFilter: (val, rec) => rec.sustainability === val,
+      sorter: (a, b) => {
+        const toNumber = (val: string | number) => Number(val);
+        return toNumber(a.sustainability) - toNumber(b.sustainability);
+      },
       responsive: ['sm'],
-      render: (s: 'High' | 'Medium' | 'Low') => (
-        <Tag color={{ High: 'green', Medium: 'orange', Low: 'red' }[s]}>{s}</Tag>
-      ),
+      render: (s: string | number) => `${s}%`,
     },
     {
       title: 'STATUS',
@@ -135,4 +135,4 @@ const FieldsTable = ({
   );
 };
 
-export default FieldsTable;
+export default AdminFieldsTable;

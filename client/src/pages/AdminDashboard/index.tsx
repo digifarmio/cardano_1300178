@@ -1,33 +1,17 @@
 import { Alert, Flex, Tabs, message } from 'antd';
 import { useState } from 'react';
-import type { MintReport } from '../../lib/types';
+import type { MintingReport } from '../../lib/types';
+import { generateFieldsRecords, mockData } from '../../lib/utils';
+import AdminFieldsTable from './components/AdminFieldsTable';
+import AdminMintActionBar from './components/AdminMintActionBar';
+import AdminMintReportsTable from './components/AdminMintReportsTable';
 import AdminStats from './components/AdminStats';
-import FieldsTable from './components/FieldsTable';
-import MintActionBar from './components/MintActionBar';
-import ReportsTable from './components/ReportsTable';
-
-const sustainabilityLevels = ['High', 'Medium', 'Low'];
-const statuses = ['Ready', 'Pending', 'In Progress', 'Minted'];
-
-const generateRecords = (count: number) =>
-  Array.from({ length: count }, (_, i) => ({
-    fieldId: (i + 1).toString(),
-    size: Math.floor(Math.random() * 91) + 10,
-    sustainability: sustainabilityLevels[i % sustainabilityLevels.length],
-    status: statuses[i % statuses.length],
-  }));
-
-const mockData = [
-  { date: '2025-05-20', totalFields: 24, minted: 22, failed: 2 },
-  { date: '2025-05-18', totalFields: 43, minted: 43, failed: 0 },
-  { date: '2025-05-15', totalFields: 59, minted: 56, failed: 3 },
-];
 
 const AdminDashboard = () => {
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [selectAllReady, setSelectAllReady] = useState(false);
   const [fieldCount, setFieldCount] = useState(5);
-  const [fieldsData, setFieldsData] = useState(generateRecords(10000));
+  const [fieldsData, setFieldsData] = useState(generateFieldsRecords(10000));
 
   const handleView = (id: string | number | bigint) => {
     message.info(`Viewing field with ID: ${id}`);
@@ -44,7 +28,7 @@ const AdminDashboard = () => {
     message.info(`Exporting data as ${format.toUpperCase()}`);
   };
 
-  const handleDownload = (report: MintReport): void => {
+  const handleDownload = (report: MintingReport): void => {
     console.log('Download CSV for:', report.date);
     message.info(`Downloading report for ${report.date}`);
   };
@@ -112,7 +96,7 @@ const AdminDashboard = () => {
         processing={fieldsData.filter((f) => f.status === 'In Progress').length}
       />
 
-      <MintActionBar
+      <AdminMintActionBar
         selectAll={selectAllReady}
         onSelectAllChange={handleSelectAllReady}
         fieldCount={fieldCount}
@@ -128,7 +112,7 @@ const AdminDashboard = () => {
             key: '1',
             label: 'Field Management',
             children: (
-              <FieldsTable
+              <AdminFieldsTable
                 dataSource={fieldsData}
                 onView={handleView}
                 onMint={handleMint}
@@ -143,7 +127,7 @@ const AdminDashboard = () => {
           {
             key: '2',
             label: 'Minting Reports',
-            children: <ReportsTable data={mockData} onDownload={handleDownload} />,
+            children: <AdminMintReportsTable data={mockData} onDownload={handleDownload} />,
           },
         ]}
       />
