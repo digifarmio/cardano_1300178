@@ -4,10 +4,10 @@ import type { CustomerTransaction, NFT, NFTDetails } from '../../lib/types';
 import { MintService } from '../../services/mintService';
 import AdminFieldsTable from './components/AdminFieldsTable';
 import AdminMintActionBar from './components/AdminMintActionBar';
-import AdminMintReportsTable from './components/AdminMintReportsTable';
 import AdminNftDetails from './components/AdminNftDetails';
 import AdminStats from './components/AdminStats';
-import { PaginationControls } from './components/PaginationControls';
+import AdminTransactionsHistory from './components/AdminTransactionsHistory';
+import PaginationControls from './components/PaginationControls';
 
 const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 const MAX_PAGE_SIZE = 50;
@@ -285,8 +285,10 @@ const AdminDashboard = () => {
   return (
     <Flex vertical gap={16}>
       <Alert
-        message="This is a demonstration environment. No real blockchain transactions will be executed."
-        type="info"
+        message="Warning"
+        description="Transactions will be on-chain. Network is set by your NMKR API key."
+        type="warning"
+        showIcon
         closable
       />
 
@@ -350,7 +352,7 @@ const AdminDashboard = () => {
             key: 'reports',
             label: 'Transaction History',
             children: (
-              <AdminMintReportsTable
+              <AdminTransactionsHistory
                 data={transactions}
                 onDownload={handleDownload}
                 loading={transactionsLoading}

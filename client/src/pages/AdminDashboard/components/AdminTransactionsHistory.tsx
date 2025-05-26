@@ -5,13 +5,13 @@ import type { CustomerTransaction, GetTransactionNfts } from '../../../lib/types
 
 const { Text } = Typography;
 
-interface AdminMintReportsTableProps {
+interface AdminTransactionsHistoryProps {
   data: CustomerTransaction[];
   loading: boolean;
   onDownload: (transaction: CustomerTransaction) => void;
 }
 
-const AdminMintReportsTable = ({ data, loading, onDownload }: AdminMintReportsTableProps) => {
+const AdminTransactionsHistory = ({ data, loading, onDownload }: AdminTransactionsHistoryProps) => {
   const expandedRowRender = (transaction: CustomerTransaction) => {
     if (!transaction.transactionNfts || transaction.transactionNfts.length === 0) {
       return <Text type="secondary">No NFTs in this transaction</Text>;
@@ -168,4 +168,4 @@ const AdminMintReportsTable = ({ data, loading, onDownload }: AdminMintReportsTa
   );
 };
 
-export default AdminMintReportsTable;
+export default AdminTransactionsHistory;

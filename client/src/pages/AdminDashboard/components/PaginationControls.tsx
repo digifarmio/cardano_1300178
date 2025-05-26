@@ -16,7 +16,7 @@ interface PaginationControlsProps {
   onRefresh: () => void;
 }
 
-export const PaginationControls: React.FC<PaginationControlsProps> = ({
+const PaginationControls: React.FC<PaginationControlsProps> = ({
   page,
   pageSize,
   loading,
@@ -91,3 +91,5 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({
     </Flex>
   );
 };
+
+export default PaginationControls;

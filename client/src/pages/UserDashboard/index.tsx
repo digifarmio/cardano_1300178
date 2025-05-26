@@ -18,8 +18,10 @@ const UserDashboard = () => {
   return (
     <Flex vertical gap={24}>
       <Alert
-        message="This is a demonstration environment. No real blockchain transactions will be executed."
-        type="info"
+        message="Warning"
+        description="Transactions will be on-chain. Network is set by your NMKR API key."
+        type="warning"
+        showIcon
         closable
       />
       <UserFieldsTable dataSource={fieldsData} onClaim={handleClaim} onView={handleView} />
