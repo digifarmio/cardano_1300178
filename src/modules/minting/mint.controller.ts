@@ -14,6 +14,7 @@ export class MintController {
     this.getCounts = this.getCounts.bind(this);
     this.getNfts = this.getNfts.bind(this);
     this.getNftDetailsById = this.getNftDetailsById.bind(this);
+    this.getTransactions = this.getTransactions.bind(this);
     this.mintRandomBatch = this.mintRandomBatch.bind(this);
     this.mintSpecificBatch = this.mintSpecificBatch.bind(this);
     this.generateReport = this.generateReport.bind(this);
@@ -60,6 +61,15 @@ export class MintController {
       const { uid } = params;
       const details = await this.mintService.getNftDetailsById(uid);
       res.json({ success: true, data: details });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getTransactions(_: Request, res: Response, next: NextFunction) {
+    try {
+      const transactions = await this.mintService.getTransactions();
+      res.json({ success: true, data: transactions });
     } catch (error) {
       next(error);
     }

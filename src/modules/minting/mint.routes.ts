@@ -11,6 +11,7 @@ export const createMintRoutes = () => {
     .get('/counts', controller.getCounts)
     .get('/nfts/:state/:count/:page', controller.getNfts)
     .get('/nfts/:uid', controller.getNftDetailsById)
+    .get('/transactions', controller.getTransactions)
     .post('/mint/random-batch', controller.mintRandomBatch)
     .post('/mint/specific-batch', csvUpload, controller.mintSpecificBatch)
     .post('/reports', controller.generateReport)

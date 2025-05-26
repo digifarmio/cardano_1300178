@@ -17,6 +17,10 @@ export const MintService = {
     return apiClient.get(`/nfts/${uid}`);
   },
 
+  getTransactions: () => {
+    return apiClient.get('/transactions');
+  },
+
   mintRandomBatch: (count: number) => {
     return apiClient.post('/mint/random-batch', { count });
   },

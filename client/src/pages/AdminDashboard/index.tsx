@@ -1,6 +1,6 @@
 import { Alert, Flex, message, Modal, Tabs } from 'antd';
 import { useCallback, useEffect, useState } from 'react';
-import type { MintingReport, NFT, NFTDetails } from '../../lib/types';
+import type { CustomerTransaction, NFT, NFTDetails } from '../../lib/types';
 import { MintService } from '../../services/mintService';
 import AdminFieldsTable from './components/AdminFieldsTable';
 import AdminMintActionBar from './components/AdminMintActionBar';
@@ -41,6 +41,8 @@ const AdminDashboard = () => {
   });
 
   const [viewingNft, setViewingNft] = useState<NFTDetails | null>(null);
+  const [transactions, setTransactions] = useState<CustomerTransaction[]>([]);
+  const [transactionsLoading, setTransactionsLoading] = useState(false);
 
   // --- Fetch Data ---
   const fetchBalanace = useCallback(async () => {
@@ -91,6 +93,19 @@ const AdminDashboard = () => {
     }
   }, []);
 
+  const fetchTransactions = useCallback(async () => {
+    setTransactionsLoading(true);
+    try {
+      const response = await MintService.getTransactions();
+      setTransactions(response.data.data);
+    } catch (error) {
+      message.error('Failed to fetch transactions');
+      console.error(error);
+    } finally {
+      setTransactionsLoading(false);
+    }
+  }, []);
+
   // --- Effects ---
   useEffect(() => {
     fetchBalanace();
@@ -103,6 +118,10 @@ const AdminDashboard = () => {
   useEffect(() => {
     fetchNfts(page, pageSize, stateFilter);
   }, [page, pageSize, stateFilter, fetchNfts]);
+
+  useEffect(() => {
+    fetchTransactions();
+  }, [fetchTransactions]);
 
   // --- Handlers ---
   const handleView = useCallback(async (uid: string) => {
@@ -132,8 +151,56 @@ const AdminDashboard = () => {
     [fetchNfts, fetchStats, page, pageSize, stateFilter]
   );
 
-  const handleDownload = useCallback((report: MintingReport): void => {
-    message.info(`Downloading report for ${report.date}`);
+  const handleDownload = useCallback((transaction: CustomerTransaction) => {
+    // Convert transaction to CSV
+    const headers = [
+      'Transaction ID',
+      'Date',
+      'Blockchain',
+      'Status',
+      'NFT Count',
+      'Amount (ADA)',
+      'Fee (ADA)',
+      'Confirmed',
+    ];
+
+    const nftDetails = transaction.transactionNfts
+      ?.map(
+        (nft) =>
+          `${nft.assetName}|${nft.fingerprint}|${nft.tokenCount}|${nft.multiplier}|${nft.confirmed ? 'CONFIRMED' : 'PENDING'}|${nft.txHashSolanaTransaction || 'N/A'}`
+      )
+      .join('\n');
+
+    const csvContent = [
+      headers.join(','),
+      [
+        transaction.transactionid,
+        new Date(transaction.created).toISOString(),
+        transaction.blockchain,
+        transaction.state,
+        transaction.nftcount,
+        transaction.ada,
+        transaction.fee,
+        transaction.confirmed ? 'Yes' : 'No',
+      ].join(','),
+      '\nNFT Details (Asset Name|Fingerprint|Token Count|Multiplier|Status|Transaction Hash)',
+      nftDetails || 'No NFT details',
+    ].join('\n');
+
+    // Create download link
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute(
+      'download',
+      `transaction_${transaction.transactionid}_${
+        new Date(transaction.created).toISOString().split('T')[0]
+      }.csv`
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }, []);
 
   const handleSelectAllReady = useCallback(() => {
@@ -281,8 +348,14 @@ const AdminDashboard = () => {
           },
           {
             key: 'reports',
-            label: 'Mint Reports',
-            children: <AdminMintReportsTable data={[]} onDownload={handleDownload} />,
+            label: 'Transaction History',
+            children: (
+              <AdminMintReportsTable
+                data={transactions}
+                onDownload={handleDownload}
+                loading={transactionsLoading}
+              />
+            ),
           },
         ]}
       />

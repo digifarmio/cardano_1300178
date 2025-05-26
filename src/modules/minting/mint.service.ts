@@ -9,6 +9,7 @@ import {
   BatchMintRequest,
   BatchProcessingSummary,
   BatchRecord,
+  CustomerTransaction,
   GetNftsParams,
   MintAndSendResult,
   NftCountResponse,
@@ -42,6 +43,10 @@ export class MintService {
   async getNftDetailsById(uid: string): Promise<NftDetailsResponse> {
     this.validationService.validateRequired(uid, 'uid');
     return this.nmkrClient.getNftDetailsById(uid);
+  }
+
+  async getTransactions(): Promise<CustomerTransaction[]> {
+    return this.nmkrClient.getTransactions();
   }
 
   async mintRandomBatch(params: BatchMintParams): Promise<BatchProcessingSummary> {

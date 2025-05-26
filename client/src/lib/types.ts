@@ -115,3 +115,48 @@ export interface MintingReport {
   failed: number;
   csvUrl?: string;
 }
+
+export interface CustomerTransaction {
+  created: string;
+  state?: string;
+  nftprojectId: number;
+  ada: number;
+  fee: number;
+  mintingcostsada: number;
+  projectada: number;
+  projectincomingtxhash?: string;
+  receiveraddress?: string;
+  senderaddress?: string;
+  transactionid?: string;
+  transactiontype?: string;
+  projectaddress?: string;
+  eurorate: number;
+  nftcount: number;
+  tokencount: number;
+  originatoraddress?: string;
+  stakereward: number;
+  stakeaddress?: string;
+  additionalPayoutWallets: number;
+  confirmed: boolean;
+  priceintokensquantity: number;
+  priceintokenspolicyid?: string;
+  priceintokenstokennamehex?: string;
+  priceintokensmultiplier: number;
+  nmkrcosts: number;
+  discount: number;
+  customerProperty?: string;
+  blockchain: string;
+  transactionNfts?: GetTransactionNfts[];
+  coin?: string;
+  projectname?: string;
+  nftProjectUid?: string;
+}
+
+export interface GetTransactionNfts {
+  assetName?: string;
+  fingerprint?: string;
+  tokenCount: number;
+  multiplier: number;
+  txHashSolanaTransaction?: string;
+  confirmed: boolean;
+}
