@@ -6,12 +6,12 @@ import {
   APIResponse,
   BatchMintParams,
   BatchMintRequest,
-  CustomerTransaction,
   GetNftsParams,
   MintAndSendResult,
   NftCountResponse,
   NftDetailsResponse,
   NftProjectDetails,
+  ProjectTransaction,
   UploadFiles,
 } from '@/types';
 import { AxiosError } from 'axios';
@@ -94,10 +94,10 @@ export class NmkrClient extends HttpClient {
     }
   }
 
-  async getTransactions(): Promise<CustomerTransaction[]> {
+  async getTransactions(): Promise<ProjectTransaction[]> {
     try {
       const response = await this.instance.get(
-        `/v2/GetCustomerTransactions/${this.configService.customerId}`,
+        `/v2/GetProjectTransactions/${this.configService.projectUid}`,
         { params: { exportOptions: 'Json' } }
       );
       return response.data;
@@ -106,7 +106,7 @@ export class NmkrClient extends HttpClient {
     }
   }
 
-  async getTransaction(transactionId: string): Promise<CustomerTransaction> {
+  async getTransaction(transactionId: string): Promise<ProjectTransaction> {
     try {
       const transactions = await this.getTransactions();
       const transaction = transactions.find((t) => t.transactionid === transactionId);
@@ -122,7 +122,7 @@ export class NmkrClient extends HttpClient {
     }
   }
 
-  async getLatestTransaction(): Promise<CustomerTransaction> {
+  async getLatestTransaction(): Promise<ProjectTransaction> {
     try {
       const transactions = await this.getTransactions();
       if (transactions.length === 0) {

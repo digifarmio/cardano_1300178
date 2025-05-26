@@ -75,12 +75,12 @@ export class MintController {
     }
   }
 
-  async mintRandomBatch(_: Request, res: Response, next: NextFunction) {
+  async mintRandomBatch(req: Request, res: Response, next: NextFunction) {
     try {
       const { projectUid, mintTotalCount, receiverAddress, blockchain } = this.configService;
       const result = await this.mintService.mintRandomBatch({
         projectUid,
-        count: mintTotalCount,
+        count: parseInt(req.body.count) || mintTotalCount,
         receiver: receiverAddress,
         blockchain,
       });

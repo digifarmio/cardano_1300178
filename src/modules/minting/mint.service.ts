@@ -9,11 +9,11 @@ import {
   BatchMintRequest,
   BatchProcessingSummary,
   BatchRecord,
-  CustomerTransaction,
   GetNftsParams,
   MintAndSendResult,
   NftCountResponse,
   NftDetailsResponse,
+  ProjectTransaction,
   ReportStatus,
 } from '@/types';
 
@@ -45,7 +45,7 @@ export class MintService {
     return this.nmkrClient.getNftDetailsById(uid);
   }
 
-  async getTransactions(): Promise<CustomerTransaction[]> {
+  async getTransactions(): Promise<ProjectTransaction[]> {
     return this.nmkrClient.getTransactions();
   }
 
