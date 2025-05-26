@@ -1,5 +1,4 @@
-import { DownloadOutlined } from '@ant-design/icons';
-import { Button, Dropdown, Flex, Table, Tag } from 'antd';
+import { Button, Flex, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useMemo } from 'react';
 import type { NFT } from '../../../lib/types';
@@ -30,7 +29,6 @@ const AdminFieldsTable = ({
   selected: { selectedRowKeys, setSelectedRowKeys },
   onView,
   onMint,
-  onExport,
 }: AdminFieldsTableProps) => {
   const columns = useMemo<ColumnsType<NFT>>(
     () => [
@@ -120,23 +118,6 @@ const AdminFieldsTable = ({
       bordered
       scroll={{ x: 1200 }}
       pagination={false}
-      title={() => (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3 style={{ margin: 0 }}>NFT Management</h3>
-          {onExport && (
-            <Dropdown
-              menu={{
-                items: [
-                  { key: 'csv', label: 'Export CSV', onClick: () => onExport('csv') },
-                  { key: 'json', label: 'Export JSON', onClick: () => onExport('json') },
-                ],
-              }}
-            >
-              <Button icon={<DownloadOutlined />}>Export</Button>
-            </Dropdown>
-          )}
-        </div>
-      )}
     />
   );
 };

@@ -1,6 +1,6 @@
 import type { AxiosResponse } from 'axios';
 import { apiClient } from '../lib/apiClient';
-import type { ReportStatus } from '../lib/types';
+import type { MintRandomBatchResponse, ReportStatus } from '../lib/types';
 
 export const MintService = {
   getBalance: () => {
@@ -23,11 +23,13 @@ export const MintService = {
     return apiClient.get('/transactions');
   },
 
-  mintRandomBatch: (count: number) => {
+  mintRandomBatch: (count: number): Promise<AxiosResponse<MintRandomBatchResponse>> => {
     return apiClient.post('/mint/random-batch', { count });
   },
 
-  mintSpecificBatch: (reserveNftsIds: (string | number | bigint)[]) => {
+  mintSpecificBatch: (
+    reserveNftsIds: (string | number | bigint)[]
+  ): Promise<AxiosResponse<MintRandomBatchResponse>> => {
     const reserveNfts = reserveNftsIds.map((uid) => ({
       nftUid: uid.toString(),
       lovelace: import.meta.env.VITE_MINT_PRICE || 0,

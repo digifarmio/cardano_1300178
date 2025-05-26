@@ -1,4 +1,4 @@
-import { Card, Descriptions, Image, Space, Typography } from 'antd';
+import { Card, Descriptions, Flex, Image, Typography } from 'antd';
 import type { NFTDetails } from '../../../lib/types';
 import { parseMetadata } from '../../../lib/utils';
 
@@ -13,32 +13,25 @@ const AdminNftDetails = ({ nft }: AdminNftDetailsProps) => {
 
   return (
     <Card>
-      <Space direction="vertical" size="large" style={{ width: '100%' }}>
+      <Flex vertical align="center" justify="center" gap={16}>
         <Title level={3}>{nft.displayname || nft.name}</Title>
 
-        {/* Safely render id_long if parsedMetadata exists */}
         {parsedMetadata ? (
           <Title level={5}>Field ID Long: {parsedMetadata.id_long}</Title>
         ) : (
           <Text type="warning">Metadata parsing failed or no metadata</Text>
         )}
 
-        {nft.ipfshash && (
+        {nft.ipfsGatewayAddress && (
           <Image
-            src={`${nft.ipfsGatewayAddress || 'https://ipfs.io/ipfs/'}${nft.ipfshash}`}
+            src={nft.ipfsGatewayAddress}
             alt={nft.displayname || nft.name}
-            style={{ maxWidth: '400px', maxHeight: '400px' }}
-            placeholder={
-              <Image
-                preview={false}
-                src="https://via.placeholder.com/400?text=Loading+Image"
-                width={400}
-              />
-            }
+            width={150}
+            height={150}
           />
         )}
 
-        <Descriptions bordered column={1}>
+        <Descriptions bordered column={1} className="w-full">
           <Descriptions.Item label="ID">{nft.uid}</Descriptions.Item>
           <Descriptions.Item label="State">
             <Text strong>{nft.state}</Text>
@@ -67,13 +60,13 @@ const AdminNftDetails = ({ nft }: AdminNftDetailsProps) => {
           )}
           {nft.metadata && (
             <Descriptions.Item label="Metadata">
-              <Text code style={{ whiteSpace: 'pre-wrap' }}>
+              <Text code className="whitespace-pre-wrap">
                 {JSON.stringify(JSON.parse(nft.metadata), null, 2)}
               </Text>
             </Descriptions.Item>
           )}
         </Descriptions>
-      </Space>
+      </Flex>
     </Card>
   );
 };

@@ -1,5 +1,4 @@
-import { DownloadOutlined } from '@ant-design/icons';
-import { Button, Dropdown, Space, Table, Tag } from 'antd';
+import { Button, Space, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useState } from 'react';
 import type { FieldRecord } from '../../../lib/types';
@@ -8,10 +7,9 @@ interface UserFieldsTableProps {
   dataSource: FieldRecord[];
   onClaim: (id: string) => void;
   onView: (id: string) => void;
-  onExport?: (format: 'csv' | 'json') => void;
 }
 
-const UserFieldsTable = ({ dataSource, onClaim, onView, onExport }: UserFieldsTableProps) => {
+const UserFieldsTable = ({ dataSource, onClaim, onView }: UserFieldsTableProps) => {
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
 
   const columns: ColumnsType<FieldRecord> = [
@@ -107,26 +105,6 @@ const UserFieldsTable = ({ dataSource, onClaim, onView, onExport }: UserFieldsTa
         onChange: (current, pageSize) => setPagination({ current, pageSize }),
         onShowSizeChange: (_, size) => setPagination({ current: 1, pageSize: size }),
       }}
-      title={() => (
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3 style={{ margin: 0 }}>Available Fields</h3>
-          {onExport && (
-            <Dropdown
-              menu={{
-                items: ['csv', 'json'].map((f) => ({
-                  key: f,
-                  label: `Export as ${f.toUpperCase()}`,
-                })),
-                onClick: ({ key }) => onExport(key as 'csv' | 'json'),
-              }}
-            >
-              <Button icon={<DownloadOutlined />} type="default" size="middle">
-                Export Data
-              </Button>
-            </Dropdown>
-          )}
-        </div>
-      )}
     />
   );
 };

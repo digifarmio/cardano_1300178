@@ -1,18 +1,18 @@
 import { DownloadOutlined, DownOutlined, UpOutlined } from '@ant-design/icons';
 import { Button, Space, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import type { CustomerTransaction, GetTransactionNfts } from '../../../lib/types';
+import type { GetTransactionNfts, ProjectTransaction } from '../../../lib/types';
 
 const { Text } = Typography;
 
 interface AdminTransactionsHistoryProps {
-  data: CustomerTransaction[];
+  data: ProjectTransaction[];
   loading: boolean;
-  onDownload: (transaction: CustomerTransaction) => void;
+  onDownload: (transaction: ProjectTransaction) => void;
 }
 
 const AdminTransactionsHistory = ({ data, loading, onDownload }: AdminTransactionsHistoryProps) => {
-  const expandedRowRender = (transaction: CustomerTransaction) => {
+  const expandedRowRender = (transaction: ProjectTransaction) => {
     if (!transaction.transactionNfts || transaction.transactionNfts.length === 0) {
       return <Text type="secondary">No NFTs in this transaction</Text>;
     }
@@ -33,7 +33,7 @@ const AdminTransactionsHistory = ({ data, loading, onDownload }: AdminTransactio
         dataIndex: 'fingerprint',
         key: 'fingerprint',
         render: (fingerprint: string) => (
-          <Text copyable ellipsis style={{ maxWidth: '200px' }}>
+          <Text copyable ellipsis className="max-w-[200px]">
             {fingerprint}
           </Text>
         ),
@@ -61,7 +61,7 @@ const AdminTransactionsHistory = ({ data, loading, onDownload }: AdminTransactio
         dataIndex: 'txHashSolanaTransaction',
         key: 'txHashSolanaTransaction',
         render: (hash: string) => (
-          <Text copyable ellipsis style={{ maxWidth: '150px' }}>
+          <Text copyable ellipsis className="max-w-[150px]">
             {hash}
           </Text>
         ),
@@ -79,7 +79,7 @@ const AdminTransactionsHistory = ({ data, loading, onDownload }: AdminTransactio
     );
   };
 
-  const columns: ColumnsType<CustomerTransaction> = [
+  const columns: ColumnsType<ProjectTransaction> = [
     {
       title: 'Date',
       dataIndex: 'created',
@@ -92,7 +92,7 @@ const AdminTransactionsHistory = ({ data, loading, onDownload }: AdminTransactio
       dataIndex: 'transactionid',
       key: 'transactionid',
       render: (id: string) => (
-        <Text copyable ellipsis style={{ maxWidth: '150px', display: 'inline-block' }}>
+        <Text copyable ellipsis className="max-w-[150px] inline-block">
           {id}
         </Text>
       ),
@@ -153,6 +153,7 @@ const AdminTransactionsHistory = ({ data, loading, onDownload }: AdminTransactio
       columns={columns}
       loading={loading}
       dataSource={data}
+      bordered
       expandable={{
         expandedRowRender,
         expandIcon: ({ expanded, onExpand, record }) =>
@@ -162,8 +163,6 @@ const AdminTransactionsHistory = ({ data, loading, onDownload }: AdminTransactio
             <DownOutlined onClick={(e) => onExpand(record, e)} />
           ),
       }}
-      bordered
-      title={() => <h3 style={{ margin: 0 }}>Transaction History</h3>}
     />
   );
 };

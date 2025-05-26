@@ -1,8 +1,14 @@
-import { Button, Card, message, Progress, Space, Table, Tag, Typography } from 'antd';
+import { Button, Card, Flex, message, Space, Table, Tag, Tooltip, Typography } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
+import pRetry from 'p-retry';
 import { useState } from 'react';
 import type { ReportStatus } from '../../../lib/types';
 
 const { Text, Title } = Typography;
+
+const MAX_RETRIES = 5;
+const DELAY = 1000; // 1 second delay for retries
+const MAX_TIMEOUT = 3000; // 3 seconds max timeout for each status check
 
 interface AdminReportsProps {
   onGenerateReport: () => Promise<{ reportId: string; statusUrl: string }>;
@@ -14,10 +20,49 @@ const AdminReports = ({ onGenerateReport, onDownloadReport, onGetStatus }: Admin
   const [activeReports, setActiveReports] = useState<Record<string, ReportStatus>>({});
   const [generating, setGenerating] = useState(false);
 
+  // Poll status with retry + exponential backoff
+  const pollReportStatus = async (reportId: string) => {
+    const fetchStatus = async () => {
+      const status = await onGetStatus(reportId);
+      setActiveReports((prev) => ({
+        ...prev,
+        [reportId]: status,
+      }));
+
+      if (status.status === 'completed' || status.status === 'failed') {
+        // Completed or failed → stop retrying by resolving
+        return status;
+      }
+
+      // Otherwise throw to retry after backoff delay
+      throw new Error('Report not ready yet');
+    };
+
+    return pRetry(fetchStatus, {
+      retries: MAX_RETRIES,
+      factor: 2, // exponential backoff multiplier
+      minTimeout: DELAY,
+      maxTimeout: MAX_TIMEOUT,
+      onFailedAttempt: (error) => {
+        console.log(`Attempt ${error.attemptNumber} failed for report ${reportId}. Retrying...`);
+      },
+    }).catch((error) => {
+      console.error(`Polling failed for report ${reportId}:`, error);
+      setActiveReports((prev) => ({
+        ...prev,
+        [reportId]: {
+          ...prev[reportId],
+          status: 'failed',
+        },
+      }));
+    });
+  };
+
   const handleGenerate = async () => {
     try {
       setGenerating(true);
       const { reportId } = await onGenerateReport();
+
       setActiveReports((prev) => ({
         ...prev,
         [reportId]: {
@@ -27,7 +72,9 @@ const AdminReports = ({ onGenerateReport, onDownloadReport, onGetStatus }: Admin
           createdAt: new Date().toISOString(),
         },
       }));
-      startPolling(reportId);
+
+      // Start polling status with retry logic (no concurrency limit needed)
+      await pollReportStatus(reportId);
     } catch (error) {
       console.error('Error generating report:', error);
       message.error('Failed to generate report');
@@ -36,54 +83,77 @@ const AdminReports = ({ onGenerateReport, onDownloadReport, onGetStatus }: Admin
     }
   };
 
-  const startPolling = (reportId: string) => {
-    const interval = setInterval(async () => {
-      try {
-        const status = await onGetStatus(reportId);
-        setActiveReports((prev) => ({
-          ...prev,
-          [reportId]: status,
-        }));
-
-        if (status.status === 'completed' || status.status === 'failed') {
-          clearInterval(interval);
-        }
-      } catch (error) {
-        console.error('Error polling report status:', error);
-        clearInterval(interval);
-      }
-    }, 3000); // Poll every 3 seconds
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'green';
+      case 'failed':
+        return 'red';
+      case 'processing':
+        return 'blue';
+      case 'pending':
+        return 'orange';
+      default:
+        return 'gray';
+    }
   };
 
-  const columns = [
+  const columns: ColumnsType<ReportStatus & { reportId: string }> = [
     {
       title: 'Report ID',
       dataIndex: 'reportId',
       key: 'reportId',
-      render: (id: string) => <Text copyable>{id}</Text>,
+      fixed: 'left',
+      width: 300,
+      render: (id: string) => (
+        <Tooltip title={id}>
+          <Text copyable className="block max-w-full truncate whitespace-nowrap">
+            {id}
+          </Text>
+        </Tooltip>
+      ),
     },
     {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
-      render: (status: string, record: ReportStatus & { progress?: number }) => (
-        <Space>
-          <Tag color={getStatusColor(status)}>{status.toUpperCase()}</Tag>
-          {status === 'processing' && (
-            <Progress percent={record.progress ?? 0} size="small" style={{ width: 200 }} />
-          )}
-        </Space>
+      width: 100,
+      render: (status: string) => (
+        <Tag className="min-w-[70px] text-center" color={getStatusColor(status)}>
+          {status.toUpperCase()}
+        </Tag>
       ),
+    },
+    {
+      title: 'Message',
+      dataIndex: 'message',
+      key: 'message',
+      ellipsis: true,
+      render: (_: unknown, record: ReportStatus) => {
+        if (record.status === 'failed' && record.error?.message) {
+          return (
+            <Tooltip title={record.error.message}>
+              <Text type="danger" className="block max-w-full truncate whitespace-nowrap">
+                {record.error.message}
+              </Text>
+            </Tooltip>
+          );
+        }
+        return '-';
+      },
     },
     {
       title: 'Created',
       dataIndex: 'createdAt',
       key: 'createdAt',
+      width: 160,
       render: (date: string) => new Date(date).toLocaleString(),
     },
     {
       title: 'Actions',
       key: 'actions',
+      fixed: 'right',
+      width: 250,
       render: (_: unknown, record: ReportStatus & { reportId: string }) => (
         <Space>
           <Button
@@ -106,52 +176,31 @@ const AdminReports = ({ onGenerateReport, onDownloadReport, onGetStatus }: Admin
     },
   ];
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'green';
-      case 'failed':
-        return 'red';
-      case 'processing':
-        return 'blue';
-      default:
-        return 'orange';
-    }
-  };
-
   return (
-    <Space direction="vertical" style={{ width: '100%' }}>
+    <Flex vertical gap={16}>
       <Card>
-        <Space direction="vertical" style={{ width: '100%' }}>
+        <Flex vertical align="center" justify="center" gap={16}>
           <Title level={4}>Generate New Report</Title>
           <Text type="secondary">
             Reports are generated asynchronously. You can track progress below.
           </Text>
-          <Button
-            type="primary"
-            onClick={handleGenerate}
-            loading={generating}
-            style={{ marginTop: 16 }}
-          >
+          <Button type="primary" onClick={handleGenerate} loading={generating}>
             Generate Full Report
           </Button>
-        </Space>
+        </Flex>
       </Card>
 
-      <Card>
-        <Title level={4}>Active Reports</Title>
-        <Table
-          columns={columns}
-          dataSource={Object.entries(activeReports).map(([reportId, status]) => ({
-            reportId,
-            ...status,
-          }))}
-          rowKey="reportId"
-          loading={generating}
-          pagination={false}
-        />
-      </Card>
-    </Space>
+      <Table
+        columns={columns}
+        dataSource={Object.entries(activeReports).map(([reportId, status]) => ({
+          reportId,
+          ...status,
+        }))}
+        rowKey="reportId"
+        loading={generating}
+        pagination={false}
+      />
+    </Flex>
   );
 };
 

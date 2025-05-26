@@ -116,7 +116,7 @@ export interface MintingReport {
   csvUrl?: string;
 }
 
-export interface CustomerTransaction {
+export interface ProjectTransaction {
   created: string;
   state?: string;
   nftprojectId: number;
@@ -172,5 +172,43 @@ export interface ReportStatus {
     message: string;
     code: string;
     details?: unknown;
+  };
+}
+
+export interface MintBatchResult {
+  success: boolean;
+  result?: {
+    sendedNft: unknown[];
+  };
+}
+
+export interface MintRandomBatchResponse {
+  success: boolean;
+  data: {
+    totalBatches: number;
+    successfulBatches: number;
+    failedBatches: number;
+    transactionIds: string[];
+    failedItems: string[];
+    batches: {
+      id: string;
+      size: number;
+      startIdx: number;
+      endIdx: number;
+      success: boolean;
+      result?: {
+        mintAndSendId: number;
+        sendedNft: {
+          id: number;
+          uid: string;
+          name: string;
+          ipfsLink: string;
+          gatewayLink: string;
+          [key: string]: unknown;
+        }[];
+      };
+      status: string;
+      createdAt: string;
+    }[];
   };
 }
