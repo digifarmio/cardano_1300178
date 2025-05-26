@@ -1,136 +1,302 @@
-import { Alert, Flex, Tabs, message } from 'antd';
-import { useState } from 'react';
-import type { MintingReport } from '../../lib/types';
-import { generateFieldsRecords, mockData } from '../../lib/utils';
+import { Alert, Flex, message, Modal, Tabs } from 'antd';
+import { useCallback, useEffect, useState } from 'react';
+import type { MintingReport, NFT, NFTDetails } from '../../lib/types';
+import { MintService } from '../../services/mintService';
 import AdminFieldsTable from './components/AdminFieldsTable';
 import AdminMintActionBar from './components/AdminMintActionBar';
 import AdminMintReportsTable from './components/AdminMintReportsTable';
+import AdminNftDetails from './components/AdminNftDetails';
 import AdminStats from './components/AdminStats';
+import { PaginationControls } from './components/PaginationControls';
+
+const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
+const MAX_PAGE_SIZE = 50;
+const STATE_FILTER_OPTIONS = [
+  { label: 'All', value: 'all' },
+  { label: 'Free', value: 'free' },
+  { label: 'Reserved', value: 'reserved' },
+  { label: 'Sold', value: 'sold' },
+  { label: 'Error', value: 'error' },
+];
 
 const AdminDashboard = () => {
+  // --- State ---
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
   const [selectAllReady, setSelectAllReady] = useState(false);
-  const [fieldCount, setFieldCount] = useState(5);
-  const [fieldsData, setFieldsData] = useState(generateFieldsRecords(10000));
+  const [fieldCount, setFieldCount] = useState(1);
+  const [nfts, setNfts] = useState<NFT[]>([]);
+  const [balance, setBalance] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [stateFilter, setStateFilter] = useState<string>('all');
 
-  const handleView = (id: string | number | bigint) => {
-    message.info(`Viewing field with ID: ${id}`);
-  };
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
-  const handleMint = (id: string | number | bigint) => {
-    setFieldsData((prevData) =>
-      prevData.map((field) => (field.fieldId === id ? { ...field, status: 'Minted' } : field))
-    );
-    message.success(`Successfully minted field ${id}`);
-  };
+  const [stats, setStats] = useState({
+    total: 0,
+    free: 0,
+    reserved: 0,
+    sold: 0,
+    error: 0,
+  });
 
-  const handleExport = (format: 'csv' | 'json') => {
-    message.info(`Exporting data as ${format.toUpperCase()}`);
-  };
+  const [viewingNft, setViewingNft] = useState<NFTDetails | null>(null);
 
-  const handleDownload = (report: MintingReport): void => {
-    console.log('Download CSV for:', report.date);
-    message.info(`Downloading report for ${report.date}`);
-  };
-
-  const handleSelectAllReady = (checked: boolean) => {
-    setSelectAllReady(checked);
-    if (checked) {
-      const readyFieldIds = fieldsData
-        .filter((field) => field.status === 'Ready')
-        .map((field) => field.fieldId);
-      setSelectedRowKeys(readyFieldIds);
-    } else {
-      setSelectedRowKeys([]);
+  // --- Fetch Data ---
+  const fetchBalanace = useCallback(async () => {
+    try {
+      const response = await MintService.getBalance();
+      const { mintCouponBalanceCardano } = response.data.data;
+      setBalance(mintCouponBalanceCardano);
+    } catch (error) {
+      message.error('Failed to fetch balance');
+      console.error(error);
     }
-  };
+  }, []);
 
-  const handleMintRandom = () => {
-    const readyFields = fieldsData.filter((field) => field.status === 'Ready');
-    if (readyFields.length === 0) {
-      message.warning('No ready fields available to mint');
-      return;
+  const fetchStats = useCallback(async () => {
+    try {
+      const response = await MintService.getCounts();
+      const { nftTotal, free, reserved, sold, error } = response.data.data;
+      setStats({
+        total: nftTotal,
+        free,
+        reserved,
+        sold,
+        error,
+      });
+    } catch (error) {
+      message.error('Failed to fetch stats');
+      console.error(error);
     }
+  }, []);
 
-    const randomCount = Math.min(fieldCount, readyFields.length);
-    const randomSelection = [...readyFields]
-      .sort(() => 0.5 - Math.random())
-      .slice(0, randomCount)
-      .map((field) => field.fieldId);
+  const fetchNfts = useCallback(async (page: number, pageSize: number, state: string) => {
+    setLoading(true);
+    try {
+      const limitedPageSize = Math.min(pageSize, MAX_PAGE_SIZE);
+      const response = await MintService.getNfts(state, page, limitedPageSize);
+      const { data } = response.data;
 
-    randomSelection.forEach((id) => handleMint(id));
-    message.success(`Minted ${randomCount} random fields`);
-  };
+      setNfts(data);
 
-  const handleMintSelected = () => {
-    if (selectedRowKeys.length === 0) {
-      message.warning('No fields selected for minting');
-      return;
+      // Keep only keys from current page
+      setSelectedRowKeys((keys) => keys.filter((key) => data.some((nft: NFT) => nft.uid === key)));
+      setSelectAllReady(false);
+    } catch (error) {
+      message.error('Failed to fetch NFTs');
+      console.error(error);
+    } finally {
+      setLoading(false);
     }
+  }, []);
 
-    selectedRowKeys.forEach((id) => {
-      const field = fieldsData.find((f) => f.fieldId === id);
-      if (field && field.status === 'Ready') {
-        handleMint(id);
+  // --- Effects ---
+  useEffect(() => {
+    fetchBalanace();
+  }, [fetchBalanace]);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
+
+  useEffect(() => {
+    fetchNfts(page, pageSize, stateFilter);
+  }, [page, pageSize, stateFilter, fetchNfts]);
+
+  // --- Handlers ---
+  const handleView = useCallback(async (uid: string) => {
+    try {
+      setLoading(true);
+      const response = await MintService.getNftDetailsById(uid);
+      setViewingNft(response.data.data);
+    } catch (error) {
+      message.error('Failed to fetch NFT details');
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const handleMint = useCallback(
+    async (id: string | number | bigint) => {
+      try {
+        await MintService.mintSpecificBatch([id]);
+        message.success(`Successfully minted NFT ${id}`);
+        await fetchNfts(page, pageSize, stateFilter);
+        await fetchStats();
+      } catch {
+        message.error(`Failed to mint NFT ${id}`);
       }
-    });
-    setSelectedRowKeys([]);
-    message.success(`Minted ${selectedRowKeys.length} selected fields`);
-  };
+    },
+    [fetchNfts, fetchStats, page, pageSize, stateFilter]
+  );
 
-  const handleCountChange = (value: number | null) => {
+  const handleDownload = useCallback((report: MintingReport): void => {
+    message.info(`Downloading report for ${report.date}`);
+  }, []);
+
+  const handleSelectAllReady = useCallback(() => {
+    setSelectAllReady((prev) => {
+      const newSelectAll = !prev;
+      if (newSelectAll) {
+        const readyNftIds = nfts.filter((nft) => nft.state === 'free').map((nft) => nft.uid);
+        setSelectedRowKeys(readyNftIds);
+      } else {
+        setSelectedRowKeys([]);
+      }
+      return newSelectAll;
+    });
+  }, [nfts]);
+
+  const handleMintRandom = useCallback(async () => {
+    try {
+      const result = await MintService.mintRandomBatch(fieldCount);
+      message.success(`Minted ${result.data.successfulBatches} random NFTs`);
+      await fetchNfts(page, pageSize, stateFilter);
+      await fetchStats();
+    } catch {
+      message.error('Random minting failed');
+    }
+  }, [fieldCount, fetchNfts, fetchStats, page, pageSize, stateFilter]);
+
+  const handleMintSelected = useCallback(async () => {
+    if (selectedRowKeys.length === 0) {
+      message.warning('No NFTs selected for minting');
+      return;
+    }
+    try {
+      await MintService.mintSpecificBatch(selectedRowKeys);
+      message.success(`Minted ${selectedRowKeys.length} selected NFTs`);
+      await fetchNfts(page, pageSize, stateFilter);
+      await fetchStats();
+      setSelectedRowKeys([]);
+      setSelectAllReady(false);
+    } catch {
+      message.error('Batch minting failed');
+    }
+  }, [selectedRowKeys, fetchNfts, fetchStats, page, pageSize, stateFilter]);
+
+  const handleCountChange = useCallback((value: number | null) => {
     setFieldCount(value || 1);
-  };
+  }, []);
+
+  const handleFirstPage = useCallback(() => {
+    if (!loading) {
+      setPage(1);
+    }
+  }, [loading]);
+
+  const handlePreviousPage = useCallback(() => {
+    if (!loading) {
+      setPage((p) => Math.max(p - 1, 1));
+    }
+  }, [loading]);
+
+  const handleNextPage = useCallback(() => {
+    if (!loading && nfts.length === pageSize) {
+      setPage((p) => p + 1);
+    }
+  }, [loading, nfts.length, pageSize]);
+
+  const handlePageSizeChange = useCallback((value: number) => {
+    setPageSize(value);
+    setPage(1);
+  }, []);
+
+  const handleStateFilterChange = useCallback((value: string) => {
+    setStateFilter(value);
+    setPage(1);
+  }, []);
+
+  const handleRefresh = useCallback(() => {
+    fetchStats();
+    fetchBalanace();
+    fetchNfts(page, pageSize, stateFilter);
+  }, [fetchBalanace, fetchNfts, fetchStats, page, pageSize, stateFilter]);
 
   return (
-    <Flex vertical gap={24}>
+    <Flex vertical gap={16}>
       <Alert
         message="This is a demonstration environment. No real blockchain transactions will be executed."
         type="info"
+        closable
       />
 
       <AdminStats
-        totalFields={fieldsData.length}
-        mintedNFTs={fieldsData.filter((f) => f.status === 'Minted').length}
-        readyToMint={fieldsData.filter((f) => f.status === 'Ready').length}
-        processing={fieldsData.filter((f) => f.status === 'In Progress').length}
+        total={stats.total}
+        free={stats.free}
+        reserved={stats.reserved}
+        sold={stats.sold}
+        error={stats.error}
       />
 
       <AdminMintActionBar
+        loading={loading}
         selectAll={selectAllReady}
         onSelectAllChange={handleSelectAllReady}
         fieldCount={fieldCount}
         onFieldCountChange={handleCountChange}
         onMintRandom={handleMintRandom}
         onMintSelected={handleMintSelected}
+        balance={balance}
       />
 
       <Tabs
-        defaultActiveKey="1"
+        defaultActiveKey="nfts"
         items={[
           {
-            key: '1',
-            label: 'Field Management',
+            key: 'nfts',
+            label: 'NFTs',
             children: (
-              <AdminFieldsTable
-                dataSource={fieldsData}
-                onView={handleView}
-                onMint={handleMint}
-                onExport={handleExport}
-                selected={{
-                  selectedRowKeys,
-                  setSelectedRowKeys,
-                }}
-              />
+              <>
+                <PaginationControls
+                  page={page}
+                  pageSize={pageSize}
+                  pageSizeOptions={PAGE_SIZE_OPTIONS}
+                  loading={loading}
+                  totalItems={stats.total}
+                  stateFilter={stateFilter}
+                  stateFilterOptions={STATE_FILTER_OPTIONS}
+                  onFirstPage={handleFirstPage}
+                  onPreviousPage={handlePreviousPage}
+                  onNextPage={handleNextPage}
+                  onPageSizeChange={handlePageSizeChange}
+                  onStateFilterChange={handleStateFilterChange}
+                  onRefresh={handleRefresh}
+                />
+
+                <AdminFieldsTable
+                  dataSource={nfts}
+                  onView={handleView}
+                  onMint={handleMint}
+                  selected={{
+                    selectedRowKeys,
+                    setSelectedRowKeys,
+                  }}
+                  loading={loading}
+                />
+              </>
             ),
           },
           {
-            key: '2',
-            label: 'Minting Reports',
-            children: <AdminMintReportsTable data={mockData} onDownload={handleDownload} />,
+            key: 'reports',
+            label: 'Mint Reports',
+            children: <AdminMintReportsTable data={[]} onDownload={handleDownload} />,
           },
         ]}
       />
+
+      <Modal
+        title="NFT Details"
+        open={!!viewingNft}
+        onCancel={() => setViewingNft(null)}
+        footer={null}
+        width="80%"
+        style={{ top: 20 }}
+      >
+        {viewingNft && <AdminNftDetails nft={viewingNft} />}
+      </Modal>
     </Flex>
   );
 };

@@ -1,132 +1,138 @@
 import { DownloadOutlined } from '@ant-design/icons';
-import { Button, Dropdown, Table, Tag } from 'antd';
+import { Button, Dropdown, Flex, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { useState } from 'react';
-import type { FieldRecord } from '../../../lib/types';
+import { useMemo } from 'react';
+import type { NFT } from '../../../lib/types';
 
 interface AdminFieldsTableProps {
-  dataSource: FieldRecord[];
-  onView: (id: string) => void;
-  onMint: (id: string) => void;
-  onExport?: (format: 'csv' | 'json') => void;
+  dataSource: NFT[];
+  loading: boolean;
   selected: {
     selectedRowKeys: React.Key[];
     setSelectedRowKeys: (keys: React.Key[]) => void;
   };
+  onView: (id: string) => void;
+  onMint: (id: string) => void;
+  onExport?: (format: 'csv' | 'json') => void;
 }
+
+const statusColors: Record<string, string> = {
+  free: 'green',
+  reserved: 'gold',
+  sold: 'blue',
+  error: 'red',
+  pending: 'orange',
+};
 
 const AdminFieldsTable = ({
   dataSource,
+  loading,
+  selected: { selectedRowKeys, setSelectedRowKeys },
   onView,
   onMint,
   onExport,
-  selected: { selectedRowKeys, setSelectedRowKeys },
 }: AdminFieldsTableProps) => {
-  const [pagination, setPagination] = useState({ current: 1, pageSize: 5 });
-
-  const columns: ColumnsType<FieldRecord> = [
-    {
-      title: 'FIELD ID',
-      dataIndex: 'fieldId',
-      sorter: (a, b) => +a.fieldId - +b.fieldId,
-      width: 100,
-      fixed: 'left',
-    },
-    {
-      title: 'SIZE (HA)',
-      dataIndex: 'size',
-      sorter: (a, b) => a.size - b.size,
-      responsive: ['sm'],
-      render: (size) => `${size.toLocaleString()} ha`,
-    },
-    {
-      title: 'SUSTAINABILITY',
-      dataIndex: 'sustainability',
-      sorter: (a, b) => {
-        const toNumber = (val: string | number) => Number(val);
-        return toNumber(a.sustainability) - toNumber(b.sustainability);
+  const columns = useMemo<ColumnsType<NFT>>(
+    () => [
+      {
+        title: 'ID',
+        dataIndex: 'id',
       },
-      responsive: ['sm'],
-      render: (s: string | number) => `${s}%`,
-    },
-    {
-      title: 'STATUS',
-      dataIndex: 'status',
-      filters: ['Ready', 'Pending', 'In Progress', 'Minted'].map((val) => ({
-        text: val,
-        value: val,
-      })),
-      onFilter: (val, rec) => rec.status === val,
-      responsive: ['md'],
-      render: (s: 'Ready' | 'Pending' | 'In Progress' | 'Minted') => (
-        <Tag
-          color={{ Ready: 'green', Pending: 'gold', 'In Progress': 'orange', Minted: 'blue' }[s]}
-        >
-          {s}
-        </Tag>
-      ),
-    },
-    {
-      title: 'ACTIONS',
-      fixed: 'right',
-      width: 100,
-      render: (_, record) => (
-        <Button
-          type={record.status === 'Minted' ? 'default' : 'primary'}
-          size="small"
-          onClick={() =>
-            record.status === 'Minted' ? onView(record.fieldId) : onMint(record.fieldId)
-          }
-          disabled={record.status === 'Pending' || record.status === 'In Progress'}
-        >
-          {record.status === 'Minted' ? 'View' : 'Mint'}
-        </Button>
-      ),
-    },
-  ];
+      {
+        title: 'UID',
+        dataIndex: 'uid',
+        ellipsis: true,
+      },
+      {
+        title: 'NAME',
+        dataIndex: 'name',
+        responsive: ['sm'],
+      },
+      {
+        title: 'ASSET ID',
+        dataIndex: 'assetId',
+        responsive: ['xl'],
+        ellipsis: true,
+      },
+      {
+        title: 'STATE',
+        dataIndex: 'state',
+        width: 100,
+        responsive: ['md'],
+        filters: Object.keys(statusColors).map((val) => ({
+          text: val.charAt(0).toUpperCase() + val.slice(1),
+          value: val,
+        })),
+        onFilter: (val, rec) => rec.state === val,
+        render: (status: string) => (
+          <Tag color={statusColors[status] || 'default'}>
+            {status.charAt(0).toUpperCase() + status.slice(1)}
+          </Tag>
+        ),
+      },
+      {
+        title: 'ACTIONS',
+        key: 'actions',
+        width: 150,
+        fixed: 'right',
+        render: (_, record) => (
+          <Flex align="center" justify="center" gap={8}>
+            <Button
+              className="flex"
+              size="small"
+              onClick={() => onView(record.uid)}
+              loading={loading}
+            >
+              View
+            </Button>
+            <Button
+              className="flex"
+              size="small"
+              onClick={() => onMint(record.uid)}
+              loading={loading}
+              disabled={loading || record.state !== 'free'}
+            >
+              Mint
+            </Button>
+          </Flex>
+        ),
+      },
+    ],
+    [loading, onMint, onView]
+  );
 
   const rowSelection = {
     selectedRowKeys,
     onChange: setSelectedRowKeys,
-    getCheckboxProps: (record: FieldRecord) => ({
-      disabled: record.status !== 'Ready',
+    getCheckboxProps: (record: NFT) => ({
+      disabled: record.state !== 'free',
     }),
   };
 
   return (
     <Table
-      rowKey="fieldId"
+      rowKey="uid"
       rowSelection={rowSelection}
       columns={columns}
+      loading={loading}
       dataSource={dataSource}
       sticky
       bordered
-      scroll={{ x: 800 }}
-      pagination={{
-        ...pagination,
-        showSizeChanger: true,
-        pageSizeOptions: ['5', '10', '20', '50'],
-        showTotal: (total) => `Total ${total} items`,
-        position: ['bottomRight'],
-        onChange: (current, pageSize) => setPagination({ current, pageSize }),
-        onShowSizeChange: (_, size) => setPagination({ current: 1, pageSize: size }),
-      }}
+      scroll={{ x: 1200 }}
+      pagination={false}
       title={() => (
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3 style={{ margin: 0 }}>Available Fields</h3>
+          <h3 style={{ margin: 0 }}>NFT Management</h3>
           {onExport && (
             <Dropdown
               menu={{
-                items: ['csv', 'json'].map((f) => ({
-                  key: f,
-                  label: `Export as ${f.toUpperCase()}`,
-                })),
-                onClick: ({ key }) => onExport(key as 'csv' | 'json'),
+                items: [
+                  { key: 'csv', label: 'Export CSV', onClick: () => onExport('csv') },
+                  { key: 'json', label: 'Export JSON', onClick: () => onExport('json') },
+                ],
               }}
             >
-              <Button icon={<DownloadOutlined />} type="default" size="middle">
-                Export Data
-              </Button>
+              <Button icon={<DownloadOutlined />}>Export</Button>
             </Dropdown>
           )}
         </div>

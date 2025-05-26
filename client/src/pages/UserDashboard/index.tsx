@@ -20,6 +20,7 @@ const UserDashboard = () => {
       <Alert
         message="This is a demonstration environment. No real blockchain transactions will be executed."
         type="info"
+        closable
       />
       <UserFieldsTable dataSource={fieldsData} onClaim={handleClaim} onView={handleView} />
     </Flex>

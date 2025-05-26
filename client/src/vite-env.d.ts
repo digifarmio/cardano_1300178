@@ -8,6 +8,8 @@ interface ViteTypeOptions {
 
 interface ImportMetaEnv {
   readonly VITE_API_URL: string;
+  readonly VITE_MINT_PRICE: string;
+  readonly VITE_MINT_COUNT: string;
 }
 
 interface ImportMeta {

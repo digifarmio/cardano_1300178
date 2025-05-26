@@ -1,39 +1,32 @@
-import { Card, Col, Row, Statistic } from 'antd';
+import { Card, Flex, Statistic } from 'antd';
 
 interface AdminStatsProps {
-  totalFields: number;
-  mintedNFTs: number;
-  readyToMint: number;
-  processing: number;
+  total: number;
+  free: number;
+  reserved: number;
+  sold: number;
+  error: number;
 }
 
-const AdminStats = ({ totalFields, mintedNFTs, readyToMint, processing }: AdminStatsProps) => {
+const AdminStats = ({ total, free, reserved, sold, error }: AdminStatsProps) => {
   return (
-    <Row gutter={[16, 16]}>
-      <Col xs={24} sm={12} md={12} lg={6}>
-        <Card variant="borderless">
-          <Statistic title="Total Fields" value={totalFields} />
-        </Card>
-      </Col>
-
-      <Col xs={24} sm={12} md={12} lg={6}>
-        <Card variant="borderless">
-          <Statistic title="Minted NFTs" value={mintedNFTs} valueStyle={{ color: '#3f8600' }} />
-        </Card>
-      </Col>
-
-      <Col xs={24} sm={12} md={12} lg={6}>
-        <Card variant="borderless">
-          <Statistic title="Ready To Mint" value={readyToMint} valueStyle={{ color: '#1890ff' }} />
-        </Card>
-      </Col>
-
-      <Col xs={24} sm={12} md={12} lg={6}>
-        <Card variant="borderless">
-          <Statistic title="Processing" value={processing} valueStyle={{ color: '#faad14' }} />
-        </Card>
-      </Col>
-    </Row>
+    <Flex align="center" justify="space-between" wrap="wrap" gap={16} className="w-full">
+      <Card variant="borderless" className="min-w-[160px] flex-1">
+        <Statistic title="Total Fields" value={total} />
+      </Card>
+      <Card variant="borderless" className="min-w-[160px] flex-1">
+        <Statistic title="Free" value={free} valueStyle={{ color: 'blue' }} />
+      </Card>
+      <Card variant="borderless" className="min-w-[160px] flex-1">
+        <Statistic title="Reserved" value={reserved} valueStyle={{ color: 'orange' }} />
+      </Card>
+      <Card variant="borderless" className="min-w-[160px] flex-1">
+        <Statistic title="Sold" value={sold} valueStyle={{ color: 'green' }} />
+      </Card>
+      <Card variant="borderless" className="min-w-[160px] flex-1">
+        <Statistic title="Error" value={error} valueStyle={{ color: 'red' }} />
+      </Card>
+    </Flex>
   );
 };
 
