@@ -34,7 +34,7 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
   const isLastPage = totalItems <= page * pageSize;
 
   return (
-    <Flex wrap="wrap" align="center" justify="space-between" className="gap-4 mb-4">
+    <Flex wrap="wrap" align="center" justify="space-between" className="gap-4">
       <Flex wrap="wrap" align="center" className="gap-4">
         {/* First & Previous */}
         <Flex className="gap-2">

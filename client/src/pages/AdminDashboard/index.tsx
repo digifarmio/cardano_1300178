@@ -300,17 +300,6 @@ const AdminDashboard = () => {
         error={stats.error}
       />
 
-      <AdminMintActionBar
-        loading={loading}
-        selectAll={selectAllReady}
-        onSelectAllChange={handleSelectAllReady}
-        fieldCount={fieldCount}
-        onFieldCountChange={handleCountChange}
-        onMintRandom={handleMintRandom}
-        onMintSelected={handleMintSelected}
-        balance={balance}
-      />
-
       <Tabs
         defaultActiveKey="nfts"
         items={[
@@ -318,7 +307,18 @@ const AdminDashboard = () => {
             key: 'nfts',
             label: 'NFTs',
             children: (
-              <>
+              <Flex vertical gap={16}>
+                <AdminMintActionBar
+                  loading={loading}
+                  selectAll={selectAllReady}
+                  onSelectAllChange={handleSelectAllReady}
+                  fieldCount={fieldCount}
+                  onFieldCountChange={handleCountChange}
+                  onMintRandom={handleMintRandom}
+                  onMintSelected={handleMintSelected}
+                  balance={balance}
+                />
+
                 <PaginationControls
                   page={page}
                   pageSize={pageSize}
@@ -345,7 +345,7 @@ const AdminDashboard = () => {
                   }}
                   loading={loading}
                 />
-              </>
+              </Flex>
             ),
           },
           {
