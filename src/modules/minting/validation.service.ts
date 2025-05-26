@@ -51,7 +51,7 @@ export class ValidationService {
     if (!reserveNfts?.length) throw new ValidationError('No NFTs provided in batch mint request');
     reserveNfts.forEach(({ nftUid, lovelace, tokencount }, index) => {
       this.validateRequired(nftUid, `NFT[${index}].nftUid`);
-      this.validatePositiveNumber(lovelace, `NFT[${index}].lovelace`);
+      this.validateNonNegativeNumber(lovelace, `NFT[${index}].lovelace`);
       this.validatePositiveNumber(tokencount, `NFT[${index}].tokencount`);
     });
   }
@@ -59,7 +59,7 @@ export class ValidationService {
   async validateMintConditions(params: BatchMintParams): Promise<void> {
     const [projectDetails, nftCount, balance, conditionsMet] = await Promise.all([
       this.nmkrClient.getProjectDetails(params.projectUid),
-      this.nmkrClient.getNftCount(params.projectUid),
+      this.nmkrClient.getCounts(params.projectUid),
       this.nmkrClient.getMintCouponBalance(),
       this.nmkrClient.checkSaleConditions(params.projectUid, params.receiver, params.count),
     ]);

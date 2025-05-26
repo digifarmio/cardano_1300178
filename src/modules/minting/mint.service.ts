@@ -11,6 +11,8 @@ import {
   BatchRecord,
   GetNftsParams,
   MintAndSendResult,
+  NftCountResponse,
+  NftDetailsResponse,
   ReportStatus,
 } from '@/types';
 
@@ -23,9 +25,23 @@ export class MintService {
     private batchService = new BatchProcessingService()
   ) {}
 
-  async getNftCollection(params: GetNftsParams): Promise<APIResponse> {
+  async getBalance(): Promise<APIResponse> {
+    return this.nmkrClient.getBalance();
+  }
+
+  async getCounts(projectUid: string): Promise<NftCountResponse> {
+    this.validationService.validateRequired(projectUid, 'projectUid');
+    return this.nmkrClient.getCounts(projectUid);
+  }
+
+  async getNfts(params: GetNftsParams): Promise<APIResponse> {
     this.validationService.validateGetNftsParams(params);
-    return this.nmkrClient.getNftCollection(params);
+    return this.nmkrClient.getNfts(params);
+  }
+
+  async getNftDetailsById(uid: string): Promise<NftDetailsResponse> {
+    this.validationService.validateRequired(uid, 'uid');
+    return this.nmkrClient.getNftDetailsById(uid);
   }
 
   async mintRandomBatch(params: BatchMintParams): Promise<BatchProcessingSummary> {

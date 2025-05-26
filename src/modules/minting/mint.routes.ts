@@ -7,7 +7,10 @@ export const createMintRoutes = () => {
   const controller = new MintController();
 
   router
-    .get('/collections/:projectUid/:state/:count/:page', controller.getNftCollection)
+    .get('/balance', controller.getBalance)
+    .get('/counts', controller.getCounts)
+    .get('/nfts/:state/:count/:page', controller.getNfts)
+    .get('/nfts/:uid', controller.getNftDetailsById)
     .post('/mint/random-batch', controller.mintRandomBatch)
     .post('/mint/specific-batch', csvUpload, controller.mintSpecificBatch)
     .post('/reports', controller.generateReport)

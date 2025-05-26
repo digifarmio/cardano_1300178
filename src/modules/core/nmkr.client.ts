@@ -135,7 +135,16 @@ export class NmkrClient extends HttpClient {
     }
   }
 
-  async getNftCount(projectUid: string): Promise<NftCountResponse> {
+  async getBalance(): Promise<APIResponse> {
+    try {
+      const response = await this.instance.get('/v2/GetMintCouponBalance');
+      return response.data;
+    } catch (error: unknown) {
+      handleAxiosError(error);
+    }
+  }
+
+  async getCounts(projectUid: string): Promise<NftCountResponse> {
     try {
       const response = await this.instance.get(`/v2/GetCounts/${projectUid}`);
       return response.data;
@@ -144,7 +153,7 @@ export class NmkrClient extends HttpClient {
     }
   }
 
-  async getNftCollection(params: GetNftsParams): Promise<APIResponse> {
+  async getNfts(params: GetNftsParams): Promise<APIResponse> {
     try {
       const { projectUid, state, count = 100, page = 1 } = params;
       const response = await this.instance.get(
