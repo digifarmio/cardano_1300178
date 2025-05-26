@@ -1,4 +1,6 @@
+import type { AxiosResponse } from 'axios';
 import { apiClient } from '../lib/apiClient';
+import type { ReportStatus } from '../lib/types';
 
 export const MintService = {
   getBalance: () => {
@@ -32,5 +34,17 @@ export const MintService = {
       tokencount: import.meta.env.VITE_MINT_COUNT || 1,
     }));
     return apiClient.post('/mint/specific-batch', { reserveNfts });
+  },
+
+  generateReport(): Promise<AxiosResponse<{ data: { reportId: string; statusUrl: string } }>> {
+    return apiClient.post('/reports');
+  },
+
+  getReportStatus(reportId: string): Promise<AxiosResponse<{ data: ReportStatus }>> {
+    return apiClient.get(`/reports/${reportId}`);
+  },
+
+  getReportFile(reportId: string, type: 'csv' | 'pdf'): Promise<AxiosResponse<{ data: string }>> {
+    return apiClient.get(`/reports/${reportId}/download/${type}`);
   },
 };

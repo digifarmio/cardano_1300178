@@ -93,7 +93,7 @@ export class ReportService {
         updatedAt: new Date().toISOString(),
       };
 
-      if (error instanceof Error && error.message.includes('missing transaction hashes')) {
+      if (error instanceof Error && error.message.includes('Please try again later.')) {
         await this.storageService.updateStatus({
           ...statusUpdate,
           status: 'processing',

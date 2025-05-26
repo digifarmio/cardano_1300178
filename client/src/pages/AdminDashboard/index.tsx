@@ -5,6 +5,7 @@ import { MintService } from '../../services/mintService';
 import AdminFieldsTable from './components/AdminFieldsTable';
 import AdminMintActionBar from './components/AdminMintActionBar';
 import AdminNftDetails from './components/AdminNftDetails';
+import AdminReports from './components/AdminReports';
 import AdminStats from './components/AdminStats';
 import AdminTransactionsHistory from './components/AdminTransactionsHistory';
 import PaginationControls from './components/PaginationControls';
@@ -282,6 +283,50 @@ const AdminDashboard = () => {
     fetchNfts(page, pageSize, stateFilter);
   }, [fetchBalanace, fetchNfts, fetchStats, page, pageSize, stateFilter]);
 
+  const handleGenerateReport = useCallback(async () => {
+    try {
+      const response = await MintService.generateReport();
+      return response.data.data;
+    } catch (error) {
+      message.error('Failed to generate report');
+      throw error;
+    }
+  }, []);
+
+  const handleGetReportStatus = useCallback(async (reportId: string) => {
+    try {
+      const response = await MintService.getReportStatus(reportId);
+      return response.data.data;
+    } catch (error) {
+      message.error('Failed to get report status');
+      throw error;
+    }
+  }, []);
+
+  const handleDownloadReport = useCallback(async (reportId: string, type: 'csv' | 'pdf') => {
+    try {
+      const response = await MintService.getReportStatus(reportId);
+      const { status, pdfPath, csvPath } = response.data.data;
+
+      if (status !== 'completed') {
+        message.warning(`The ${type.toUpperCase()} report is not ready yet.`);
+        return;
+      }
+
+      const filePath = type === 'pdf' ? pdfPath : csvPath;
+
+      if (!filePath) {
+        message.error(`${type.toUpperCase()} report is unavailable.`);
+        return;
+      }
+
+      window.open(filePath, '_blank');
+    } catch (error) {
+      console.error('Failed to download report:', error);
+      message.error(`Failed to download ${type.toUpperCase()} report`);
+    }
+  }, []);
+
   return (
     <Flex vertical gap={16}>
       <Alert
@@ -305,7 +350,7 @@ const AdminDashboard = () => {
         items={[
           {
             key: 'nfts',
-            label: 'NFTs',
+            label: 'NFTs Management',
             children: (
               <Flex vertical gap={16}>
                 <AdminMintActionBar
@@ -349,13 +394,24 @@ const AdminDashboard = () => {
             ),
           },
           {
-            key: 'reports',
+            key: 'transactions',
             label: 'Transaction History',
             children: (
               <AdminTransactionsHistory
                 data={transactions}
                 onDownload={handleDownload}
                 loading={transactionsLoading}
+              />
+            ),
+          },
+          {
+            key: 'reports',
+            label: 'Reports',
+            children: (
+              <AdminReports
+                onGenerateReport={handleGenerateReport}
+                onDownloadReport={handleDownloadReport}
+                onGetStatus={handleGetReportStatus}
               />
             ),
           },

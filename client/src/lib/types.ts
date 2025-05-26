@@ -160,3 +160,17 @@ export interface GetTransactionNfts {
   txHashSolanaTransaction?: string;
   confirmed: boolean;
 }
+
+export interface ReportStatus {
+  id: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  createdAt: string;
+  updatedAt?: string;
+  csvPath?: string;
+  pdfPath?: string;
+  error?: {
+    message: string;
+    code: string;
+    details?: unknown;
+  };
+}
