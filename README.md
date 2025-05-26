@@ -88,6 +88,7 @@ Ensure the following are installed on your machine:
 
    ```env
    NODE_ENV=development
+   SERVERLESS_ORG=<your-org>
    NMKR_API_KEY=<your-nmkr-api-key>
    NMKR_BASE_URL=https://studio-api.preprod.nmkr.io
    NMKR_CUSTOMER_ID=<your-nmkr-customer-id>
