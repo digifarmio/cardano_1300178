@@ -28,7 +28,7 @@ const AdminMintActionBar = ({
     <Card variant="borderless">
       <Flex align="center" justify="space-between" gap={16}>
         <Checkbox checked={selectAll} onChange={(e) => onSelectAllChange(e.target.checked)}>
-          Select All Ready
+          Select All Free
         </Checkbox>
 
         <Space size="middle" wrap align="center">

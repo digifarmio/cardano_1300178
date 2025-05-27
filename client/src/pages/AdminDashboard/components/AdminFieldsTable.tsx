@@ -33,27 +33,27 @@ const AdminFieldsTable = ({
   const columns = useMemo<ColumnsType<NFT>>(
     () => [
       {
-        title: 'ID',
+        title: 'Id',
         dataIndex: 'id',
       },
       {
-        title: 'UID',
+        title: 'Uid',
         dataIndex: 'uid',
         ellipsis: true,
       },
       {
-        title: 'NAME',
+        title: 'Name',
         dataIndex: 'name',
         responsive: ['sm'],
       },
       {
-        title: 'ASSET ID',
+        title: 'Asset Id',
         dataIndex: 'assetId',
         responsive: ['xl'],
         ellipsis: true,
       },
       {
-        title: 'STATE',
+        title: 'State',
         dataIndex: 'state',
         width: 100,
         responsive: ['md'],
@@ -69,7 +69,7 @@ const AdminFieldsTable = ({
         ),
       },
       {
-        title: 'ACTIONS',
+        title: 'Actions',
         key: 'actions',
         width: 150,
         fixed: 'right',

@@ -334,7 +334,7 @@ const AdminDashboard = () => {
   const renderWarningAlert = () => (
     <Alert
       message="Warning"
-      description="Transactions will be on-chain. Network is set by your NMKR API key."
+      description="Transactions will be on-chain using the network set by your NMKR API key. Admin mints send NFTs to address defined in the RECEIVER_ADDRESS environment variable."
       type="warning"
       showIcon
       closable
@@ -415,7 +415,7 @@ const AdminDashboard = () => {
   const tabItems = [
     {
       key: 'nfts',
-      label: 'NFTs Management',
+      label: 'Field Management',
       children: renderNftsManagement(),
     },
     {
@@ -425,7 +425,7 @@ const AdminDashboard = () => {
     },
     {
       key: 'reports',
-      label: 'Reports',
+      label: 'Minting Reports',
       children: renderReports(),
     },
   ];
