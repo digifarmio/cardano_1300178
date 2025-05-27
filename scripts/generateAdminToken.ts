@@ -1,9 +1,7 @@
-import { ConfigService } from '@/config/config.service';
 import { TokenService } from '@/modules/auth/token.service';
 import 'dotenv/config';
 
-const configService = new ConfigService();
-const tokenService = new TokenService(undefined, configService);
+const tokenService = new TokenService();
 
 async function main() {
   try {
