@@ -3,17 +3,17 @@
     "target": "ES2022",
     "module": "CommonJS",
     "outDir": ".build",
-    "rootDir": "src",
+    "rootDir": ".",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "moduleResolution": "node",
     "types": ["node"],
-    "baseUrl": "./",
+    "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"]
     }
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "**/*.spec.ts"]
+  "include": ["src/**/*.ts", "scripts/**/*.ts"],
+  "exclude": ["node_modules", ".build", ".serverless", "client", "media", "mkdocs", "**/*.spec.ts"]
 }

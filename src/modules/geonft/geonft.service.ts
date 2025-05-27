@@ -1,9 +1,9 @@
-import { GetObjectCommand, S3Client, ListObjectsV2Command } from '@aws-sdk/client-s3';
-import { AwsClientProvider, AwsClientType } from '../core/AwsClients';
-import { ConfigService } from '../../config/config.service';
+import { GetObjectCommand, ListObjectsV2Command, S3Client } from '@aws-sdk/client-s3';
 import csv from 'csvtojson';
-import { NmkrClient } from '../core/nmkr.client';
-import { APIResponse, BucketObject, ImageNft, UploadFiles } from '../../types';
+import { ConfigService } from '@/config/config.service';
+import { AwsClientProvider, AwsClientType } from '@/modules/core/AwsClients';
+import { NmkrClient } from '@/modules/core/nmkr.client';
+import { APIResponse, UploadFiles, BucketObject, ImageNft } from '@/types';
 
 export class GeoNftService {
   private readonly s3Client: S3Client;

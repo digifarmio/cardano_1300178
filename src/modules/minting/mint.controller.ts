@@ -1,8 +1,8 @@
+import { NextFunction, Request, Response } from 'express';
 import { ConfigService } from '@/config/config.service';
 import { ValidationError } from '@/modules/core/errors';
 import { BatchProcessingService } from '@/modules/minting/batch-processing.service';
 import { MintService } from '@/modules/minting/mint.service';
-import { NextFunction, Request, Response } from 'express';
 
 export class MintController {
   constructor(

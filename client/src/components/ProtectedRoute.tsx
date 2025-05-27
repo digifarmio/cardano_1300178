@@ -5,6 +5,7 @@ import { useAuth } from '../hooks/useAuth';
 import PageSpinner from './PageSpinner';
 
 import type { DecodedToken, ProtectedRouteProps } from '../lib/types';
+
 const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
   const { token, isLoading } = useAuth();
   const { pathname } = useLocation();
@@ -19,19 +20,13 @@ const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
 
   try {
     const { role } = jwtDecode<DecodedToken>(token);
-    const roles = role ? (Array.isArray(role) ? role : [role]) : [];
-    const validRoles = roles.filter((r): r is string => typeof r === 'string');
-    const hasAccess = validRoles.some((r) => allowedRoles.includes(r));
 
-    if (!hasAccess) {
+    if (typeof role !== 'string' || !allowedRoles.includes(role)) {
       return <Navigate to="/unauthorized" replace />;
     }
 
     if (pathname === '/') {
-      if (validRoles.includes('admin')) {
-        return <Navigate to="/admin" replace />;
-      }
-      return <Navigate to="/user" replace />;
+      return <Navigate to={role === 'admin' ? '/admin' : '/user'} replace />;
     }
 
     return <Outlet />;

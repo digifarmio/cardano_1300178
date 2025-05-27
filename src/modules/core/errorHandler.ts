@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+import { AxiosError } from 'axios';
+import { ErrorRequestHandler, Request } from 'express';
 import {
   ApiError,
   ApplicationError,
@@ -8,8 +10,6 @@ import {
   ValidationError,
 } from '@/modules/core/errors';
 import { ErrorResponse } from '@/types';
-import { AxiosError } from 'axios';
-import { ErrorRequestHandler, Request } from 'express';
 
 /* ===================== ERROR EXTRACTION ===================== */
 
