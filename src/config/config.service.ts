@@ -18,10 +18,6 @@ export class ConfigService {
     return process.env.NMKR_BASE_URL || 'https://studio-api.nmkr.io';
   }
 
-  get customerId(): string {
-    return this.validateEnvVar('NMKR_CUSTOMER_ID', process.env.NMKR_CUSTOMER_ID);
-  }
-
   get projectUid(): string {
     return this.validateEnvVar('NMKR_PROJECT_UID', process.env.NMKR_PROJECT_UID);
   }

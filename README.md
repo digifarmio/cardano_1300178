@@ -91,7 +91,6 @@ Ensure the following are installed on your machine:
    SERVERLESS_ORG=<your-org>
    NMKR_API_KEY=<your-nmkr-api-key>
    NMKR_BASE_URL=https://studio-api.preprod.nmkr.io
-   NMKR_CUSTOMER_ID=<your-nmkr-customer-id>
    NMKR_PROJECT_UID=<your-nmkr-project-id>
    RECEIVER_ADDRESS=<your-wallet-address>
    BLOCKCHAIN=Cardano
