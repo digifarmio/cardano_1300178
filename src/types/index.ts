@@ -155,7 +155,7 @@ export interface GetTransactionNfts {
   confirmed: boolean;
 }
 
-export interface CustomerTransaction {
+export interface ProjectTransaction {
   created: string;
   state?: string;
   nftprojectId: number;

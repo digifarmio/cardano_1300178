@@ -43,7 +43,7 @@ export class BatchProcessingService {
     this.validationService.validateNonNegativeNumber(lovelace, 'lovelace');
 
     return {
-      reserveNfts: Array(count).fill({ nftUid, lovelace, tokencount: 1 }),
+      reserveNfts: Array(count).fill({ nftUid, lovelace, tokencount: count }),
     };
   }
 
