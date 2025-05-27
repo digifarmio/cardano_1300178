@@ -146,14 +146,14 @@ const AdminReports = ({ onGenerateReport, onDownloadReport, onGetStatus }: Admin
       title: 'Created',
       dataIndex: 'createdAt',
       key: 'createdAt',
-      width: 160,
+      width: 150,
       render: (date: string) => new Date(date).toLocaleString(),
     },
     {
       title: 'Actions',
       key: 'actions',
       fixed: 'right',
-      width: 250,
+      width: 150,
       render: (_: unknown, record: ReportStatus & { reportId: string }) => (
         <Space>
           <Button
@@ -164,13 +164,13 @@ const AdminReports = ({ onGenerateReport, onDownloadReport, onGetStatus }: Admin
           >
             Download CSV
           </Button>
-          <Button
+          {/* <Button
             size="small"
             onClick={() => onDownloadReport(record.reportId, 'pdf')}
             disabled={record.status !== 'completed'}
           >
             Download PDF
-          </Button>
+          </Button> */}
         </Space>
       ),
     },
