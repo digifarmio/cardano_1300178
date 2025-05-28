@@ -56,4 +56,4 @@ functions:
     handler: .build/handler.lambdaHandler
     events:
       - sqs:
-          arn: arn:aws:sqs:us-east-1:202533530220:Digifarm.fifo
+          arn: ${env:AWS_SQS_QUEUE_ARN}
