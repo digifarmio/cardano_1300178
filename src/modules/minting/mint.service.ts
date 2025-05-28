@@ -40,6 +40,12 @@ export class MintService {
     return this.nmkrClient.getNfts(params);
   }
 
+  async getUserNfts(nftUids: string[]): Promise<NftDetailsResponse[]> {
+    this.validationService.validateRequired(nftUids, 'nftUids');
+    const promises = nftUids.map((uid) => this.nmkrClient.getNftDetailsThrottled(uid));
+    return Promise.all(promises);
+  }
+
   async getNftDetailsById(uid: string): Promise<NftDetailsResponse> {
     this.validationService.validateRequired(uid, 'uid');
     return this.nmkrClient.getNftDetailsById(uid);

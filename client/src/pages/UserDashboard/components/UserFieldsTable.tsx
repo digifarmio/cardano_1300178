@@ -1,109 +1,96 @@
-import { Button, Space, Table, Tag } from 'antd';
+import { Table, Tooltip, Button, Flex, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { useState } from 'react';
-import type { FieldRecord } from '../../../lib/types';
+import type { NFTDetails } from '../../../lib/types';
+import { parseMetadata } from '../../../lib/utils';
 
 interface UserFieldsTableProps {
-  dataSource: FieldRecord[];
+  dataSource: NFTDetails[];
   onClaim: (id: string) => void;
   onView: (id: string) => void;
+  loading?: boolean;
 }
 
-const UserFieldsTable = ({ dataSource, onClaim, onView }: UserFieldsTableProps) => {
-  const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
+const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
+const PAGE_SIZE = 10;
 
-  const columns: ColumnsType<FieldRecord> = [
+const statusColors: Record<string, string> = {
+  free: 'green',
+  reserved: 'gold',
+  sold: 'blue',
+  error: 'red',
+  pending: 'orange',
+};
+
+const UserFieldsTable = ({ dataSource, onClaim, onView, loading }: UserFieldsTableProps) => {
+  const enhancedDataSource = dataSource.map((record) => ({
+    ...record,
+    parsedMetadata: parseMetadata(record.metadata),
+  }));
+
+  const columns: ColumnsType<NFTDetails & { parsedMetadata?: ReturnType<typeof parseMetadata> }> = [
     {
-      title: 'FIELD ID',
-      dataIndex: 'fieldId',
-      key: 'fieldId',
+      title: 'Field ID',
+      key: 'field_id',
+      render: (_, record) => record.parsedMetadata?.id_long || record.parsedMetadata?.id || 'N/A',
+    },
+    {
+      title: 'Area (m2)',
+      key: 'area',
+      render: (_, record) => record.parsedMetadata?.area ?? 'N/A',
+    },
+    {
+      title: 'Sustainability Index',
+      key: 'SustInd',
+      render: (_, record) => record.parsedMetadata?.SustInd ?? 'N/A',
+    },
+    {
+      title: 'Country',
+      key: 'country',
+      render: (_, record) => record.parsedMetadata?.country ?? 'N/A',
+    },
+    {
+      title: 'State',
+      dataIndex: 'state',
       width: 100,
-      fixed: 'left',
-      sorter: (a, b) => +a.fieldId - +b.fieldId,
-    },
-    {
-      title: 'SIZE (HA)',
-      dataIndex: 'size',
-      key: 'size',
-      render: (size: number) => size.toFixed(2),
-      sorter: (a, b) => a.size - b.size,
-      responsive: ['sm'],
-    },
-    {
-      title: 'SUSTAINABILITY',
-      dataIndex: 'sustainability',
-      sorter: (a, b) => {
-        const toNumber = (val: string | number) => Number(val);
-        return toNumber(a.sustainability) - toNumber(b.sustainability);
-      },
-      responsive: ['sm'],
-      render: (s: string | number) => `${s}%`,
-    },
-    {
-      title: 'STATUS',
-      dataIndex: 'status',
-      key: 'status',
-      filters: [
-        { text: 'All Fields', value: 'All Fields' },
-        { text: 'Claimable', value: 'Claimable' },
-        { text: 'Owned', value: 'Owned' },
-        { text: 'Locked', value: 'Locked' },
-      ],
       responsive: ['md'],
-      onFilter: (value: boolean | React.Key, record) =>
-        value === true || value === false
-          ? true
-          : value === 'All Fields'
-            ? true
-            : record.status === value,
-      render: (status: string) => {
-        const color = status === 'Claimable' ? 'green' : status === 'Owned' ? 'blue' : 'red';
-        return <Tag color={color}>{status}</Tag>;
-      },
+      filters: Object.keys(statusColors).map((val) => ({
+        text: val.charAt(0).toUpperCase() + val.slice(1),
+        value: val,
+      })),
+      onFilter: (val, rec) => rec.state === val,
+      render: (status: string) => (
+        <Tag color={statusColors[status] || 'default'}>
+          {status.charAt(0).toUpperCase() + status.slice(1)}
+        </Tag>
+      ),
     },
     {
-      title: 'ACTIONS',
+      title: 'Actions',
       key: 'actions',
-      fixed: 'right',
       width: 150,
-      render: (_: unknown, record: FieldRecord) => (
-        <Space size="small">
-          {record.status === 'Claimable' && (
-            <Button type="primary" size="small" onClick={() => onClaim(record.fieldId)}>
-              Claim NFT
+      render: (_, record) => (
+        <Flex gap={8}>
+          <Button onClick={() => onView(record.uid)}>View</Button>
+          <Tooltip title="Claim functionality coming soon">
+            <Button onClick={() => onClaim(record.uid)} disabled>
+              Claim
             </Button>
-          )}
-          {record.status === 'Owned' && (
-            <Button size="small" onClick={() => onView(record.fieldId)}>
-              View NFT
-            </Button>
-          )}
-          {record.status === 'Locked' && (
-            <Button disabled size="small">
-              Not Available
-            </Button>
-          )}
-        </Space>
+          </Tooltip>
+        </Flex>
       ),
     },
   ];
 
   return (
     <Table
-      rowKey="fieldId"
       columns={columns}
-      dataSource={dataSource}
-      sticky
-      bordered
-      scroll={{ x: 800 }}
+      dataSource={enhancedDataSource}
+      rowKey="uid"
+      loading={loading}
       pagination={{
-        ...pagination,
         showSizeChanger: true,
-        pageSizeOptions: ['10', '20', '50'],
-        showTotal: (total) => `Total ${total} items`,
-        position: ['bottomRight'],
-        onChange: (current, pageSize) => setPagination({ current, pageSize }),
-        onShowSizeChange: (_, size) => setPagination({ current: 1, pageSize: size }),
+        defaultPageSize: PAGE_SIZE,
+        pageSizeOptions: PAGE_SIZE_OPTIONS,
       }}
     />
   );

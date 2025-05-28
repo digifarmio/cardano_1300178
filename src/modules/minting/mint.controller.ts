@@ -3,9 +3,11 @@ import { ConfigService } from '@/config/config.service';
 import { ValidationError } from '@/modules/core/errors';
 import { BatchProcessingService } from '@/modules/minting/batch-processing.service';
 import { MintService } from '@/modules/minting/mint.service';
+import { JwtService } from '@/modules/core/jwt.service';
 
 export class MintController {
   constructor(
+    private readonly jwtService = new JwtService(),
     private readonly mintService = new MintService(),
     private readonly configService = new ConfigService(),
     private readonly batchService = new BatchProcessingService()
@@ -13,6 +15,7 @@ export class MintController {
     this.getBalance = this.getBalance.bind(this);
     this.getCounts = this.getCounts.bind(this);
     this.getNfts = this.getNfts.bind(this);
+    this.getUserNfts = this.getUserNfts.bind(this);
     this.getNftDetailsById = this.getNftDetailsById.bind(this);
     this.getTransactions = this.getTransactions.bind(this);
     this.mintRandomBatch = this.mintRandomBatch.bind(this);
@@ -51,6 +54,24 @@ export class MintController {
         page: Number(page),
       });
       res.json({ success: true, data: collection });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getUserNfts(req: Request, res: Response, next: NextFunction) {
+    try {
+      const token = req.headers.authorization!.split(' ')[1];
+      const decoded = this.jwtService.verify(token);
+      const fieldUids = decoded.fields || [];
+
+      if (fieldUids.length === 0) {
+        res.json({ success: true, data: [] });
+        return;
+      }
+
+      const nfts = await this.mintService.getUserNfts(fieldUids);
+      res.json({ success: true, data: nfts });
     } catch (error) {
       next(error);
     }

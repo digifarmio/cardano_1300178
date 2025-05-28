@@ -15,6 +15,10 @@ export const MintService = {
     return apiClient.get(`/nfts/${state}/${limit}/${page}`);
   },
 
+  getUserNfts: () => {
+    return apiClient.get('/user/nfts');
+  },
+
   getNftDetailsById: (uid: string) => {
     return apiClient.get(`/nfts/${uid}`);
   },

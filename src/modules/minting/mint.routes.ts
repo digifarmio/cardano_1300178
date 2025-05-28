@@ -11,6 +11,8 @@ export const createMintRoutes = () => {
 
   const adminAuth = [authenticate, requireRole(Role.admin)];
 
+  router.get('/user/nfts', authenticate, controller.getUserNfts);
+
   // Admin-only routes
   router
     .get('/balance', ...adminAuth, controller.getBalance)
