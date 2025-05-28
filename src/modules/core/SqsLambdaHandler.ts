@@ -42,6 +42,7 @@ export class SqsLambdaHandler {
         port: this.configService.sftpPort,
         username: this.configService.sftpUsername,
         password: this.configService.sftpPassword,
+        readyTimeout: 30000,
       });
 
       // Process files concurrently
@@ -66,9 +67,9 @@ export class SqsLambdaHandler {
       const { bucketName, key } = JSON.parse(record.body);
       console.log(`Starting upload for file: ${key}`);
       const remoteFilePath = `${this.configService.remotePath}/${key}`;
-      // The condition is inverted. The sdk returns false if the file exists for some reason
+
       const exist = await this.sftp.exists(remoteFilePath);
-      if (!exist) {
+      if (exist) {
         console.log(`File already exists on SFTP: ${remoteFilePath}`);
         return;
       }

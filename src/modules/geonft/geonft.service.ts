@@ -79,6 +79,7 @@ export class GeoNftService {
             const entries = batch.map((key, index) => ({
               Id: `batch-${batchNumber}-${index}`,
               MessageBody: JSON.stringify({ bucketName, key }),
+              MessageGroupId: 'default',
             }));
 
             await this.sqsClient.send(

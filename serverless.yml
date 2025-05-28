@@ -26,9 +26,6 @@ provider:
     AWS_S3_BUCKET: ${env:AWS_S3_BUCKET}
     AWS_DYNAMO_TABLE_BATCH_RECORDS: ${env:AWS_DYNAMO_TABLE_BATCH_RECORDS, 'BatchRecords'}
     AWS_DYNAMO_TABLE_RECORDS_STATUS: ${env:AWS_DYNAMO_TABLE_RECORDS_STATUS, 'ReportStatus'}
-    AWS_ACCESS_KEY_ID: ${env:AWS_ACCESS_KEY_ID}
-    AWS_SECRET_ACCESS_KEY: ${env:AWS_SECRET_ACCESS_KEY}
-    AWS_REGION: ${env:AWS_REGION, 'us-east-1'} # Default AWS region
     AWS_BUCKET_NAME_CSV: ${env:AWS_BUCKET_NAME_CSV, ''} # Default bucket name
     AWS_BUCKET_NAME_NFT: ${env:AWS_BUCKET_NAME_NFT, ''} # Default bucket name
     AWS_SQS_QUEUE_URL: ${env:AWS_SQS_QUEUE_URL, ''} # Default queue URL
@@ -41,15 +38,13 @@ plugins:
   - serverless-offline-sqs
   - serverless-offline
 
-custom:
-  serverless-offline-sqs:
-    autoCreate: true
-    apiVersion: '2012-11-05'
-    endpoint: http://0.0.0.0:9324
-    region: us-east-1
-    accessKeyId: root
-    secretAccessKey: root
-    skipCacheInvalidation: false
+build:
+  esbuild:
+    bundle: true
+    minify: false
+    sourcemap: true
+    target: node20
+    platform: node
 
 functions:
   api:
@@ -61,14 +56,4 @@ functions:
     handler: .build/handler.lambdaHandler
     events:
       - sqs:
-          arn:  
-            Fn::GetAtt:
-              - DigifarmNftQueue
-              - Arn
-
-resources:
-  Resources:
-    DigifarmNftQueue:
-      Type: AWS::SQS::Queue
-      Properties:
-        QueueName: Digifarm-nft              
+          arn: arn:aws:sqs:us-east-1:202533530220:Digifarm.fifo
