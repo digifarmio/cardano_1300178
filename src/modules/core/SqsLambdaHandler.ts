@@ -69,7 +69,7 @@ export class SqsLambdaHandler {
       const remoteFilePath = `${this.configService.remotePath}/${key}`;
 
       const exist = await this.sftp.exists(remoteFilePath);
-      if (exist) {
+      if (!exist) {
         console.log(`File already exists on SFTP: ${remoteFilePath}`);
         return;
       }

@@ -35,7 +35,6 @@ provider:
     SFTP_PASSWORD: ${env:SFTP_PASSWORD, ''} # Default SFTP password
     REMOTE_PATH: ${env:REMOTE_PATH, ''} # Defau
 plugins:
-  - serverless-offline-sqs
   - serverless-offline
 
 build:
