@@ -101,6 +101,7 @@ const AdminFieldsTable = ({
 
   const rowSelection = {
     selectedRowKeys,
+    preserveSelectedRowKeys: true,
     onChange: setSelectedRowKeys,
     getCheckboxProps: (record: NFT) => ({
       disabled: record.state !== 'free',

@@ -1,7 +1,9 @@
-import { Alert, Flex, message, Modal, Tabs } from 'antd';
+import { Alert, Button, Flex, Input, message, Modal, Tabs } from 'antd';
 import { useCallback, useEffect, useState } from 'react';
-import type { NFT, NFTDetails, ProjectTransaction } from '../../lib/types';
+import { getErrorMessage } from '../../lib/errorHandler';
 import { MintService } from '../../services/mintService';
+import { useSelectionStore } from '../../stores/selectionStore';
+import type { NFT, NFTDetails, ProjectTransaction } from '../../lib/types';
 import AdminFieldsTable from './components/AdminFieldsTable';
 import AdminMintActionBar from './components/AdminMintActionBar';
 import AdminNftDetails from './components/AdminNftDetails';
@@ -30,8 +32,6 @@ const INITIAL_STATS = {
 };
 
 const INITIAL_STATE = {
-  selectedRowKeys: [] as React.Key[],
-  selectAllReady: false,
   fieldCount: 1,
   nfts: [] as NFT[],
   balance: 0,
@@ -43,6 +43,7 @@ const INITIAL_STATE = {
   viewingNft: null as NFTDetails | null,
   transactions: [] as ProjectTransaction[],
   transactionsLoading: false,
+  generatedToken: null as string | null,
 };
 
 type AdminState = typeof INITIAL_STATE;
@@ -50,6 +51,16 @@ type AdminState = typeof INITIAL_STATE;
 const AdminDashboard = () => {
   const [messageApi, contextHolder] = message.useMessage();
   const [state, setState] = useState<AdminState>(INITIAL_STATE);
+
+  const {
+    selectedRowKeys,
+    selectAllReady,
+    setSelectedRowKeys,
+    setSelectAllReady,
+    clearSelection,
+    getSelectedCount,
+    getAllSelectedNfts,
+  } = useSelectionStore();
 
   // ==================== Data Fetching ====================
   const fetchBalance = useCallback(async () => {
@@ -60,8 +71,9 @@ const AdminDashboard = () => {
         balance: response.data.data.mintCouponBalanceCardano,
       }));
     } catch (error) {
-      messageApi.error('Failed to fetch balance');
-      console.error(error);
+      const errorMessage = getErrorMessage(error);
+      messageApi.error(errorMessage);
+      console.error(errorMessage);
     }
   }, [messageApi]);
 
@@ -74,8 +86,9 @@ const AdminDashboard = () => {
         stats: { total: nftTotal, free, reserved, sold, error },
       }));
     } catch (error) {
-      messageApi.error('Failed to fetch stats');
-      console.error(error);
+      const errorMessage = getErrorMessage(error);
+      messageApi.error(errorMessage);
+      console.error(errorMessage);
     }
   }, [messageApi]);
 
@@ -85,19 +98,11 @@ const AdminDashboard = () => {
       const limitedPageSize = Math.min(state.pageSize, MAX_PAGE_SIZE);
       const response = await MintService.getNfts(state.stateFilter, state.page, limitedPageSize);
       const data = response.data.data;
-
-      setState((prev) => ({
-        ...prev,
-        nfts: data,
-        selectedRowKeys: prev.selectedRowKeys.filter((key) =>
-          data.some((nft: NFT) => nft.uid === key)
-        ),
-        selectAllReady: false,
-        loading: false,
-      }));
+      setState((prev) => ({ ...prev, nfts: data, loading: false }));
     } catch (error) {
-      messageApi.error('Failed to fetch NFTs');
-      console.error(error);
+      const errorMessage = getErrorMessage(error);
+      messageApi.error(errorMessage);
+      console.error(errorMessage);
       setState((prev) => ({ ...prev, loading: false }));
     }
   }, [messageApi, state.page, state.pageSize, state.stateFilter]);
@@ -112,8 +117,9 @@ const AdminDashboard = () => {
         transactionsLoading: false,
       }));
     } catch (error) {
-      messageApi.error('Failed to fetch transactions');
-      console.error(error);
+      const errorMessage = getErrorMessage(error);
+      messageApi.error(errorMessage);
+      console.error(errorMessage);
       setState((prev) => ({ ...prev, transactionsLoading: false }));
     }
   }, [messageApi]);
@@ -144,8 +150,9 @@ const AdminDashboard = () => {
         loading: false,
       }));
     } catch (error) {
-      messageApi.error('Failed to fetch NFT details');
-      console.error(error);
+      const errorMessage = getErrorMessage(error);
+      messageApi.error(errorMessage);
+      console.error(errorMessage);
       setState((prev) => ({ ...prev, loading: false }));
     }
   };
@@ -167,25 +174,27 @@ const AdminDashboard = () => {
       messageApi.success(`Successfully minted ${totalMinted} NFTs`);
       await refresh();
     } catch (error) {
-      messageApi.error('Random minting failed');
-      console.error(error);
+      const errorMessage = getErrorMessage(error);
+      messageApi.error(errorMessage);
+      console.error(errorMessage);
     }
   };
 
   const handleSelectedMint = async () => {
-    if (state.selectedRowKeys.length === 0) {
+    if (selectedRowKeys.length === 0) {
       messageApi.warning('No NFTs selected for minting');
       return;
     }
 
     try {
-      await MintService.mintSpecificBatch(state.selectedRowKeys as string[]);
-      messageApi.success(`Minted ${state.selectedRowKeys.length} NFTs`);
-      setState((prev) => ({ ...prev, selectedRowKeys: [], selectAllReady: false }));
+      await MintService.mintSpecificBatch(selectedRowKeys as string[]);
+      messageApi.success(`Minted ${selectedRowKeys.length} NFTs`);
+      clearSelection();
       await refresh();
     } catch (error) {
-      messageApi.error('Batch minting failed');
-      console.error(error);
+      const errorMessage = getErrorMessage(error);
+      messageApi.error(errorMessage);
+      console.error(errorMessage);
     }
   };
 
@@ -195,28 +204,42 @@ const AdminDashboard = () => {
       messageApi.success('Minted 1 NFT');
       await refresh();
     } catch (error) {
-      messageApi.error('Minting failed');
-      console.error(error);
+      const errorMessage = getErrorMessage(error);
+      messageApi.error(errorMessage);
+      console.error(errorMessage);
     }
   };
 
   // ==================== Selection Handlers ====================
   const handleSelectAllReady = () => {
-    setState((prev) => {
-      const newSelectAll = !prev.selectAllReady;
-      const readyNftIds = newSelectAll
-        ? prev.nfts.filter((nft) => nft.state === 'free').map((nft) => nft.uid)
-        : [];
-      return {
-        ...prev,
-        selectAllReady: newSelectAll,
-        selectedRowKeys: readyNftIds,
-      };
-    });
+    const newSelectAll = !selectAllReady;
+    setSelectAllReady(newSelectAll);
+
+    if (newSelectAll) {
+      // Select all NFTs in 'free' state on the current page
+      const readyNfts = state.nfts.filter((nft) => nft.state === 'free');
+      const readyNftIds = readyNfts.map((nft) => nft.uid);
+      setSelectedRowKeys(readyNftIds, readyNfts);
+    } else {
+      // Deselect all NFTs in 'free' state on the current page
+      const currentPageFreeIds = state.nfts
+        .filter((nft) => nft.state === 'free')
+        .map((nft) => nft.uid);
+
+      const newSelectedKeys = selectedRowKeys.filter(
+        (key) => !currentPageFreeIds.includes(String(key))
+      );
+
+      const remainingNfts = getAllSelectedNfts().filter(
+        (nft) => !currentPageFreeIds.includes(nft.uid)
+      );
+
+      setSelectedRowKeys(newSelectedKeys, remainingNfts);
+    }
   };
 
   const handleRowSelection = (keys: React.Key[]) => {
-    setState((prev) => ({ ...prev, selectedRowKeys: keys }));
+    setSelectedRowKeys(keys, state.nfts);
   };
 
   // ==================== Pagination Handlers ====================
@@ -298,7 +321,9 @@ const AdminDashboard = () => {
       const response = await MintService.generateReport();
       return response.data.data;
     } catch (error) {
-      messageApi.error('Failed to generate report');
+      const errorMessage = getErrorMessage(error);
+      messageApi.error(errorMessage);
+      console.error(errorMessage);
       throw error;
     }
   };
@@ -308,7 +333,9 @@ const AdminDashboard = () => {
       const response = await MintService.getReportStatus(reportId);
       return response.data.data;
     } catch (error) {
-      messageApi.error('Failed to get report status');
+      const errorMessage = getErrorMessage(error);
+      messageApi.error(errorMessage);
+      console.error(errorMessage);
       throw error;
     }
   };
@@ -325,8 +352,27 @@ const AdminDashboard = () => {
 
       window.open(type === 'pdf' ? pdfPath : csvPath, '_blank');
     } catch (error) {
-      messageApi.error(`Failed to download ${type.toUpperCase()} report`);
-      console.error(error);
+      const errorMessage = getErrorMessage(error);
+      messageApi.error(errorMessage);
+      console.error(errorMessage);
+    }
+  };
+
+  const handleGenerateToken = async () => {
+    if (selectedRowKeys.length === 0) {
+      messageApi.warning('No NFTs selected for token generation');
+      return;
+    }
+
+    try {
+      const response = await MintService.generateUserToken(selectedRowKeys as string[]);
+      const { token } = response.data;
+      setState((prev) => ({ ...prev, generatedToken: token }));
+      messageApi.success('Access token generated successfully');
+    } catch (error) {
+      const errorMessage = getErrorMessage(error);
+      messageApi.error(errorMessage);
+      console.error(errorMessage);
     }
   };
 
@@ -345,13 +391,16 @@ const AdminDashboard = () => {
     <Flex vertical gap={16}>
       <AdminMintActionBar
         loading={state.loading}
-        selectAll={state.selectAllReady}
+        balance={state.balance}
+        selectAll={selectAllReady}
+        hasSelected={getSelectedCount() > 0}
+        selectedCount={getSelectedCount()}
         onSelectAllChange={handleSelectAllReady}
         fieldCount={state.fieldCount}
         onFieldCountChange={handleFieldCountChange}
         onMintRandom={handleRandomMint}
         onMintSelected={handleSelectedMint}
-        balance={state.balance}
+        onGenerateToken={handleGenerateToken}
       />
 
       <PaginationControls
@@ -375,7 +424,7 @@ const AdminDashboard = () => {
         onView={handleViewNft}
         onMint={handleSpecificMint}
         selected={{
-          selectedRowKeys: state.selectedRowKeys,
+          selectedRowKeys,
           setSelectedRowKeys: handleRowSelection,
         }}
         loading={state.loading}
@@ -412,6 +461,31 @@ const AdminDashboard = () => {
     </Modal>
   );
 
+  const renderTokenModal = () => {
+    const handleClipboardCopy = () => {
+      navigator.clipboard.writeText(state.generatedToken || '');
+      messageApi.success('Token copied to clipboard!');
+    };
+
+    return (
+      <Modal
+        title="Generated Access Token"
+        open={!!state.generatedToken}
+        onCancel={() => setState((prev) => ({ ...prev, generatedToken: null }))}
+        footer={null}
+      >
+        <Input.TextArea
+          value={state.generatedToken || ''}
+          readOnly
+          autoSize={{ minRows: 3, maxRows: 6 }}
+        />
+        <Button onClick={handleClipboardCopy} className="mt-4">
+          Copy to Clipboard
+        </Button>
+      </Modal>
+    );
+  };
+
   const tabItems = [
     {
       key: 'nfts',
@@ -437,6 +511,7 @@ const AdminDashboard = () => {
       <AdminStats {...state.stats} />
       <Tabs defaultActiveKey="nfts" items={tabItems} />
       {renderNftDetailsModal()}
+      {renderTokenModal()}
     </Flex>
   );
 };

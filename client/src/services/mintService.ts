@@ -49,4 +49,8 @@ export const MintService = {
   getReportFile(reportId: string, type: 'csv' | 'pdf'): Promise<AxiosResponse<{ data: string }>> {
     return apiClient.get(`/reports/${reportId}/download/${type}`);
   },
+
+  generateUserToken: (uids: string[]): Promise<AxiosResponse<{ token: string }>> => {
+    return apiClient.post('/tokens/user', { fields: uids });
+  },
 };
