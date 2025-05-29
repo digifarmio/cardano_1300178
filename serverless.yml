@@ -32,12 +32,15 @@ provider:
     AWS_SECRET_ACCESS_KEY: ${env:AWS_SECRET_ACCESS_KEY}
     AWS_REGION: ${env:AWS_REGION, 'us-east-1'} # Default AWS region
     BUCKET_NAME: ${env:BUCKET_NAME, ''} # Default bucket name
+    JWT_SECRET: ${env:JWT_SECRET}
+    JWT_ISSUER: ${env:JWT_ISSUER}
+    JWT_EXPIRES_IN: ${env:JWT_EXPIRES_IN}
 
 plugins:
   - serverless-offline
 
 functions:
   api:
-    handler: .build/handler.handler
+    handler: .build/src/handler.handler
     events:
       - httpApi: '*'

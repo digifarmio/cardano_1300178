@@ -1,34 +1,43 @@
-import { CheckOutlined, SettingOutlined } from '@ant-design/icons';
+import { CheckOutlined, KeyOutlined, SettingOutlined } from '@ant-design/icons';
 import { Button, Card, Checkbox, Flex, InputNumber, Space, Tooltip, Typography } from 'antd';
 
 const { Text } = Typography;
 
 interface AdminMintActionBarProps {
   loading?: boolean;
+  balance?: number;
   selectAll: boolean;
+  hasSelected: boolean;
+  selectedCount: number;
   onSelectAllChange: (checked: boolean) => void;
   fieldCount: number;
   onFieldCountChange: (value: number | null) => void;
   onMintRandom: () => void;
   onMintSelected: () => void;
-  balance?: number;
+  onGenerateToken: () => void;
 }
 
 const AdminMintActionBar = ({
   loading,
+  balance,
   selectAll,
+  hasSelected,
+  selectedCount,
   onSelectAllChange,
   fieldCount,
   onFieldCountChange,
   onMintRandom,
   onMintSelected,
-  balance,
+  onGenerateToken,
 }: AdminMintActionBarProps) => {
   return (
     <Card variant="borderless">
       <Flex align="center" justify="space-between" gap={16}>
         <Checkbox checked={selectAll} onChange={(e) => onSelectAllChange(e.target.checked)}>
-          Select All Free
+          <Flex align="center" gap={4}>
+            <Text>Select All Free</Text>
+            <Text type="secondary">({selectedCount})</Text>
+          </Flex>
         </Checkbox>
 
         <Space size="middle" wrap align="center">
@@ -50,8 +59,18 @@ const AdminMintActionBar = ({
             icon={<CheckOutlined />}
             onClick={onMintSelected}
             loading={loading}
+            disabled={!hasSelected}
           >
             Mint Selected
+          </Button>
+
+          <Button
+            icon={<KeyOutlined />}
+            onClick={onGenerateToken}
+            loading={loading}
+            disabled={!hasSelected}
+          >
+            Generate Access Token
           </Button>
         </Space>
       </Flex>

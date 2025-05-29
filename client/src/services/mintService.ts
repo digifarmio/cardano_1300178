@@ -15,6 +15,10 @@ export const MintService = {
     return apiClient.get(`/nfts/${state}/${limit}/${page}`);
   },
 
+  getUserNfts: () => {
+    return apiClient.get('/user/nfts');
+  },
+
   getNftDetailsById: (uid: string) => {
     return apiClient.get(`/nfts/${uid}`);
   },
@@ -48,5 +52,9 @@ export const MintService = {
 
   getReportFile(reportId: string, type: 'csv' | 'pdf'): Promise<AxiosResponse<{ data: string }>> {
     return apiClient.get(`/reports/${reportId}/download/${type}`);
+  },
+
+  generateUserToken: (uids: string[]): Promise<AxiosResponse<{ token: string }>> => {
+    return apiClient.post('/tokens/user', { fields: uids });
   },
 };

@@ -1,6 +1,5 @@
 import { ValidationError } from '@/modules/core/errors';
 import { Blockchain } from '@/types';
-import path from 'path';
 
 export class ConfigService {
   private validateEnvVar(name: string, value: string | undefined): string {
@@ -48,14 +47,6 @@ export class ConfigService {
     return parseInt(size || '500', 10);
   }
 
-  get batchStoragePath(): string {
-    return path.join(process.cwd(), 'data', 'batches');
-  }
-
-  get reportStoragePath(): string {
-    return path.join(process.cwd(), 'data', 'reports');
-  }
-
   get concurrencyLimit(): number {
     const limit = this.validateEnvVar('CONCURRENCY_LIMIT', process.env.CONCURRENCY_LIMIT);
     return parseInt(limit || '5', 10);
@@ -98,5 +89,17 @@ export class ConfigService {
 
   get bucketName(): string {
     return this.validateEnvVar('BUCKET_NAME', process.env.BUCKET_NAME);
+  }
+
+  get jwtSecret(): string {
+    return this.validateEnvVar('JWT_SECRET', process.env.JWT_SECRET);
+  }
+
+  get jwtIssuer(): string {
+    return this.validateEnvVar('JWT_ISSUER', process.env.JWT_ISSUER);
+  }
+
+  get jwtExpiresIn(): string {
+    return this.validateEnvVar('JWT_EXPIRES_IN', process.env.JWT_EXPIRES_IN);
   }
 }

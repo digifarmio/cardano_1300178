@@ -1,3 +1,6 @@
+import { AxiosError } from 'axios';
+import pLimit from 'p-limit';
+import pRetry from 'p-retry';
 import { ConfigService } from '@/config/config.service';
 import { handleAxiosError } from '@/modules/core/errorHandler';
 import { NotFoundError } from '@/modules/core/errors';
@@ -14,9 +17,6 @@ import {
   ProjectTransaction,
   UploadFiles,
 } from '@/types';
-import { AxiosError } from 'axios';
-import pLimit from 'p-limit';
-import pRetry from 'p-retry';
 
 export class NmkrClient extends HttpClient {
   private readonly configService = new ConfigService();
