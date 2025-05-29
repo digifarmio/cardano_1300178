@@ -89,6 +89,11 @@ Ensure the following are installed on your machine:
    ```env
    NODE_ENV=development
    SERVERLESS_ORG=<your-org>
+
+   JWT_SECRET=<your-very-secure-secret>
+   JWT_ISSUER=<your-app-name>
+   JWT_EXPIRES_IN=1d  # or 1d, or 3600 (as string if in seconds)
+
    NMKR_API_KEY=<your-nmkr-api-key>
    NMKR_BASE_URL=https://studio-api.preprod.nmkr.io
    NMKR_PROJECT_UID=<your-nmkr-project-id>
@@ -98,9 +103,20 @@ Ensure the following are installed on your machine:
    MINT_TOTAL_COUNT=500
    CONCURRENCY_LIMIT=5
    RETRY_COUNT=3
+
    AWS_S3_BUCKET=your-s3-bucket-name
    AWS_DYNAMO_TABLE_BATCH_RECORDS=your-dynamo-table
    AWS_DYNAMO_TABLE_RECORDS_STATUS=your-dynamo-table
+   AWS_BUCKET_NAME_CSV=digifarm-files
+   AWS_BUCKET_NAME_NFT=digifarm-nfts
+   AWS_SQS_QUEUE_URL=http://your-sqs-url/queue/queue-name
+   AWS_SQS_QUEUE_ARN=arn:aws:sqs:us-east-1:202533530220:Digifarm.fifo
+
+   SFTP_HOST=<host>
+   SFTP_PORT=<port>
+   SFTP_USERNAME=<username>
+   SFTP_PASSWORD=<password>
+   REMOTE_PATH=<remote-path>
    ```
 
 4. **Build and Deploy:**
