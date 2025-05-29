@@ -11,6 +11,9 @@ import {
   BatchRecord,
   GetNftsParams,
   MintAndSendResult,
+  NftCountResponse,
+  NftDetailsResponse,
+  ProjectTransaction,
   ReportStatus,
 } from '@/types';
 
@@ -23,9 +26,33 @@ export class MintService {
     private batchService = new BatchProcessingService()
   ) {}
 
-  async getNftCollection(params: GetNftsParams): Promise<APIResponse> {
+  async getBalance(): Promise<APIResponse> {
+    return this.nmkrClient.getBalance();
+  }
+
+  async getCounts(projectUid: string): Promise<NftCountResponse> {
+    this.validationService.validateRequired(projectUid, 'projectUid');
+    return this.nmkrClient.getCounts(projectUid);
+  }
+
+  async getNfts(params: GetNftsParams): Promise<APIResponse> {
     this.validationService.validateGetNftsParams(params);
-    return this.nmkrClient.getNftCollection(params);
+    return this.nmkrClient.getNfts(params);
+  }
+
+  async getUserNfts(nftUids: string[]): Promise<NftDetailsResponse[]> {
+    this.validationService.validateRequired(nftUids, 'nftUids');
+    const promises = nftUids.map((uid) => this.nmkrClient.getNftDetailsThrottled(uid));
+    return Promise.all(promises);
+  }
+
+  async getNftDetailsById(uid: string): Promise<NftDetailsResponse> {
+    this.validationService.validateRequired(uid, 'uid');
+    return this.nmkrClient.getNftDetailsById(uid);
+  }
+
+  async getTransactions(): Promise<ProjectTransaction[]> {
+    return this.nmkrClient.getTransactions();
   }
 
   async mintRandomBatch(params: BatchMintParams): Promise<BatchProcessingSummary> {

@@ -1,10 +1,10 @@
+import csv from 'csvtojson';
+import { v4 as uuidv4 } from 'uuid';
 import { ConfigService } from '@/config/config.service';
 import { BatchProcessingError } from '@/modules/core/errors';
 import { StorageService } from '@/modules/minting/storage.service';
 import { ValidationService } from '@/modules/minting/validation.service';
 import { BatchRecord, MintAndSendResult } from '@/types';
-import csv from 'csvtojson';
-import { v4 as uuidv4 } from 'uuid';
 
 export class BatchProcessingService {
   constructor(
@@ -43,7 +43,7 @@ export class BatchProcessingService {
     this.validationService.validateNonNegativeNumber(lovelace, 'lovelace');
 
     return {
-      reserveNfts: Array(count).fill({ nftUid, lovelace, tokencount: 1 }),
+      reserveNfts: Array(count).fill({ nftUid, lovelace, tokencount: count }),
     };
   }
 

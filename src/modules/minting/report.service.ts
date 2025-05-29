@@ -1,11 +1,11 @@
+import { createObjectCsvStringifier } from 'csv-writer';
+import PDFDocument from 'pdfkit';
+import { v4 as uuidv4 } from 'uuid';
 import { ConfigService } from '@/config/config.service';
 import { NmkrClient } from '@/modules/core/nmkr.client';
 import { ExplorerService } from '@/modules/minting/explorer.service';
 import { StorageService } from '@/modules/minting/storage.service';
 import { BatchRecord, CsvRecord, PdfRecord, ReportStatus } from '@/types';
-import { createObjectCsvStringifier } from 'csv-writer';
-import PDFDocument from 'pdfkit';
-import { v4 as uuidv4 } from 'uuid';
 
 export class ReportService {
   constructor(
@@ -93,7 +93,7 @@ export class ReportService {
         updatedAt: new Date().toISOString(),
       };
 
-      if (error instanceof Error && error.message.includes('missing transaction hashes')) {
+      if (error instanceof Error && error.message.includes('Please try again later.')) {
         await this.storageService.updateStatus({
           ...statusUpdate,
           status: 'processing',

@@ -1,5 +1,5 @@
-import { ConfigService } from '@/config/config.service';
 import axios from 'axios';
+import { ConfigService } from '@/config/config.service';
 
 export class HttpClient {
   protected readonly instance = axios.create({

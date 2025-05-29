@@ -1,3 +1,6 @@
+import { Request } from 'express';
+import { JwtPayload } from 'jsonwebtoken';
+
 // ==================== Blockchain Types ====================
 export type Blockchain = 'Cardano';
 
@@ -155,7 +158,7 @@ export interface GetTransactionNfts {
   confirmed: boolean;
 }
 
-export interface CustomerTransaction {
+export interface ProjectTransaction {
   created: string;
   state?: string;
   nftprojectId: number;
@@ -337,3 +340,19 @@ export interface BucketObject {
 export interface CsvHeaders {
   [key: string]: string;
 }
+
+export enum Role {
+  admin = 'admin',
+  user = 'user',
+}
+
+export interface User {
+  role: Role;
+  fields: string[];
+}
+
+export interface RequestWithUser extends Request {
+  user?: User;
+}
+
+export interface TokenPayload extends JwtPayload, User {}
