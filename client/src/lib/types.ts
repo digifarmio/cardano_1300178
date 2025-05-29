@@ -1,5 +1,7 @@
 import type { JwtPayload } from 'jwt-decode';
 
+export type AdminStatKey = 'total' | 'sold' | 'free' | 'reserved' | 'error';
+
 export interface AuthContextType {
   token: string | null;
   login: (token: string) => void;
@@ -28,7 +30,7 @@ export interface NFT {
   id: number;
   ipfsLink: string;
   gatewayLink: string;
-  state: string;
+  state: AdminStatKey;
   name: string;
   displayname: string | null;
   detaildata: unknown | null;
@@ -51,7 +53,7 @@ export interface NFT {
 export interface NFTDetails {
   id: number;
   ipfshash: string;
-  state: string;
+  state: AdminStatKey;
   name: string;
   displayname: string;
   detaildata: string;

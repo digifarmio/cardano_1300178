@@ -1,7 +1,8 @@
 import { Button, Flex, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useMemo } from 'react';
-import type { NFT } from '../../../lib/types';
+import { getStatColor, getStatLabel } from '../../../lib/statusMapper';
+import type { AdminStatKey, NFT } from '../../../lib/types';
 
 interface AdminFieldsTableProps {
   dataSource: NFT[];
@@ -14,14 +15,6 @@ interface AdminFieldsTableProps {
   onMint: (id: string) => void;
   onExport?: (format: 'csv' | 'json') => void;
 }
-
-const statusColors: Record<string, string> = {
-  free: 'green',
-  reserved: 'gold',
-  sold: 'blue',
-  error: 'red',
-  pending: 'orange',
-};
 
 const AdminFieldsTable = ({
   dataSource,
@@ -57,15 +50,8 @@ const AdminFieldsTable = ({
         dataIndex: 'state',
         width: 100,
         responsive: ['md'],
-        filters: Object.keys(statusColors).map((val) => ({
-          text: val.charAt(0).toUpperCase() + val.slice(1),
-          value: val,
-        })),
-        onFilter: (val, rec) => rec.state === val,
-        render: (status: string) => (
-          <Tag color={statusColors[status] || 'default'}>
-            {status.charAt(0).toUpperCase() + status.slice(1)}
-          </Tag>
+        render: (status: AdminStatKey) => (
+          <Tag color={getStatColor(status)}>{getStatLabel(status)}</Tag>
         ),
       },
       {

@@ -1,4 +1,5 @@
 import { Card, Flex, Statistic } from 'antd';
+import { getStatColor, getStatLabel } from '../../../lib/statusMapper';
 
 interface AdminStatsProps {
   total: number;
@@ -9,23 +10,19 @@ interface AdminStatsProps {
 }
 
 const AdminStats = ({ total, free, reserved, sold, error }: AdminStatsProps) => {
+  const stats = { total, sold, free, reserved, error };
+
   return (
     <Flex align="center" justify="space-between" wrap="wrap" gap={16} className="w-full">
-      <Card variant="borderless" className="min-w-[160px] flex-1">
-        <Statistic title="Total Fields" value={total} />
-      </Card>
-      <Card variant="borderless" className="min-w-[160px] flex-1">
-        <Statistic title="Free" value={free} valueStyle={{ color: 'blue' }} />
-      </Card>
-      <Card variant="borderless" className="min-w-[160px] flex-1">
-        <Statistic title="Reserved" value={reserved} valueStyle={{ color: 'orange' }} />
-      </Card>
-      <Card variant="borderless" className="min-w-[160px] flex-1">
-        <Statistic title="Sold" value={sold} valueStyle={{ color: 'green' }} />
-      </Card>
-      <Card variant="borderless" className="min-w-[160px] flex-1">
-        <Statistic title="Error" value={error} valueStyle={{ color: 'red' }} />
-      </Card>
+      {Object.entries(stats).map(([key, value]) => (
+        <Card key={key} variant="borderless" className="min-w-[160px] flex-1">
+          <Statistic
+            title={getStatLabel(key as keyof typeof stats)}
+            value={value}
+            valueStyle={{ color: getStatColor(key as keyof typeof stats) }}
+          />
+        </Card>
+      ))}
     </Flex>
   );
 };

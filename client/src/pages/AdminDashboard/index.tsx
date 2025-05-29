@@ -1,7 +1,8 @@
 import { Alert, Button, Flex, Grid, Input, message, Modal, Tabs } from 'antd';
 import { useCallback, useEffect, useState } from 'react';
 import { getErrorMessage } from '../../lib/errorHandler';
-import type { NFT, NFTDetails, ProjectTransaction } from '../../lib/types';
+import { getStatLabel } from '../../lib/statusMapper';
+import type { AdminStatKey, NFT, NFTDetails, ProjectTransaction } from '../../lib/types';
 import { MintService } from '../../services/mintService';
 import { useSelectionStore } from '../../stores/selectionStore';
 import AdminFieldsTable from './components/AdminFieldsTable';
@@ -17,12 +18,13 @@ const { useBreakpoint } = Grid;
 // Constants
 const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 const MAX_PAGE_SIZE = 50;
+
 const STATE_FILTER_OPTIONS = [
   { label: 'All', value: 'all' },
-  { label: 'Free', value: 'free' },
-  { label: 'Reserved', value: 'reserved' },
-  { label: 'Sold', value: 'sold' },
-  { label: 'Error', value: 'error' },
+  ...(['free', 'reserved', 'sold', 'error'] as AdminStatKey[]).map((status) => ({
+    label: getStatLabel(status),
+    value: status,
+  })),
 ];
 
 const INITIAL_STATS = {

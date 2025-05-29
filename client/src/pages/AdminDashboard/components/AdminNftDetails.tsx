@@ -1,4 +1,5 @@
-import { Card, Descriptions, Flex, Grid, Image, Typography } from 'antd';
+import { Card, Descriptions, Flex, Grid, Image, Tag, Typography } from 'antd';
+import { getStatColor, getStatLabel } from '../../../lib/statusMapper';
 import type { NFTDetails } from '../../../lib/types';
 import { parseMetadata } from '../../../lib/utils';
 
@@ -113,7 +114,7 @@ const AdminNftDetails = ({ nft }: AdminNftDetailsProps) => {
         <Descriptions bordered column={1} size="small">
           <Descriptions.Item label="ID">{nft.uid}</Descriptions.Item>
           <Descriptions.Item label="Status">
-            <Text strong>{nft.state}</Text>
+            <Tag color={getStatColor(nft.state)}>{getStatLabel(nft.state)}</Tag>
           </Descriptions.Item>
           <Descriptions.Item label="Minted">{nft.minted ? 'Yes' : 'No'}</Descriptions.Item>
 

@@ -1,6 +1,7 @@
-import { Table, Tooltip, Button, Flex, Tag } from 'antd';
+import { Button, Flex, Table, Tag, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import type { NFTDetails } from '../../../lib/types';
+import { getStatColor, getStatLabel } from '../../../lib/statusMapper';
+import type { AdminStatKey, NFTDetails } from '../../../lib/types';
 import { parseMetadata } from '../../../lib/utils';
 
 interface UserFieldsTableProps {
@@ -12,14 +13,6 @@ interface UserFieldsTableProps {
 
 const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 const PAGE_SIZE = 10;
-
-const statusColors: Record<string, string> = {
-  free: 'green',
-  reserved: 'gold',
-  sold: 'blue',
-  error: 'red',
-  pending: 'orange',
-};
 
 const UserFieldsTable = ({ dataSource, onClaim, onView, loading }: UserFieldsTableProps) => {
   const enhancedDataSource = dataSource.map((record) => ({
@@ -53,15 +46,8 @@ const UserFieldsTable = ({ dataSource, onClaim, onView, loading }: UserFieldsTab
       dataIndex: 'state',
       width: 100,
       responsive: ['md'],
-      filters: Object.keys(statusColors).map((val) => ({
-        text: val.charAt(0).toUpperCase() + val.slice(1),
-        value: val,
-      })),
-      onFilter: (val, rec) => rec.state === val,
-      render: (status: string) => (
-        <Tag color={statusColors[status] || 'default'}>
-          {status.charAt(0).toUpperCase() + status.slice(1)}
-        </Tag>
+      render: (status: AdminStatKey) => (
+        <Tag color={getStatColor(status)}>{getStatLabel(status)}</Tag>
       ),
     },
     {
