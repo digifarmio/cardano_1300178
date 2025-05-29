@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router';
 
 import { InfoCircleOutlined, LoginOutlined } from '@ant-design/icons';
 
+import { jwtDecode } from 'jwt-decode';
 import { useAuth } from '../hooks/useAuth';
 
 const { Title, Text } = Typography;
@@ -19,9 +20,16 @@ const Login = () => {
 
   const onFinish = async (values: LoginFormValues) => {
     try {
+      const decoded = jwtDecode(values.token);
+      const currentTime = Date.now() / 1000;
+      if (decoded.exp && decoded.exp < currentTime) {
+        throw new Error('Token expired');
+      }
+
       login(values.token);
       navigate('/', { replace: true });
-    } catch {
+    } catch (error) {
+      console.log('Login error:', error);
       form.setFields([
         {
           name: 'token',
