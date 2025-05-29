@@ -16,7 +16,6 @@ provider:
     NODE_ENV: ${env:NODE_ENV, 'development'} # Auto detect environment
     NMKR_API_KEY: ${env:NMKR_API_KEY, 'key-local-dev'} # Default for local
     NMKR_BASE_URL: ${env:NMKR_BASE_URL, 'https://studio-api.preprod.nmkr.io'} # NMKR staging URL
-    NMKR_CUSTOMER_ID: ${env:NMKR_CUSTOMER_ID} # NMKR Customer Id
     NMKR_PROJECT_UID: ${env:NMKR_PROJECT_UID} # NMKR Project id
     NMKR_POLICY_ID: ${env:NMKR_POLICY_ID} # NMKR Policy id
     RECEIVER_ADDRESS: ${env:RECEIVER_ADDRESS} # Wallet address
