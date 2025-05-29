@@ -1,9 +1,9 @@
-import { Alert, Button, Flex, Input, message, Modal, Tabs } from 'antd';
+import { Alert, Button, Flex, Grid, Input, message, Modal, Tabs } from 'antd';
 import { useCallback, useEffect, useState } from 'react';
 import { getErrorMessage } from '../../lib/errorHandler';
+import type { NFT, NFTDetails, ProjectTransaction } from '../../lib/types';
 import { MintService } from '../../services/mintService';
 import { useSelectionStore } from '../../stores/selectionStore';
-import type { NFT, NFTDetails, ProjectTransaction } from '../../lib/types';
 import AdminFieldsTable from './components/AdminFieldsTable';
 import AdminMintActionBar from './components/AdminMintActionBar';
 import AdminNftDetails from './components/AdminNftDetails';
@@ -11,6 +11,8 @@ import AdminReports from './components/AdminReports';
 import AdminStats from './components/AdminStats';
 import AdminTransactionsHistory from './components/AdminTransactionsHistory';
 import PaginationControls from './components/PaginationControls';
+
+const { useBreakpoint } = Grid;
 
 // Constants
 const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
@@ -61,6 +63,9 @@ const AdminDashboard = () => {
     getSelectedCount,
     getAllSelectedNfts,
   } = useSelectionStore();
+
+  const screens = useBreakpoint();
+  const modalWidth = screens.md ? '50%' : '90%';
 
   // ==================== Data Fetching ====================
   const fetchBalance = useCallback(async () => {
@@ -454,8 +459,7 @@ const AdminDashboard = () => {
       open={!!state.viewingNft}
       onCancel={handleCloseNftModal}
       footer={null}
-      width="80%"
-      modalRender={(node) => <div className="mt-5">{node}</div>}
+      width={modalWidth}
     >
       {state.viewingNft && <AdminNftDetails nft={state.viewingNft} />}
     </Modal>
