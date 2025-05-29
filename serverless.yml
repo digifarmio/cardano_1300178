@@ -11,13 +11,11 @@ provider:
   name: aws
   runtime: nodejs20.x
   timeout: 300 # Add this line - global default timeout (5 minutes)
-  memorySize: 1024 # Add this line - increase memory allocation
   environment:
     NODE_ENV: ${env:NODE_ENV, 'development'} # Auto detect environment
     NMKR_API_KEY: ${env:NMKR_API_KEY, 'key-local-dev'} # Default for local
     NMKR_BASE_URL: ${env:NMKR_BASE_URL, 'https://studio-api.preprod.nmkr.io'} # NMKR staging URL
     NMKR_PROJECT_UID: ${env:NMKR_PROJECT_UID} # NMKR Project id
-    NMKR_POLICY_ID: ${env:NMKR_POLICY_ID} # NMKR Policy id
     RECEIVER_ADDRESS: ${env:RECEIVER_ADDRESS} # Wallet address
     BLOCKCHAIN: ${env:BLOCKCHAIN, 'Cardano'} # Blockchain
     MINT_BATCH_SIZE: ${env:MINT_BATCH_SIZE, 10} # Safe default batch size
@@ -27,19 +25,34 @@ provider:
     AWS_S3_BUCKET: ${env:AWS_S3_BUCKET}
     AWS_DYNAMO_TABLE_BATCH_RECORDS: ${env:AWS_DYNAMO_TABLE_BATCH_RECORDS, 'BatchRecords'}
     AWS_DYNAMO_TABLE_RECORDS_STATUS: ${env:AWS_DYNAMO_TABLE_RECORDS_STATUS, 'ReportStatus'}
-    AWS_ACCESS_KEY_ID: ${env:AWS_ACCESS_KEY_ID}
-    AWS_SECRET_ACCESS_KEY: ${env:AWS_SECRET_ACCESS_KEY}
-    AWS_REGION: ${env:AWS_REGION, 'us-east-1'} # Default AWS region
-    BUCKET_NAME: ${env:BUCKET_NAME, ''} # Default bucket name
+    AWS_BUCKET_NAME_CSV: ${env:AWS_BUCKET_NAME_CSV, ''} # Default bucket name
+    AWS_BUCKET_NAME_NFT: ${env:AWS_BUCKET_NAME_NFT, ''} # Default bucket name
+    AWS_SQS_QUEUE_URL: ${env:AWS_SQS_QUEUE_URL, ''} # Default queue URL
+    SFTP_HOST: ${env:SFTP_HOST, ''} # Default SFTP host
+    SFTP_PORT: ${env:SFTP_PORT, '22'} # Default SFTP port
+    SFTP_USERNAME: ${env:SFTP_USERNAME, ''} # Default SFTP username
+    SFTP_PASSWORD: ${env:SFTP_PASSWORD, ''} # Default SFTP password
+    REMOTE_PATH: ${env:REMOTE_PATH, ''} # Defau
     JWT_SECRET: ${env:JWT_SECRET}
     JWT_ISSUER: ${env:JWT_ISSUER}
     JWT_EXPIRES_IN: ${env:JWT_EXPIRES_IN}
-
 plugins:
   - serverless-offline
+
+build:
+  esbuild:
+    bundle: true
+    target: node20
+    platform: node
 
 functions:
   api:
     handler: .build/src/handler.handler
     events:
       - httpApi: '*'
+
+  processNfts:
+    handler: .build/src/SqsLambdaHandler.lambdaHandler
+    events:
+      - sqs:
+          arn: ${env:AWS_SQS_QUEUE_ARN}
