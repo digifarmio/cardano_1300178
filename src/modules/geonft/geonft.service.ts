@@ -1,8 +1,8 @@
 import { S3Client, ListObjectsV2Command } from '@aws-sdk/client-s3';
+import { SQSClient, SendMessageBatchCommand } from '@aws-sdk/client-sqs';
 import { AwsClientProvider, AwsClientType } from '../core/AwsClients';
 import { ConfigService } from '../../config/config.service';
 import { APIResponse } from '../../types';
-import { SQSClient, SendMessageBatchCommand } from '@aws-sdk/client-sqs';
 
 export class GeoNftService {
   private readonly s3Client: S3Client;

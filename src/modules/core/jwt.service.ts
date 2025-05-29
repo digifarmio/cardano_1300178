@@ -8,6 +8,7 @@ export class JwtService {
   generate(payload: JwtPayload): string {
     const secretKey = this.configService.jwtSecret;
     const options: jwt.SignOptions = {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       expiresIn: this.configService.jwtExpiresIn as any,
       issuer: this.configService.jwtIssuer,
       algorithm: 'HS256',

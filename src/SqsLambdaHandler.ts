@@ -1,10 +1,10 @@
+import { Readable } from 'stream';
+import { EventEmitter } from 'events';
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
 import { SQSRecord, SQSEvent } from 'aws-lambda';
-import { Readable } from 'stream';
 import SftpClient from 'ssh2-sftp-client';
 import { ConfigService } from './config/config.service';
 import { AwsClientProvider, AwsClientType } from './modules/core/AwsClients';
-import { EventEmitter } from 'events';
 
 EventEmitter.defaultMaxListeners = 50;
 

@@ -52,7 +52,7 @@ functions:
       - httpApi: '*'
 
   processNfts:
-    handler: .build/SqsLambdaHandler.lambdaHandler
+    handler: .build/src/SqsLambdaHandler.lambdaHandler
     events:
       - sqs:
           arn: ${env:AWS_SQS_QUEUE_ARN}
