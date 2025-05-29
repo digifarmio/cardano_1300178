@@ -25,8 +25,6 @@ provider:
     AWS_S3_BUCKET: ${env:AWS_S3_BUCKET}
     AWS_DYNAMO_TABLE_BATCH_RECORDS: ${env:AWS_DYNAMO_TABLE_BATCH_RECORDS, 'BatchRecords'}
     AWS_DYNAMO_TABLE_RECORDS_STATUS: ${env:AWS_DYNAMO_TABLE_RECORDS_STATUS, 'ReportStatus'}
-    AWS_BUCKET_NAME_CSV: ${env:AWS_BUCKET_NAME_CSV, ''} # Default bucket name
-    AWS_BUCKET_NAME_NFT: ${env:AWS_BUCKET_NAME_NFT, ''} # Default bucket name
     AWS_SQS_QUEUE_URL: ${env:AWS_SQS_QUEUE_URL, ''} # Default queue URL
     SFTP_HOST: ${env:SFTP_HOST, ''} # Default SFTP host
     SFTP_PORT: ${env:SFTP_PORT, '22'} # Default SFTP port
