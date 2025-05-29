@@ -67,14 +67,6 @@ export class ConfigService {
     );
   }
 
-  get bucketNameCsv(): string {
-    return this.validateEnvVar('AWS_BUCKET_NAME_CSV', process.env.AWS_BUCKET_NAME_CSV);
-  }
-
-  get bucketNameNft(): string {
-    return this.validateEnvVar('AWS_BUCKET_NAME_NFT', process.env.AWS_BUCKET_NAME_NFT);
-  }
-
   get sqsQueueUrl(): string {
     return this.validateEnvVar('AWS_SQS_QUEUE_URL', process.env.AWS_SQS_QUEUE_URL);
   }

@@ -107,8 +107,6 @@ Ensure the following are installed on your machine:
    AWS_S3_BUCKET=your-s3-bucket-name
    AWS_DYNAMO_TABLE_BATCH_RECORDS=your-dynamo-table
    AWS_DYNAMO_TABLE_RECORDS_STATUS=your-dynamo-table
-   AWS_BUCKET_NAME_CSV=digifarm-files
-   AWS_BUCKET_NAME_NFT=digifarm-nfts
    AWS_SQS_QUEUE_URL=http://your-sqs-url/queue/queue-name
    AWS_SQS_QUEUE_ARN=arn:aws:sqs:us-east-1:202533530220:Digifarm.fifo
 

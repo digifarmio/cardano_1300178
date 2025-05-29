@@ -18,15 +18,13 @@ export class GeoNftService {
    * Main entry point from the controller
    * This method orchestrates the entire process
    */
-  async process(): Promise<APIResponse> {
-    const bucketNameNft = this.configService.bucketNameNft;
-    const bucketNameCsv = this.configService.bucketNameCsv;
+  async process(nftBucket: string, csvBucket: string): Promise<APIResponse> {
     try {
       // Combine listing files and enqueueing to SQS in one operation
       console.log('Starting NFT processing workflow');
-      const nft = await this.streamFilesToSqs(bucketNameNft);
+      const nft = await this.streamFilesToSqs(nftBucket);
 
-      const csv = await this.streamFilesToSqs(bucketNameCsv);
+      const csv = await this.streamFilesToSqs(csvBucket);
 
       return {
         success: true,
