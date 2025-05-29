@@ -11,6 +11,7 @@ export class GeoNftController {
       const { nftBucket, csvBucket } = req.body;
       if (!nftBucket || !csvBucket) {
         res.status(400).json({ error: 'nftBucket and csvBucket parameters are required' });
+        return;
       }
 
       const data = await this.geoNftService.process(nftBucket, csvBucket);
