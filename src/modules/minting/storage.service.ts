@@ -1,5 +1,3 @@
-import { ConfigService } from '@/config/config.service';
-import { BatchRecord, ReportStatus } from '@/types';
 import {
   DynamoDBClient,
   GetItemCommand,
@@ -10,6 +8,8 @@ import {
 import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { v4 as uuidv4 } from 'uuid';
+import { BatchRecord, ReportStatus } from '@/types';
+import { ConfigService } from '@/config/config.service';
 
 export class StorageService {
   private readonly s3: S3Client;

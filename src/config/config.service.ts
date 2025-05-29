@@ -1,6 +1,5 @@
 import { ValidationError } from '@/modules/core/errors';
 import { Blockchain } from '@/types';
-import path from 'path';
 
 export class ConfigService {
   private validateEnvVar(name: string, value: string | undefined): string {
@@ -16,10 +15,6 @@ export class ConfigService {
 
   get baseUrl(): string {
     return process.env.NMKR_BASE_URL || 'https://studio-api.nmkr.io';
-  }
-
-  get customerId(): string {
-    return this.validateEnvVar('NMKR_CUSTOMER_ID', process.env.NMKR_CUSTOMER_ID);
   }
 
   get projectUid(): string {
@@ -46,14 +41,6 @@ export class ConfigService {
   get mintTotalCount(): number {
     const size = this.validateEnvVar('MINT_TOTAL_COUNT', process.env.MINT_TOTAL_COUNT);
     return parseInt(size || '500', 10);
-  }
-
-  get batchStoragePath(): string {
-    return path.join(process.cwd(), 'data', 'batches');
-  }
-
-  get reportStoragePath(): string {
-    return path.join(process.cwd(), 'data', 'reports');
   }
 
   get concurrencyLimit(): number {
@@ -98,5 +85,17 @@ export class ConfigService {
 
   get bucketName(): string {
     return this.validateEnvVar('BUCKET_NAME', process.env.BUCKET_NAME);
+  }
+
+  get jwtSecret(): string {
+    return this.validateEnvVar('JWT_SECRET', process.env.JWT_SECRET);
+  }
+
+  get jwtIssuer(): string {
+    return this.validateEnvVar('JWT_ISSUER', process.env.JWT_ISSUER);
+  }
+
+  get jwtExpiresIn(): string {
+    return this.validateEnvVar('JWT_EXPIRES_IN', process.env.JWT_EXPIRES_IN);
   }
 }

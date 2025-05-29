@@ -1,5 +1,5 @@
 import { S3, S3Client } from '@aws-sdk/client-s3';
-import { ConfigService } from '../../config/config.service';
+import { ConfigService } from '@/config/config.service';
 
 export enum AwsClientType {
   S3 = 'S3',
