@@ -10,6 +10,7 @@ import {
 import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { v4 as uuidv4 } from 'uuid';
+import { AwsClientProvider, AwsClientType } from '../core/AwsClients';
 
 export class StorageService {
   private readonly s3: S3Client;
@@ -19,21 +20,8 @@ export class StorageService {
   private readonly statusTableName: string;
 
   constructor(private readonly config = new ConfigService()) {
-    this.s3 = new S3Client({
-      region: this.config.awsRegion,
-      credentials: {
-        accessKeyId: this.config.awsAccessKeyId,
-        secretAccessKey: this.config.awsSecretAccessKey,
-      },
-    });
-
-    this.dynamoDB = new DynamoDBClient({
-      region: this.config.awsRegion,
-      credentials: {
-        accessKeyId: this.config.awsAccessKeyId,
-        secretAccessKey: this.config.awsSecretAccessKey,
-      },
-    });
+    this.s3 = AwsClientProvider.getClient(AwsClientType.S3) as S3Client;
+    this.dynamoDB = AwsClientProvider.getClient(AwsClientType.DynamoDB) as DynamoDBClient;
 
     this.bucketName = this.config.awsS3Bucket;
     this.batchTableName = this.config.awsDynamoBatchRecords;

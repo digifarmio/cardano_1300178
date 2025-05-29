@@ -30,8 +30,8 @@ export class GeoNftService {
 
       return {
         success: true,
-        message: `${nft + csv} files enqueued for Lambda processing`,
-      } as APIResponse;
+        data: `Total NFT: ${nft} and CSV: ${csv} files enqueued for Lambda processing`,
+      };
     } catch (error) {
       console.error('Error processing NFT data:', error);
       throw new Error('Failed to process NFT data');

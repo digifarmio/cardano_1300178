@@ -1,9 +1,9 @@
 import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
-import { SQSRecord } from 'aws-lambda';
+import { SQSRecord, SQSEvent } from 'aws-lambda';
 import { Readable } from 'stream';
 import SftpClient from 'ssh2-sftp-client';
-import { ConfigService } from '../../config/config.service';
-import { AwsClientProvider, AwsClientType } from './AwsClients';
+import { ConfigService } from './config/config.service';
+import { AwsClientProvider, AwsClientType } from './modules/core/AwsClients';
 import { EventEmitter } from 'events';
 
 EventEmitter.defaultMaxListeners = 50;
@@ -20,20 +20,10 @@ export class SqsLambdaHandler {
   }
 
   /**
-   * Handler to process SQS messages - this will be called by AWS Lambda
-   */
-  static async handler(event: { Records: SQSRecord[] }): Promise<void> {
-    console.log(`Lambda function invoked with ${event.Records.length} records`);
-
-    const handler = new SqsLambdaHandler();
-    await handler.processSqsRecords(event.Records);
-  }
-
-  /**
    * Process a batch of SQS records
    * This method handles the processing of records within the Lambda function
    */
-  private async processSqsRecords(records: SQSRecord[]): Promise<void> {
+  async processSqsRecords(records: SQSRecord[]): Promise<void> {
     try {
       console.log(`Processing ${records.length} SQS records`);
 
@@ -91,3 +81,8 @@ export class SqsLambdaHandler {
     }
   }
 }
+
+export const handler = new SqsLambdaHandler();
+export const lambdaHandler = async (event: SQSEvent): Promise<void> => {
+  await handler.processSqsRecords(event.Records);
+};

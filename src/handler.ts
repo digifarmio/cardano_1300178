@@ -4,7 +4,6 @@ import { createHealthCheckRoutes } from '@/modules/healthcheck/healthcheck.route
 import { createMintRoutes } from '@/modules/minting/mint.routes';
 import express from 'express';
 import serverless from 'serverless-http';
-import { SqsLambdaHandler } from './modules/core/SqsLambdaHandler';
 
 const app = express();
 
@@ -20,4 +19,3 @@ app.use('/', createMintRoutes());
 app.use(globalErrorHandler);
 
 export const handler = serverless(app);
-export const lambdaHandler = SqsLambdaHandler.handler;

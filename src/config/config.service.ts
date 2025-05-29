@@ -62,10 +62,6 @@ export class ConfigService {
     return parseInt(count || '3', 10);
   }
 
-  get awsRegion(): string {
-    return this.validateEnvVar('AWS_REGION', process.env.AWS_REGION);
-  }
-
   get awsS3Bucket(): string {
     return this.validateEnvVar('AWS_S3_BUCKET', process.env.AWS_S3_BUCKET);
   }
@@ -82,14 +78,6 @@ export class ConfigService {
       'AWS_DYNAMO_TABLE_RECORDS_STATUS',
       process.env.AWS_DYNAMO_TABLE_RECORDS_STATUS
     );
-  }
-
-  get awsAccessKeyId(): string {
-    return this.validateEnvVar('AWS_ACCESS_KEY_ID', process.env.AWS_ACCESS_KEY_ID);
-  }
-
-  get awsSecretAccessKey(): string {
-    return this.validateEnvVar('AWS_SECRET_ACCESS_KEY', process.env.AWS_SECRET_ACCESS_KEY);
   }
 
   get bucketNameCsv(): string {

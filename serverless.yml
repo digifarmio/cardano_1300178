@@ -40,8 +40,6 @@ plugins:
 build:
   esbuild:
     bundle: true
-    minify: false
-    sourcemap: true
     target: node20
     platform: node
 
@@ -52,7 +50,7 @@ functions:
       - httpApi: '*'
 
   processNfts:
-    handler: .build/handler.lambdaHandler
+    handler: .build/SqsLambdaHandler.lambdaHandler
     events:
       - sqs:
           arn: ${env:AWS_SQS_QUEUE_ARN}
