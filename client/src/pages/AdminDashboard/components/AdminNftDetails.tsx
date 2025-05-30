@@ -17,19 +17,21 @@ const AdminNftDetails = ({ nft }: AdminNftDetailsProps) => {
 
   return (
     <Flex vertical gap={24} className="p-2">
-      {/* NFT Title */}
       <Title level={3} className="!mb-0 text-center">
         {nft.displayname || nft.name}
       </Title>
 
-      {/* Field ID */}
       {parsedMetadata && (
         <Text strong className="text-lg text-center">
-          Field ID: {parsedMetadata.id_long || parsedMetadata.id}
+          Field ID:{' '}
+          {typeof parsedMetadata.id_long === 'string'
+            ? parsedMetadata.id_long
+            : typeof parsedMetadata.id === 'string'
+              ? parsedMetadata.id
+              : 'N/A'}
         </Text>
       )}
 
-      {/* Image Preview */}
       {nft.ipfsGatewayAddress && (
         <Flex justify="center" className="my-4">
           <Image
@@ -46,65 +48,22 @@ const AdminNftDetails = ({ nft }: AdminNftDetailsProps) => {
         </Flex>
       )}
 
-      {/* Field Data Section */}
+      {/* Dynamic Metadata Details*/}
       {parsedMetadata && (
         <Card title="Field Data">
           <Descriptions bordered column={1} size="small">
-            <Descriptions.Item label="Area">{parsedMetadata.area ?? 'N/A'} m²</Descriptions.Item>
-            <Descriptions.Item label="Crop">{parsedMetadata.crop ?? 'N/A'}</Descriptions.Item>
-            <Descriptions.Item label="Last">{parsedMetadata.last ?? 'N/A'}</Descriptions.Item>
-            <Descriptions.Item label="Tile">{parsedMetadata.tile ?? 'N/A'}</Descriptions.Item>
-            <Descriptions.Item label="Dates">
-              {(parsedMetadata.dates ?? []).join(', ') || 'N/A'}
-            </Descriptions.Item>
-            <Descriptions.Item label="Sustainability Index">
-              {parsedMetadata.SustInd ?? 'N/A'}
-            </Descriptions.Item>
-            <Descriptions.Item label="Flatness">
-              {parsedMetadata.flatness ?? 'N/A'}
-            </Descriptions.Item>
-            <Descriptions.Item label="Perimeter">
-              {parsedMetadata.perimeter ?? 'N/A'}
-            </Descriptions.Item>
-            <Descriptions.Item label="Exterior Area">
-              {parsedMetadata.exterior_area ?? 'N/A'}
-            </Descriptions.Item>
-            <Descriptions.Item label="Source Projection">
-              {parsedMetadata.src_proj ?? 'N/A'}
-            </Descriptions.Item>
-            <Descriptions.Item label="Center Coordinates">
-              {parsedMetadata.center_lat ?? 'N/A'}, {parsedMetadata.center_lng ?? 'N/A'}
-            </Descriptions.Item>
-            <Descriptions.Item label="Center (Raw)">
-              {(parsedMetadata.center ?? []).join(', ') || 'N/A'}
-            </Descriptions.Item>
-            <Descriptions.Item label="Country">{parsedMetadata.country ?? 'N/A'}</Descriptions.Item>
-            <Descriptions.Item label="Confidence">
-              {parsedMetadata.confidence ?? 'N/A'}%
-            </Descriptions.Item>
-            <Descriptions.Item label="Version">{parsedMetadata.version ?? 'N/A'}</Descriptions.Item>
-            <Descriptions.Item label="Vertices">
-              {parsedMetadata.number_of_vertices ?? 'N/A'}
-            </Descriptions.Item>
-            <Descriptions.Item label="Vertices (Simplified)">
-              {parsedMetadata.number_of_vertices_simplified ?? 'N/A'}
-            </Descriptions.Item>
-            <Descriptions.Item label="Vegetation">
-              Herbaceous: {parsedMetadata.herbaceous_vegetation ?? 'N/A'}%
-              <br />
-              Shrubs: {parsedMetadata.shrubs ?? 'N/A'}%
-              <br />
-              Forest: {parsedMetadata.open_forest ?? 'N/A'}%
-            </Descriptions.Item>
-            <Descriptions.Item label="Field ID">
-              {parsedMetadata.id ?? parsedMetadata.id ?? 'N/A'}
-            </Descriptions.Item>
-            <Descriptions.Item label="Field ID (Long)">
-              {parsedMetadata.id_long ?? parsedMetadata.id ?? 'N/A'}
-            </Descriptions.Item>
-            <Descriptions.Item label="Metadata Version">
-              {parsedMetadata.version ?? 'N/A'}
-            </Descriptions.Item>
+            {Object.entries(parsedMetadata).map(([key, value]) => {
+              if (key === 'files') return;
+              return (
+                <Descriptions.Item key={key} label={key}>
+                  {Array.isArray(value)
+                    ? value.join(', ')
+                    : typeof value === 'object' && value !== null
+                      ? JSON.stringify(value)
+                      : String(value)}
+                </Descriptions.Item>
+              );
+            })}
           </Descriptions>
         </Card>
       )}

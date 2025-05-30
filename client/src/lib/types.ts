@@ -84,31 +84,7 @@ export interface NFTDetails {
   mintingfees: number;
 }
 
-export interface Metadata {
-  area: number;
-  crop: number;
-  last: number;
-  tile: string;
-  dates: string[];
-  SustInd: number;
-  country: string;
-  version: string;
-  flatness: number;
-  src_proj: number;
-  perimeter: number;
-  center_lat: number;
-  center_lng: number;
-  confidence: number;
-  exterior_area: number;
-  number_of_vertices: number;
-  number_of_vertices_simplified: number;
-  herbaceous_vegetation: number;
-  shrubs: number;
-  open_forest: number;
-  id: string;
-  id_long: string;
-  center: [number, number];
-}
+export type Metadata = Record<string, unknown>;
 
 export interface MintingReport {
   date: string;
