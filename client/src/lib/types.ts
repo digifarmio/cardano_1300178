@@ -1,5 +1,7 @@
 import type { JwtPayload } from 'jwt-decode';
 
+export type AdminStatKey = 'total' | 'sold' | 'free' | 'reserved' | 'error';
+
 export interface AuthContextType {
   token: string | null;
   login: (token: string) => void;
@@ -28,7 +30,7 @@ export interface NFT {
   id: number;
   ipfsLink: string;
   gatewayLink: string;
-  state: string;
+  state: AdminStatKey;
   name: string;
   displayname: string | null;
   detaildata: unknown | null;
@@ -51,7 +53,7 @@ export interface NFT {
 export interface NFTDetails {
   id: number;
   ipfshash: string;
-  state: string;
+  state: AdminStatKey;
   name: string;
   displayname: string;
   detaildata: string;
@@ -82,31 +84,7 @@ export interface NFTDetails {
   mintingfees: number;
 }
 
-export interface Metadata {
-  area: number;
-  crop: number;
-  last: number;
-  tile: string;
-  dates: string[];
-  SustInd: number;
-  country: string;
-  version: string;
-  flatness: number;
-  src_proj: number;
-  perimeter: number;
-  center_lat: number;
-  center_lng: number;
-  confidence: number;
-  exterior_area: number;
-  number_of_vertices: number;
-  number_of_vertices_simplified: number;
-  herbaceous_vegetation: number;
-  shrubs: number;
-  open_forest: number;
-  id: string;
-  id_long: string;
-  center: [number, number];
-}
+export type Metadata = Record<string, unknown>;
 
 export interface MintingReport {
   date: string;

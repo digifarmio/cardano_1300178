@@ -1,5 +1,4 @@
-import { DownloadOutlined, DownOutlined, UpOutlined } from '@ant-design/icons';
-import { Button, Space, Table, Tag, Typography } from 'antd';
+import { Space, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { GetTransactionNfts, ProjectTransaction } from '../../../lib/types';
 
@@ -8,10 +7,9 @@ const { Text } = Typography;
 interface AdminTransactionsHistoryProps {
   data: ProjectTransaction[];
   loading: boolean;
-  onDownload: (transaction: ProjectTransaction) => void;
 }
 
-const AdminTransactionsHistory = ({ data, loading, onDownload }: AdminTransactionsHistoryProps) => {
+const AdminTransactionsHistory = ({ data, loading }: AdminTransactionsHistoryProps) => {
   const expandedRowRender = (transaction: ProjectTransaction) => {
     if (!transaction.transactionNfts || transaction.transactionNfts.length === 0) {
       return <Text type="secondary">No NFTs in this transaction</Text>;
@@ -136,15 +134,6 @@ const AdminTransactionsHistory = ({ data, loading, onDownload }: AdminTransactio
         </Space>
       ),
     },
-    {
-      title: 'Actions',
-      key: 'actions',
-      render: (_, record) => (
-        <Button icon={<DownloadOutlined />} onClick={() => onDownload(record)} size="small">
-          CSV
-        </Button>
-      ),
-    },
   ];
 
   return (
@@ -154,15 +143,7 @@ const AdminTransactionsHistory = ({ data, loading, onDownload }: AdminTransactio
       loading={loading}
       dataSource={data}
       bordered
-      expandable={{
-        expandedRowRender,
-        expandIcon: ({ expanded, onExpand, record }) =>
-          expanded ? (
-            <UpOutlined onClick={(e) => onExpand(record, e)} />
-          ) : (
-            <DownOutlined onClick={(e) => onExpand(record, e)} />
-          ),
-      }}
+      expandable={{ expandedRowRender }}
     />
   );
 };
