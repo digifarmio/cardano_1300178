@@ -276,52 +276,6 @@ const AdminDashboard = () => {
     setState((prev) => ({ ...prev, fieldCount: value || 1 }));
   };
 
-  // ==================== Transaction Handlers ====================
-  const handleDownloadTransaction = (transaction: ProjectTransaction) => {
-    const csvContent = [
-      [
-        'Transaction ID',
-        'Date',
-        'Blockchain',
-        'Status',
-        'NFT Count',
-        'Amount (ADA)',
-        'Fee (ADA)',
-        'Confirmed',
-      ].join(','),
-      [
-        transaction.transactionid,
-        new Date(transaction.created).toISOString(),
-        transaction.blockchain,
-        transaction.state,
-        transaction.nftcount,
-        transaction.ada,
-        transaction.fee,
-        transaction.confirmed ? 'Yes' : 'No',
-      ].join(','),
-      '\nNFT Details (Asset Name|Fingerprint|Token Count|Multiplier|Status|Transaction Hash)',
-      transaction.transactionNfts
-        ?.map(
-          (nft) =>
-            `${nft.assetName}|${nft.fingerprint}|${nft.tokenCount}|${nft.multiplier}|${nft.confirmed ? 'CONFIRMED' : 'PENDING'}|${nft.txHashSolanaTransaction || 'N/A'}`
-        )
-        .join('\n') || 'No NFT details',
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute(
-      'download',
-      `transaction_${transaction.transactionid}_${new Date(transaction.created).toISOString().split('T')[0]}.csv`
-    );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
-
   // ==================== Report Handlers ====================
   const handleGenerateReport = async () => {
     try {
@@ -440,11 +394,7 @@ const AdminDashboard = () => {
   );
 
   const renderTransactionHistory = () => (
-    <AdminTransactionsHistory
-      data={state.transactions}
-      onDownload={handleDownloadTransaction}
-      loading={state.transactionsLoading}
-    />
+    <AdminTransactionsHistory data={state.transactions} loading={state.transactionsLoading} />
   );
 
   const renderReports = () => (
