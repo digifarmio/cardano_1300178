@@ -1,6 +1,7 @@
 import { Space, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { GetTransactionNfts, ProjectTransaction } from '../../../lib/types';
+import { lovelaceToAda } from '../../../lib/utils';
 
 const { Text } = Typography;
 
@@ -129,8 +130,8 @@ const AdminTransactionsHistory = ({ data, loading }: AdminTransactionsHistoryPro
       key: 'amount',
       render: (_, record) => (
         <Space direction="vertical" size={0}>
-          <Text strong>{record.ada} ADA</Text>
-          <Text type="secondary">Fee: {record.fee} ADA</Text>
+          <Text strong>{lovelaceToAda(record.ada)} ADA</Text>
+          <Text type="secondary">Fee: {lovelaceToAda(record.fee)} ADA</Text>
         </Space>
       ),
     },
