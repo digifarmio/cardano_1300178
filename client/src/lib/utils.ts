@@ -34,3 +34,28 @@ export function parseMetadata(jsonString: string): Metadata | null {
     return null;
   }
 }
+
+/**
+ * Converts Lovelace (smallest Cardano unit) to ADA.
+ * Example: 1430000 => 1.430000
+ */
+export function lovelaceToAda(value: number | string): string {
+  const num = Number(value);
+  if (!num || isNaN(num)) {
+    return '0.000000';
+  }
+  const ada = num / 1_000_000;
+  return ada.toFixed(6);
+}
+
+/**
+ * Converts ADA to Lovelace.
+ * Example: 1.43 => 1430000
+ */
+export function adaToLovelace(value: number | string): number {
+  const num = Number(value);
+  if (!num || isNaN(num)) {
+    return 0;
+  }
+  return Math.round(num * 1_000_000);
+}

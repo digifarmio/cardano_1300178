@@ -3,6 +3,7 @@ import type { ColumnsType } from 'antd/es/table';
 import pRetry from 'p-retry';
 import { useState } from 'react';
 import type { ReportStatus } from '../../../lib/types';
+import { CloudDownloadOutlined } from '@ant-design/icons';
 
 const { Text, Title } = Typography;
 
@@ -161,6 +162,7 @@ const AdminReports = ({ onGenerateReport, onDownloadReport, onGetStatus }: Admin
             size="small"
             onClick={() => onDownloadReport(record.reportId, 'csv')}
             disabled={record.status !== 'completed'}
+            icon={<CloudDownloadOutlined />}
           >
             Download CSV
           </Button>
@@ -184,7 +186,12 @@ const AdminReports = ({ onGenerateReport, onDownloadReport, onGetStatus }: Admin
           <Text type="secondary">
             Reports are generated asynchronously. You can track progress below.
           </Text>
-          <Button type="primary" onClick={handleGenerate} loading={generating}>
+          <Button
+            type="primary"
+            onClick={handleGenerate}
+            loading={generating}
+            icon={<CloudDownloadOutlined />}
+          >
             Generate Full Report
           </Button>
         </Flex>
@@ -197,7 +204,6 @@ const AdminReports = ({ onGenerateReport, onDownloadReport, onGetStatus }: Admin
           ...status,
         }))}
         rowKey="reportId"
-        loading={generating}
         pagination={false}
       />
     </Flex>

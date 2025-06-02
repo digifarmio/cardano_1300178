@@ -1,4 +1,4 @@
-import { CheckOutlined, KeyOutlined, SettingOutlined } from '@ant-design/icons';
+import { KeyOutlined, PlusCircleOutlined } from '@ant-design/icons';
 import { Button, Card, Checkbox, Flex, InputNumber, Space, Tooltip, Typography } from 'antd';
 
 const { Text } = Typography;
@@ -49,14 +49,14 @@ const AdminMintActionBar = ({
           <span>fields</span>
 
           <Tooltip title="Mint a random set of fields">
-            <Button icon={<SettingOutlined />} onClick={onMintRandom} loading={loading}>
+            <Button icon={<PlusCircleOutlined />} onClick={onMintRandom} loading={loading}>
               Mint Random
             </Button>
           </Tooltip>
 
           <Button
             type="primary"
-            icon={<CheckOutlined />}
+            icon={<PlusCircleOutlined />}
             onClick={onMintSelected}
             loading={loading}
             disabled={!hasSelected}

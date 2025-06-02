@@ -1,4 +1,5 @@
 import { Button, Flex, Select } from 'antd';
+import { ReloadOutlined } from '@ant-design/icons';
 
 interface PaginationControlsProps {
   page: number;
@@ -85,7 +86,7 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
       </Flex>
 
       {/* Refresh button on the far right */}
-      <Button onClick={onRefresh} loading={loading} type="default">
+      <Button type="default" onClick={onRefresh} loading={loading} icon={<ReloadOutlined />}>
         Refresh
       </Button>
     </Flex>

@@ -1,9 +1,8 @@
 import { Button, Layout, Typography } from 'antd';
 import { jwtDecode } from 'jwt-decode';
 import { NavLink, Outlet, useNavigate } from 'react-router';
-
+import { LogoutOutlined } from '@ant-design/icons';
 import { useAuth } from '../hooks/useAuth';
-
 import type { DecodedToken } from '../lib/types';
 
 const { Header, Content } = Layout;
@@ -36,7 +35,7 @@ const AppLayout = () => {
           </Title>
         </NavLink>
         <div className="ml-auto">
-          <Button danger onClick={handleLogout}>
+          <Button danger onClick={handleLogout} icon={<LogoutOutlined />}>
             Logout
           </Button>
         </div>

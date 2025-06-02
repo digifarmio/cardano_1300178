@@ -30,6 +30,19 @@ function getErrorInfo(err: unknown) {
   if (!(err instanceof Error)) return baseErrorInfo;
 
   const enhancedErrorInfo = { ...baseErrorInfo, message: err.message };
+  if (err.name === 'TokenExpiredError') {
+    enhancedErrorInfo.code = 'TOKEN_EXPIRED';
+    enhancedErrorInfo.statusCode = 401;
+    enhancedErrorInfo.message = 'Token has expired';
+    return enhancedErrorInfo;
+  }
+
+  if (err.name === 'JsonWebTokenError') {
+    enhancedErrorInfo.code = 'INVALID_TOKEN';
+    enhancedErrorInfo.statusCode = 401;
+    enhancedErrorInfo.message = 'Invalid authentication token';
+    return enhancedErrorInfo;
+  }
 
   if (err instanceof ApplicationError) {
     enhancedErrorInfo.code = err.code;

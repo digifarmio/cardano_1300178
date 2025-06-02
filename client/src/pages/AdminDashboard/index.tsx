@@ -1,4 +1,4 @@
-import { Alert, Button, Flex, Grid, Input, message, Modal, Tabs } from 'antd';
+import { Button, Flex, Grid, Input, message, Modal, Tabs } from 'antd';
 import { useCallback, useEffect, useState } from 'react';
 import { getErrorMessage } from '../../lib/errorHandler';
 import { getStatLabel } from '../../lib/statusMapper';
@@ -12,6 +12,7 @@ import AdminReports from './components/AdminReports';
 import AdminStats from './components/AdminStats';
 import AdminTransactionsHistory from './components/AdminTransactionsHistory';
 import PaginationControls from './components/PaginationControls';
+import { CopyOutlined } from '@ant-design/icons';
 
 const { useBreakpoint } = Grid;
 
@@ -58,8 +59,8 @@ const AdminDashboard = () => {
 
   const {
     selectedRowKeys,
-    selectAllReady,
     setSelectedRowKeys,
+    selectAllReady,
     setSelectAllReady,
     clearSelection,
     getSelectedCount,
@@ -148,18 +149,19 @@ const AdminDashboard = () => {
 
   // ==================== NFT Detail Handlers ====================
   const handleViewNft = async (uid: string) => {
+    setState((prev) => ({ ...prev, loading: true }));
+
     try {
-      setState((prev) => ({ ...prev, loading: true }));
       const response = await MintService.getNftDetailsById(uid);
       setState((prev) => ({
         ...prev,
         viewingNft: response.data.data,
-        loading: false,
       }));
     } catch (error) {
       const errorMessage = getErrorMessage(error);
       messageApi.error(errorMessage);
       console.error(errorMessage);
+    } finally {
       setState((prev) => ({ ...prev, loading: false }));
     }
   };
@@ -170,20 +172,25 @@ const AdminDashboard = () => {
 
   // ==================== Minting Handlers ====================
   const handleRandomMint = async () => {
+    setState((prev) => ({ ...prev, loading: true }));
+
     try {
       const result = await MintService.mintRandomBatch(state.fieldCount);
       const { batches } = result.data.data;
-      const totalMinted = batches.reduce(
-        (sum: number, batch) =>
-          batch.success && batch.result?.sendedNft ? sum + batch.result.sendedNft.length : sum,
-        0
-      );
+
+      const totalMinted = batches.reduce((sum: number, batch) => {
+        const sent = (batch.success && batch.result?.sendedNft?.length) || 0;
+        return sum + sent;
+      }, 0);
+
       messageApi.success(`Successfully minted ${totalMinted} NFTs`);
       await refresh();
     } catch (error) {
       const errorMessage = getErrorMessage(error);
-      messageApi.error(errorMessage);
       console.error(errorMessage);
+      messageApi.error(errorMessage);
+    } finally {
+      setState((prev) => ({ ...prev, loading: false }));
     }
   };
 
@@ -192,6 +199,16 @@ const AdminDashboard = () => {
       messageApi.warning('No NFTs selected for minting');
       return;
     }
+
+    const selectedNfts = getAllSelectedNfts();
+    const nonFreeNfts = selectedNfts.filter((nft) => nft.state !== 'free');
+
+    if (nonFreeNfts.length > 0) {
+      messageApi.warning(`Cannot mint ${nonFreeNfts.length} NFTs - they are not in 'free' state`);
+      return;
+    }
+
+    setState((prev) => ({ ...prev, loading: true }));
 
     try {
       await MintService.mintSpecificBatch(selectedRowKeys as string[]);
@@ -202,10 +219,14 @@ const AdminDashboard = () => {
       const errorMessage = getErrorMessage(error);
       messageApi.error(errorMessage);
       console.error(errorMessage);
+    } finally {
+      setState((prev) => ({ ...prev, loading: false }));
     }
   };
 
   const handleSpecificMint = async (id: string) => {
+    setState((prev) => ({ ...prev, loading: true }));
+
     try {
       await MintService.mintSpecificBatch([id]);
       messageApi.success('Minted 1 NFT');
@@ -214,6 +235,8 @@ const AdminDashboard = () => {
       const errorMessage = getErrorMessage(error);
       messageApi.error(errorMessage);
       console.error(errorMessage);
+    } finally {
+      setState((prev) => ({ ...prev, loading: false }));
     }
   };
 
@@ -262,14 +285,20 @@ const AdminDashboard = () => {
     setState((prev) => ({ ...prev, stateFilter, page: 1 }));
   };
 
-  const handleFirstPage = () => handlePageChange(1);
-  const handlePreviousPage = () =>
-    setState((prev) => ({ ...prev, page: Math.max(prev.page - 1, 1) }));
-  const handleNextPage = () =>
-    setState((prev) => ({
+  const handleFirstPage = () => {
+    return handlePageChange(1);
+  };
+
+  const handlePreviousPage = () => {
+    return setState((prev) => ({ ...prev, page: Math.max(prev.page - 1, 1) }));
+  };
+
+  const handleNextPage = () => {
+    return setState((prev) => ({
       ...prev,
       page: state.nfts.length === state.pageSize ? prev.page + 1 : prev.page,
     }));
+  };
 
   // ==================== Field Count Handler ====================
   const handleFieldCountChange = (value: number | null) => {
@@ -278,6 +307,8 @@ const AdminDashboard = () => {
 
   // ==================== Report Handlers ====================
   const handleGenerateReport = async () => {
+    setState((prev) => ({ ...prev, loading: true }));
+
     try {
       const response = await MintService.generateReport();
       return response.data.data;
@@ -286,10 +317,14 @@ const AdminDashboard = () => {
       messageApi.error(errorMessage);
       console.error(errorMessage);
       throw error;
+    } finally {
+      setState((prev) => ({ ...prev, loading: false }));
     }
   };
 
   const handleGetReportStatus = async (reportId: string) => {
+    setState((prev) => ({ ...prev, loading: true }));
+
     try {
       const response = await MintService.getReportStatus(reportId);
       return response.data.data;
@@ -298,10 +333,14 @@ const AdminDashboard = () => {
       messageApi.error(errorMessage);
       console.error(errorMessage);
       throw error;
+    } finally {
+      setState((prev) => ({ ...prev, loading: false }));
     }
   };
 
   const handleDownloadReport = async (reportId: string, type: 'csv' | 'pdf') => {
+    setState((prev) => ({ ...prev, loading: true }));
+
     try {
       const response = await MintService.getReportStatus(reportId);
       const { status, pdfPath, csvPath } = response.data.data;
@@ -311,11 +350,19 @@ const AdminDashboard = () => {
         return;
       }
 
-      window.open(type === 'pdf' ? pdfPath : csvPath, '_blank');
+      const filePath = type === 'pdf' ? pdfPath : csvPath;
+      if (!filePath) {
+        messageApi.error(`No ${type.toUpperCase()} path found for this report.`);
+        return;
+      }
+
+      window.open(filePath, '_blank');
     } catch (error) {
       const errorMessage = getErrorMessage(error);
       messageApi.error(errorMessage);
       console.error(errorMessage);
+    } finally {
+      setState((prev) => ({ ...prev, loading: false }));
     }
   };
 
@@ -324,6 +371,8 @@ const AdminDashboard = () => {
       messageApi.warning('No NFTs selected for token generation');
       return;
     }
+
+    setState((prev) => ({ ...prev, loading: true }));
 
     try {
       const response = await MintService.generateUserToken(selectedRowKeys as string[]);
@@ -334,20 +383,12 @@ const AdminDashboard = () => {
       const errorMessage = getErrorMessage(error);
       messageApi.error(errorMessage);
       console.error(errorMessage);
+    } finally {
+      setState((prev) => ({ ...prev, loading: false }));
     }
   };
 
   // ==================== Render Helpers ====================
-  const renderWarningAlert = () => (
-    <Alert
-      message="Warning"
-      description="Transactions will be on-chain using the network set by your NMKR API key. Admin mints send NFTs to address defined in the RECEIVER_ADDRESS environment variable."
-      type="warning"
-      showIcon
-      closable
-    />
-  );
-
   const renderNftsManagement = () => (
     <Flex vertical gap={16}>
       <AdminMintActionBar
@@ -384,10 +425,8 @@ const AdminDashboard = () => {
         dataSource={state.nfts}
         onView={handleViewNft}
         onMint={handleSpecificMint}
-        selected={{
-          selectedRowKeys,
-          setSelectedRowKeys: handleRowSelection,
-        }}
+        selectedRowKeys={selectedRowKeys}
+        onRowSelection={handleRowSelection}
         loading={state.loading}
       />
     </Flex>
@@ -435,7 +474,7 @@ const AdminDashboard = () => {
           readOnly
           autoSize={{ minRows: 3, maxRows: 6 }}
         />
-        <Button onClick={handleClipboardCopy} className="mt-4">
+        <Button onClick={handleClipboardCopy} className="mt-4" icon={<CopyOutlined />}>
           Copy to Clipboard
         </Button>
       </Modal>
@@ -463,7 +502,6 @@ const AdminDashboard = () => {
   return (
     <Flex vertical gap={16}>
       {contextHolder}
-      {renderWarningAlert()}
       <AdminStats {...state.stats} />
       <Tabs defaultActiveKey="nfts" items={tabItems} />
       {renderNftDetailsModal()}
