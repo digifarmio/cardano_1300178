@@ -1,4 +1,4 @@
-import { Alert, Button, Flex, Grid, Input, message, Modal, Tabs } from 'antd';
+import { Button, Flex, Grid, Input, message, Modal, Tabs } from 'antd';
 import { useCallback, useEffect, useState } from 'react';
 import { getErrorMessage } from '../../lib/errorHandler';
 import { getStatLabel } from '../../lib/statusMapper';
@@ -338,16 +338,6 @@ const AdminDashboard = () => {
   };
 
   // ==================== Render Helpers ====================
-  const renderWarningAlert = () => (
-    <Alert
-      message="Warning"
-      description="Transactions will be on-chain using the network set by your NMKR API key. Admin mints send NFTs to address defined in the RECEIVER_ADDRESS environment variable."
-      type="warning"
-      showIcon
-      closable
-    />
-  );
-
   const renderNftsManagement = () => (
     <Flex vertical gap={16}>
       <AdminMintActionBar
@@ -463,7 +453,6 @@ const AdminDashboard = () => {
   return (
     <Flex vertical gap={16}>
       {contextHolder}
-      {renderWarningAlert()}
       <AdminStats {...state.stats} />
       <Tabs defaultActiveKey="nfts" items={tabItems} />
       {renderNftDetailsModal()}

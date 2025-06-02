@@ -1,4 +1,4 @@
-import { Alert, Flex, Grid, message, Modal } from 'antd';
+import { Flex, Grid, message, Modal } from 'antd';
 import { useEffect, useState } from 'react';
 import { MintService } from '../../services/mintService';
 import type { NFTDetails } from '../../lib/types';
@@ -65,13 +65,6 @@ const UserDashboard = () => {
   return (
     <Flex vertical gap={24}>
       {contextHolder}
-      <Alert
-        message="Warning"
-        description="Transactions will be on-chain. Network is set by your NMKR API key."
-        type="warning"
-        showIcon
-        closable
-      />
 
       <UserFieldsTable
         dataSource={nfts}
