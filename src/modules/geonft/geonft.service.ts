@@ -1,5 +1,5 @@
 import { S3Client, ListObjectsV2Command } from '@aws-sdk/client-s3';
-import { SQSClient, SendMessageBatchCommand } from '@aws-sdk/client-sqs';
+import { GetQueueAttributesCommand, SQSClient, SendMessageBatchCommand } from '@aws-sdk/client-sqs';
 import { AwsClientProvider, AwsClientType } from '../core/AwsClients';
 import { ConfigService } from '../../config/config.service';
 import { APIResponse } from '../../types';
@@ -20,6 +20,10 @@ export class GeoNftService {
    */
   async process(nftBucket: string, csvBucket: string): Promise<APIResponse> {
     try {
+      const isQueueBusy = await this.isQueueProcessing();
+      if (isQueueBusy) {
+        throw new Error('Queue is currently processing. Please try again later.');
+      }
       // Combine listing files and enqueueing to SQS in one operation
       console.log('Starting NFT processing workflow');
       const nft = await this.streamFilesToSqs(nftBucket);
@@ -98,6 +102,42 @@ export class GeoNftService {
     } catch (error) {
       console.error('Error streaming files to SQS:', error);
       throw new Error('Failed to stream files to SQS');
+    }
+  }
+
+  private async isQueueProcessing(): Promise<boolean> {
+    try {
+      const queueUrl = this.configService.sqsQueueUrl;
+
+      const command = new GetQueueAttributesCommand({
+        QueueUrl: queueUrl,
+        AttributeNames: [
+          'ApproximateNumberOfMessages',
+          'ApproximateNumberOfMessagesNotVisible',
+          'ApproximateNumberOfMessagesDelayed',
+        ],
+      });
+
+      const response = await this.sqsClient.send(command);
+      const attributes = response.Attributes;
+
+      if (!attributes) {
+        return false;
+      }
+
+      const availableMessages = parseInt(attributes.ApproximateNumberOfMessages || '0', 10);
+      const inFlightMessages = parseInt(
+        attributes.ApproximateNumberOfMessagesNotVisible || '0',
+        10
+      );
+      const delayedMessages = parseInt(attributes.ApproximateNumberOfMessagesDelayed || '0', 10);
+
+      const totalMessages = availableMessages + inFlightMessages + delayedMessages;
+
+      return totalMessages > 0;
+    } catch (error) {
+      console.error('Error checking queue status:', error);
+      return false;
     }
   }
 }

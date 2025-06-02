@@ -3,4 +3,5 @@ node_modules
 .serverless
 .env
 .DS_Store
+.env.production
 
