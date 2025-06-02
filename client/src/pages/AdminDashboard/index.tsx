@@ -1,7 +1,8 @@
 import { Alert, Button, Flex, Grid, Input, message, Modal, Tabs } from 'antd';
 import { useCallback, useEffect, useState } from 'react';
 import { getErrorMessage } from '../../lib/errorHandler';
-import type { NFT, NFTDetails, ProjectTransaction } from '../../lib/types';
+import { getStatLabel } from '../../lib/statusMapper';
+import type { AdminStatKey, NFT, NFTDetails, ProjectTransaction } from '../../lib/types';
 import { MintService } from '../../services/mintService';
 import { useSelectionStore } from '../../stores/selectionStore';
 import AdminFieldsTable from './components/AdminFieldsTable';
@@ -17,12 +18,13 @@ const { useBreakpoint } = Grid;
 // Constants
 const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
 const MAX_PAGE_SIZE = 50;
+
 const STATE_FILTER_OPTIONS = [
   { label: 'All', value: 'all' },
-  { label: 'Free', value: 'free' },
-  { label: 'Reserved', value: 'reserved' },
-  { label: 'Sold', value: 'sold' },
-  { label: 'Error', value: 'error' },
+  ...(['free', 'reserved', 'sold', 'error'] as AdminStatKey[]).map((status) => ({
+    label: getStatLabel(status),
+    value: status,
+  })),
 ];
 
 const INITIAL_STATS = {
@@ -274,52 +276,6 @@ const AdminDashboard = () => {
     setState((prev) => ({ ...prev, fieldCount: value || 1 }));
   };
 
-  // ==================== Transaction Handlers ====================
-  const handleDownloadTransaction = (transaction: ProjectTransaction) => {
-    const csvContent = [
-      [
-        'Transaction ID',
-        'Date',
-        'Blockchain',
-        'Status',
-        'NFT Count',
-        'Amount (ADA)',
-        'Fee (ADA)',
-        'Confirmed',
-      ].join(','),
-      [
-        transaction.transactionid,
-        new Date(transaction.created).toISOString(),
-        transaction.blockchain,
-        transaction.state,
-        transaction.nftcount,
-        transaction.ada,
-        transaction.fee,
-        transaction.confirmed ? 'Yes' : 'No',
-      ].join(','),
-      '\nNFT Details (Asset Name|Fingerprint|Token Count|Multiplier|Status|Transaction Hash)',
-      transaction.transactionNfts
-        ?.map(
-          (nft) =>
-            `${nft.assetName}|${nft.fingerprint}|${nft.tokenCount}|${nft.multiplier}|${nft.confirmed ? 'CONFIRMED' : 'PENDING'}|${nft.txHashSolanaTransaction || 'N/A'}`
-        )
-        .join('\n') || 'No NFT details',
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute(
-      'download',
-      `transaction_${transaction.transactionid}_${new Date(transaction.created).toISOString().split('T')[0]}.csv`
-    );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
-
   // ==================== Report Handlers ====================
   const handleGenerateReport = async () => {
     try {
@@ -438,11 +394,7 @@ const AdminDashboard = () => {
   );
 
   const renderTransactionHistory = () => (
-    <AdminTransactionsHistory
-      data={state.transactions}
-      onDownload={handleDownloadTransaction}
-      loading={state.transactionsLoading}
-    />
+    <AdminTransactionsHistory data={state.transactions} loading={state.transactionsLoading} />
   );
 
   const renderReports = () => (
