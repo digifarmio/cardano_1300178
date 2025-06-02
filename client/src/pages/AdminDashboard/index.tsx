@@ -51,10 +51,6 @@ const INITIAL_STATE = {
   transactions: [] as ProjectTransaction[],
   transactionsLoading: false,
   generatedToken: null as string | null,
-
-  uploadLoading: false,
-  nftBucket: '',
-  csvBucket: '',
 };
 
 type AdminState = typeof INITIAL_STATE;
@@ -75,8 +71,6 @@ const AdminDashboard = () => {
 
   const screens = useBreakpoint();
   const modalWidth = screens.md ? '50%' : '90%';
-
-  console.log('TEST');
 
   // ==================== Data Fetching ====================
   const fetchBalance = useCallback(async () => {
