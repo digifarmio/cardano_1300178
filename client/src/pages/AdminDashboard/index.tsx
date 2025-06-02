@@ -13,6 +13,8 @@ import AdminStats from './components/AdminStats';
 import AdminTransactionsHistory from './components/AdminTransactionsHistory';
 import PaginationControls from './components/PaginationControls';
 import { CopyOutlined } from '@ant-design/icons';
+import { UploadsService } from '../../services/uploadsService';
+import AdminUploads from './components/AdminUploads';
 
 const { useBreakpoint } = Grid;
 
@@ -388,6 +390,21 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleProcessCSV = useCallback(
+    async (nftBucket: string, csvBucket: string) => {
+      try {
+        await UploadsService.processCSV(nftBucket, csvBucket);
+        messageApi.success('Fields processing started successfully');
+      } catch (error) {
+        const errorMessage = getErrorMessage(error);
+        messageApi.error(errorMessage);
+        console.error(errorMessage);
+        throw error;
+      }
+    },
+    [messageApi]
+  );
+
   // ==================== Render Helpers ====================
   const renderNftsManagement = () => (
     <Flex vertical gap={16}>
@@ -444,6 +461,11 @@ const AdminDashboard = () => {
     />
   );
 
+  const renderUploads = useCallback(
+    () => <AdminUploads onProcessCSV={handleProcessCSV} />,
+    [handleProcessCSV]
+  );
+
   const renderNftDetailsModal = () => (
     <Modal
       title="NFT Details"
@@ -496,6 +518,11 @@ const AdminDashboard = () => {
       key: 'reports',
       label: 'Minting Reports',
       children: renderReports(),
+    },
+    {
+      key: 'uploads',
+      label: 'Uploads',
+      children: renderUploads(),
     },
   ];
 
