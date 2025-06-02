@@ -204,7 +204,6 @@ const AdminReports = ({ onGenerateReport, onDownloadReport, onGetStatus }: Admin
           ...status,
         }))}
         rowKey="reportId"
-        loading={generating}
         pagination={false}
       />
     </Flex>

@@ -106,11 +106,12 @@ const AdminTransactionsHistory = ({ data, loading }: AdminTransactionsHistoryPro
       title: 'Status',
       dataIndex: 'state',
       key: 'state',
-      render: (state: string) => (
-        <Tag color={state === 'confirmed' ? 'green' : 'orange'}>
-          {state?.toUpperCase() || 'PENDING'}
-        </Tag>
-      ),
+      render: (_: string, record: ProjectTransaction) => {
+        const isConfirmed = record.confirmed;
+        const status = isConfirmed ? 'CONFIRMED' : record.state?.toUpperCase() || 'PENDING';
+
+        return <Tag color={isConfirmed ? 'green' : 'orange'}>{status}</Tag>;
+      },
     },
     {
       title: 'NFTs',

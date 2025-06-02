@@ -118,9 +118,6 @@ export class ReportService {
 
   private async prepareData(batches: BatchRecord[]) {
     try {
-      let allNftsHaveTxHash = true;
-      let missingTxNfts: string[] = [];
-
       const results = await Promise.all(
         batches.map(async (batch) => {
           const nfts = batch.success
@@ -132,14 +129,8 @@ export class ReportService {
               try {
                 const details = await this.nmkr.getNftDetailsThrottled(nft.uid);
 
-                if (!details.initialminttxhash) {
-                  allNftsHaveTxHash = false;
-                  missingTxNfts.push(nft.name || 'Unknown NFT');
-                }
-
                 return {
                   success: true,
-                  hasTxHash: !!details.initialminttxhash,
                   csvRecord: {
                     fieldID: nft.name || 'Unknown NFT',
                     tokenID: details.uid,
@@ -171,12 +162,8 @@ export class ReportService {
                 };
               } catch (error) {
                 console.error(`Error fetching NFT details for ${nft.name}:`, error);
-                allNftsHaveTxHash = false;
-                missingTxNfts.push(nft.name || 'Unknown NFT');
-
                 return {
                   success: false,
-                  hasTxHash: false,
                   csvRecord: {
                     fieldID: nft.name || 'Unknown NFT',
                     tokenID: 'Error',
@@ -211,16 +198,9 @@ export class ReportService {
               successCount: nftDetails.filter((d) => d.success).length,
               errorCount: nftDetails.filter((d) => !d.success).length,
             },
-            allNftsHaveTxHash: nftDetails.every((d) => d.hasTxHash),
           };
         })
       );
-
-      if (!allNftsHaveTxHash) {
-        throw new Error(
-          `Report cannot be completed. Missing blockchain transactions for NFTs: ${missingTxNfts.join(', ')}. Please try again later.`
-        );
-      }
 
       return {
         csvData: results.flatMap((r) => r.csvRecords),
