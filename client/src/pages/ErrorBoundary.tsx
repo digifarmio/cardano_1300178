@@ -1,5 +1,6 @@
 import { Button, Flex, Result } from 'antd';
 import { useNavigate } from 'react-router';
+import { RollbackOutlined } from '@ant-design/icons';
 
 const ErrorBoundary = () => {
   const navigate = useNavigate();
@@ -15,7 +16,7 @@ const ErrorBoundary = () => {
         title="500"
         subTitle="Sorry, something went wrong."
         extra={
-          <Button type="primary" onClick={handleRetry}>
+          <Button type="primary" onClick={handleRetry} icon={<RollbackOutlined />}>
             Retry
           </Button>
         }

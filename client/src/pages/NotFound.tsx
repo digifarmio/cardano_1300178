@@ -1,5 +1,6 @@
 import { Button, Flex, Result } from 'antd';
 import { useNavigate } from 'react-router';
+import { RollbackOutlined } from '@ant-design/icons';
 
 const NotFound = () => {
   const navigate = useNavigate();
@@ -15,7 +16,7 @@ const NotFound = () => {
         title="404"
         subTitle="Sorry, the page you visited does not exist."
         extra={
-          <Button type="primary" onClick={handleBackHome}>
+          <Button type="primary" onClick={handleBackHome} icon={<RollbackOutlined />}>
             Back Home
           </Button>
         }

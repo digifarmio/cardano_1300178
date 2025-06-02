@@ -3,6 +3,7 @@ import type { ColumnsType } from 'antd/es/table';
 import { useMemo } from 'react';
 import { getStatColor, getStatLabel } from '../../../lib/statusMapper';
 import type { AdminStatKey, NFT } from '../../../lib/types';
+import { EyeOutlined, PlusCircleOutlined } from '@ant-design/icons';
 
 interface AdminFieldsTableProps {
   dataSource: NFT[];
@@ -66,6 +67,7 @@ const AdminFieldsTable = ({
               size="small"
               onClick={() => onView(record.uid)}
               loading={loading}
+              icon={<EyeOutlined />}
             >
               View
             </Button>
@@ -75,6 +77,7 @@ const AdminFieldsTable = ({
               onClick={() => onMint(record.uid)}
               loading={loading}
               disabled={loading || record.state !== 'free'}
+              icon={<PlusCircleOutlined />}
             >
               Mint
             </Button>

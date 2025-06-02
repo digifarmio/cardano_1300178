@@ -1,5 +1,6 @@
 import { Button, Flex, Result } from 'antd';
 import { useNavigate } from 'react-router';
+import { RollbackOutlined } from '@ant-design/icons';
 
 const Unauthorized = () => {
   const navigate = useNavigate();
@@ -15,7 +16,7 @@ const Unauthorized = () => {
         title="403"
         subTitle="Sorry, you are not authorized to access this page."
         extra={
-          <Button type="primary" onClick={handleBackHome}>
+          <Button type="primary" onClick={handleBackHome} icon={<RollbackOutlined />}>
             Back Home
           </Button>
         }
