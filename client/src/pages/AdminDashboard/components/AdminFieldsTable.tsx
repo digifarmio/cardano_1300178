@@ -8,10 +8,8 @@ import { EyeOutlined, PlusCircleOutlined } from '@ant-design/icons';
 interface AdminFieldsTableProps {
   dataSource: NFT[];
   loading: boolean;
-  selected: {
-    selectedRowKeys: React.Key[];
-    setSelectedRowKeys: (keys: React.Key[]) => void;
-  };
+  selectedRowKeys: React.Key[];
+  onRowSelection: (keys: React.Key[]) => void;
   onView: (id: string) => void;
   onMint: (id: string) => void;
   onExport?: (format: 'csv' | 'json') => void;
@@ -20,7 +18,8 @@ interface AdminFieldsTableProps {
 const AdminFieldsTable = ({
   dataSource,
   loading,
-  selected: { selectedRowKeys, setSelectedRowKeys },
+  selectedRowKeys,
+  onRowSelection,
   onView,
   onMint,
 }: AdminFieldsTableProps) => {
@@ -91,10 +90,7 @@ const AdminFieldsTable = ({
   const rowSelection = {
     selectedRowKeys,
     preserveSelectedRowKeys: true,
-    onChange: setSelectedRowKeys,
-    getCheckboxProps: (record: NFT) => ({
-      disabled: record.state !== 'free',
-    }),
+    onChange: onRowSelection,
   };
 
   return (

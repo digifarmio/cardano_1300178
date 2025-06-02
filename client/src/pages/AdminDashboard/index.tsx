@@ -59,8 +59,8 @@ const AdminDashboard = () => {
 
   const {
     selectedRowKeys,
-    selectAllReady,
     setSelectedRowKeys,
+    selectAllReady,
     setSelectAllReady,
     clearSelection,
     getSelectedCount,
@@ -197,6 +197,14 @@ const AdminDashboard = () => {
   const handleSelectedMint = async () => {
     if (selectedRowKeys.length === 0) {
       messageApi.warning('No NFTs selected for minting');
+      return;
+    }
+
+    const selectedNfts = getAllSelectedNfts();
+    const nonFreeNfts = selectedNfts.filter((nft) => nft.state !== 'free');
+
+    if (nonFreeNfts.length > 0) {
+      messageApi.warning(`Cannot mint ${nonFreeNfts.length} NFTs - they are not in 'free' state`);
       return;
     }
 
@@ -417,10 +425,8 @@ const AdminDashboard = () => {
         dataSource={state.nfts}
         onView={handleViewNft}
         onMint={handleSpecificMint}
-        selected={{
-          selectedRowKeys,
-          setSelectedRowKeys: handleRowSelection,
-        }}
+        selectedRowKeys={selectedRowKeys}
+        onRowSelection={handleRowSelection}
         loading={state.loading}
       />
     </Flex>
