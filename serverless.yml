@@ -16,17 +16,6 @@ provider:
       allowedOrigins:
         - ${env:DOMAIN}
         - http://localhost:5173
-      allowedHeaders:
-        - Content-Type
-        - Authorization
-        - X-Requested-With
-      allowedMethods:
-        - GET
-        - POST
-        - PUT
-        - DELETE
-        - OPTIONS
-      allowCredentials: true
   environment:
     NODE_ENV: ${env:NODE_ENV, 'development'} # Auto detect environment
     NMKR_API_KEY: ${env:NMKR_API_KEY, 'key-local-dev'} # Default for local
