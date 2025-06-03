@@ -1,5 +1,5 @@
 import { Button, Card, Flex, Input, Typography } from 'antd';
-import { FolderOutlined, FileTextOutlined, UploadOutlined } from '@ant-design/icons';
+import { FolderOutlined, UploadOutlined } from '@ant-design/icons';
 import { memo, useState } from 'react';
 
 const { Title, Text } = Typography;
@@ -62,7 +62,7 @@ const AdminUploads = memo(({ onProcessCSV }: AdminUploadsProps) => {
               placeholder="e.g. field-data"
               value={csvBucket}
               onChange={(e) => setCsvBucket(e.target.value)}
-              prefix={<FileTextOutlined className="text-gray-400" />}
+              prefix={<FolderOutlined className="text-gray-400" />}
               size="large"
             />
           </Flex>
