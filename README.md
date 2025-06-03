@@ -89,6 +89,7 @@ Ensure the following are installed on your machine:
    ```env
    NODE_ENV=development
    SERVERLESS_ORG=<your-org>
+   DOMAIN=<your-domain>
 
    JWT_SECRET=<your-very-secure-secret>
    JWT_ISSUER=<your-app-name>
