@@ -19,11 +19,11 @@ export class GeoNftService {
    * This method orchestrates the entire process
    */
   async process(nftBucket: string, csvBucket: string): Promise<APIResponse> {
+    const isQueueBusy = await this.isQueueProcessing();
+    if (isQueueBusy) {
+      throw new Error('Queue is currently processing. Please try again later.');
+    }
     try {
-      const isQueueBusy = await this.isQueueProcessing();
-      if (isQueueBusy) {
-        throw new Error('Queue is currently processing. Please try again later.');
-      }
       // Combine listing files and enqueueing to SQS in one operation
       console.log('Starting NFT processing workflow');
       const nft = await this.streamFilesToSqs(nftBucket);
