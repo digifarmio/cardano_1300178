@@ -206,7 +206,7 @@ const AdminDashboard = () => {
     const nonFreeNfts = selectedNfts.filter((nft) => nft.state !== 'free');
 
     if (nonFreeNfts.length > 0) {
-      messageApi.warning(`Cannot mint ${nonFreeNfts.length} NFTs - they are not in 'free' state`);
+      messageApi.warning(`Cannot mint ${nonFreeNfts.length} NFTs — not ready to be minted.`);
       return;
     }
 
