@@ -50,8 +50,8 @@ export const MintService = {
     return apiClient.get(`/reports/${reportId}`);
   },
 
-  getReportFile(reportId: string, type: 'csv' | 'pdf'): Promise<AxiosResponse<{ data: string }>> {
-    return apiClient.get(`/reports/${reportId}/download/${type}`);
+  getReportFile(reportId: string): Promise<AxiosResponse<{ data: string }>> {
+    return apiClient.get(`/reports/${reportId}/download`);
   },
 
   generateUserToken: (uids: string[]): Promise<AxiosResponse<{ token: string }>> => {

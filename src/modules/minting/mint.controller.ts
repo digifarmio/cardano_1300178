@@ -157,8 +157,7 @@ export class MintController {
 
   async downloadReport({ params }: Request, res: Response, next: NextFunction) {
     try {
-      const type = params.type === 'csv' || params.type === 'pdf' ? params.type : 'csv';
-      const fileUrl = await this.mintService.getReportFile(params.reportId, type);
+      const fileUrl = await this.mintService.getReportFile(params.reportId, 'csv');
       res.redirect(fileUrl);
     } catch (error) {
       next(error);

@@ -1,11 +1,10 @@
 import { createObjectCsvStringifier } from 'csv-writer';
-import PDFDocument from 'pdfkit';
 import { v4 as uuidv4 } from 'uuid';
 import { ConfigService } from '@/config/config.service';
 import { NmkrClient } from '@/modules/core/nmkr.client';
 import { ExplorerService } from '@/modules/minting/explorer.service';
 import { StorageService } from '@/modules/minting/storage.service';
-import { BatchRecord, CsvRecord, PdfRecord, ReportStatus } from '@/types';
+import { BatchRecord, CsvRecord, ReportStatus } from '@/types';
 
 export class ReportService {
   constructor(
@@ -56,7 +55,7 @@ export class ReportService {
     }
   }
 
-  async getReportFile(id: string, type: 'csv' | 'pdf'): Promise<string> {
+  async getReportFile(id: string, type: 'csv'): Promise<string> {
     try {
       return await this.storageService.getReportFileUrl(id, type);
     } catch (error) {
@@ -73,45 +72,26 @@ export class ReportService {
         throw new Error('No batch records available for report');
       }
 
-      const { csvData, pdfData } = await this.prepareData(batches);
-
-      const [csvPath, pdfPath] = await Promise.all([
-        this.generateCsv(reportId, csvData),
-        this.generatePdf(reportId, pdfData),
-      ]);
+      const { csvData } = await this.prepareData(batches);
+      const csvPath = await this.generateCsv(reportId, csvData);
 
       await this.storageService.updateStatus({
         id: reportId,
         status: 'completed',
         updatedAt: new Date().toISOString(),
         csvPath,
-        pdfPath,
       });
     } catch (error) {
-      const statusUpdate = {
+      await this.storageService.updateStatus({
         id: reportId,
+        status: 'failed',
         updatedAt: new Date().toISOString(),
-      };
+        error: {
+          message: error instanceof Error ? error.message : 'Report processing failed',
+          code: 'PROCESSING_ERROR',
+        },
+      });
 
-      if (error instanceof Error && error.message.includes('Please try again later.')) {
-        await this.storageService.updateStatus({
-          ...statusUpdate,
-          status: 'processing',
-          error: {
-            message: error instanceof Error ? error.message : String(error),
-            code: 'PROCESSING_ERROR',
-          },
-        });
-      } else {
-        await this.storageService.updateStatus({
-          ...statusUpdate,
-          status: 'failed',
-          error: {
-            message: error instanceof Error ? error.message : 'Report processing failed',
-            code: 'PROCESSING_ERROR',
-          },
-        });
-      }
       throw error;
     }
   }
@@ -142,23 +122,6 @@ export class ReportService {
                         )
                       : 'N/A',
                   },
-                  pdfNft: {
-                    name: nft.name || 'Unknown NFT',
-                    assetName: details.assetname,
-                    fingerprint: details.fingerprint,
-                    txID: details.initialminttxhash || 'Pending',
-                    explorerURL: details.initialminttxhash
-                      ? this.explorer.getExplorerUrl(
-                          details.mintedOnBlockchain,
-                          details.initialminttxhash
-                        )
-                      : 'N/A',
-                    metadata: details.metadata,
-                    policyId: details.policyid,
-                    receiverAddress: details.receiveraddress,
-                    ipfsHash: details.ipfshash,
-                    ipfsGatewayAddress: details.ipfsGatewayAddress,
-                  },
                 };
               } catch (error) {
                 console.error(`Error fetching NFT details for ${nft.name}:`, error);
@@ -170,18 +133,6 @@ export class ReportService {
                     txID: 'Error',
                     explorerURL: 'N/A',
                   },
-                  pdfNft: {
-                    name: nft.name || 'Unknown NFT',
-                    assetName: 'Error',
-                    fingerprint: 'N/A',
-                    txID: 'Error',
-                    explorerURL: 'N/A',
-                    metadata: 'N/A',
-                    policyId: 'N/A',
-                    receiverAddress: 'N/A',
-                    ipfsHash: 'N/A',
-                    ipfsGatewayAddress: 'N/A',
-                  },
                 };
               }
             })
@@ -189,22 +140,12 @@ export class ReportService {
 
           return {
             csvRecords: nftDetails.map((d) => d.csvRecord),
-            pdfRecord: {
-              batchId: batch.id,
-              status: batch.status,
-              createdAt: batch.createdAt,
-              error: batch.error,
-              nfts: nftDetails.map((d) => d.pdfNft),
-              successCount: nftDetails.filter((d) => d.success).length,
-              errorCount: nftDetails.filter((d) => !d.success).length,
-            },
           };
         })
       );
 
       return {
         csvData: results.flatMap((r) => r.csvRecords),
-        pdfData: results.map((r) => r.pdfRecord),
       };
     } catch (error) {
       throw error;
@@ -231,72 +172,5 @@ export class ReportService {
       console.error('Error generating CSV:', error);
       throw new Error('Failed to generate CSV report');
     }
-  }
-
-  private async generatePdf(reportId: string, data: PdfRecord[]): Promise<string> {
-    return new Promise((resolve, reject) => {
-      const doc = new PDFDocument({ autoFirstPage: false });
-      const chunks: Buffer[] = [];
-
-      doc.on('data', (chunk) => chunks.push(chunk));
-      doc.on('end', async () => {
-        try {
-          const pdfBuffer = Buffer.concat(chunks);
-          const url = await this.storageService.storeReportFile(reportId, pdfBuffer, 'pdf');
-          resolve(url);
-        } catch (error) {
-          console.error('Error storing PDF:', error);
-          reject(new Error('Failed to store PDF report'));
-        }
-      });
-      doc.on('error', (error) => {
-        console.error('PDF generation error:', error);
-        reject(new Error('Failed to generate PDF report'));
-      });
-
-      // Generate PDF content
-      data.forEach((record) => {
-        doc
-          .addPage()
-          .fontSize(16)
-          .text(`NFT Minting Report - Batch ${record.batchId}`, { align: 'center' })
-          .moveDown(2)
-          .fontSize(12)
-          .text(`Batch ID: ${record.batchId}`)
-          .text(`Status: ${record.status}`)
-          .text(`Created At: ${record.createdAt}`);
-
-        if (record.error) {
-          doc.fillColor('red').text(`Error: ${record.error}`).fillColor('black').moveDown();
-        } else {
-          doc.moveDown();
-        }
-
-        if (record.nfts.length) {
-          doc.fontSize(10).text('NFT Details:', { underline: true }).moveDown(0.5);
-
-          record.nfts.forEach((nft, index) => {
-            doc
-              .fontSize(10)
-              .text(`- NFT ${index + 1}`)
-              .text(`  NFT Name: ${nft.name}`)
-              .text(`  Asset Name: ${nft.assetName}`)
-              .text(`  Fingerprint: ${nft.fingerprint}`)
-              .text(`  TX ID: ${nft.txID}`)
-              .text(`  Explorer URL: ${nft.explorerURL}`)
-              .text(`  Metadata: ${JSON.stringify(nft.metadata, null, 2)}`)
-              .text(`  Policy ID: ${nft.policyId}`)
-              .text(`  Receiver Address: ${nft.receiverAddress}`)
-              .text(`  IPFS Hash: ${nft.ipfsHash}`)
-              .text(`  IPFS Gateway Address: ${nft.ipfsGatewayAddress}`)
-              .moveDown(0.5);
-          });
-        } else {
-          doc.text('No NFTs were processed in this batch.').moveDown(0.5);
-        }
-      });
-
-      doc.end();
-    });
   }
 }

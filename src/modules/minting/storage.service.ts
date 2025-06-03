@@ -127,11 +127,7 @@ export class StorageService {
     return result.Item ? (unmarshall(result.Item) as Partial<ReportStatus>) : {};
   }
 
-  async storeReportFile(
-    reportId: string,
-    content: Buffer | string,
-    type: 'csv' | 'pdf'
-  ): Promise<string> {
+  async storeReportFile(reportId: string, content: Buffer | string, type: 'csv'): Promise<string> {
     const key = `reports/${reportId}.${type}`;
     const body = typeof content === 'string' ? Buffer.from(content) : content;
 
@@ -140,14 +136,14 @@ export class StorageService {
         Bucket: this.bucketName,
         Key: key,
         Body: body,
-        ContentType: type === 'csv' ? 'text/csv' : 'application/pdf',
+        ContentType: 'text/csv',
       })
     );
 
     return `https://${this.bucketName}.s3.amazonaws.com/${key}`;
   }
 
-  async getReportFileUrl(reportId: string, type: 'csv' | 'pdf'): Promise<string> {
+  async getReportFileUrl(reportId: string, type: 'csv'): Promise<string> {
     const key = `reports/${reportId}.${type}`;
 
     try {

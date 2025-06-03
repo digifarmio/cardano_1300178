@@ -95,7 +95,7 @@ export class MintService {
     return this.reportService.getReportStatus(reportId);
   }
 
-  async getReportFile(reportId: string, type: 'csv' | 'pdf'): Promise<string> {
+  async getReportFile(reportId: string, type: 'csv'): Promise<string> {
     return this.reportService.getReportFile(reportId, type);
   }
 
