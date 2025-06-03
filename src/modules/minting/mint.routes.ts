@@ -24,7 +24,7 @@ export const createMintRoutes = () => {
     .post('/mint/specific-batch', ...adminAuth, csvUpload, controller.mintSpecificBatch)
     .post('/reports', ...adminAuth, controller.generateReport)
     .get('/reports/:reportId', ...adminAuth, controller.getReportStatus)
-    .get('/reports/:reportId/download/:type', ...adminAuth, controller.downloadReport);
+    .get('/reports/:reportId/download', ...adminAuth, controller.downloadReport);
 
   return router;
 };

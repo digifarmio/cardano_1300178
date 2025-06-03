@@ -73,8 +73,4 @@ export class ValidationService {
   validateReportRequest(reportId: string): void {
     if (!reportId?.trim()) throw new ValidationError('Invalid report ID');
   }
-
-  validateDownloadType(type: string): void {
-    if (!['csv', 'pdf'].includes(type)) throw new ValidationError('Invalid download type');
-  }
 }
