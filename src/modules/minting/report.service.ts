@@ -1,47 +1,46 @@
 import { createObjectCsvStringifier } from 'csv-writer';
 import { v4 as uuidv4 } from 'uuid';
-import { ConfigService } from '@/config/config.service';
 import { NmkrClient } from '@/modules/core/nmkr.client';
 import { ExplorerService } from '@/modules/minting/explorer.service';
 import { StorageService } from '@/modules/minting/storage.service';
-import { BatchRecord, CsvRecord, ReportStatus } from '@/types';
+import { CsvRecord, ProjectTransaction, ReportStatus } from '@/types';
 
 export class ReportService {
   constructor(
     private readonly nmkr: NmkrClient = new NmkrClient(),
-    private readonly config: ConfigService = new ConfigService(),
     private readonly explorer: ExplorerService = new ExplorerService(),
     private readonly storageService: StorageService = new StorageService()
   ) {}
 
   async generateReport(): Promise<{ reportId: string; statusUrl: string }> {
-    const reportId = uuidv4();
-    await this.storageService.saveStatus(reportId, {
-      id: reportId,
-      status: 'processing',
-      createdAt: new Date().toISOString(),
-    });
+    try {
+      const reportId = uuidv4();
+      await this.storageService.saveStatus(reportId, {
+        id: reportId,
+        status: 'processing',
+        createdAt: new Date().toISOString(),
+      });
 
-    // Process report in background
-    this.processReport(reportId).catch((error) => {
-      console.error('Failed to process report:', error);
-    });
-
-    return {
-      reportId,
-      statusUrl: `/reports/${reportId}`,
-    };
+      await this.processReport(reportId);
+      return { reportId, statusUrl: `/reports/${reportId}` };
+    } catch (error) {
+      console.error('Failed to fetch all report statuses:', error);
+      throw new Error('Unable to retrieve report statuses');
+    }
   }
 
-  async getReportStatus(id: string): Promise<ReportStatus> {
+  async getAllReports(): Promise<ReportStatus[]> {
     try {
-      const status = await this.storageService.getStatus(id);
-      return {
-        id,
-        status: status.status ?? 'pending',
-        ...status,
-        createdAt: status.createdAt ?? new Date().toISOString(),
-      };
+      return await this.storageService.getAllReports();
+    } catch (error) {
+      console.error('Failed to fetch all report statuses:', error);
+      throw new Error('Unable to retrieve report statuses');
+    }
+  }
+
+  async getReportById(id: string): Promise<ReportStatus> {
+    try {
+      return this.storageService.getReportById(id);
     } catch (error) {
       return {
         id,
@@ -52,6 +51,15 @@ export class ReportService {
           code: 'STATUS_ERROR',
         },
       };
+    }
+  }
+
+  async deleteReport(reportId: string): Promise<boolean> {
+    try {
+      return await this.storageService.deleteReport(reportId);
+    } catch (error) {
+      console.error('Failed to delete report:', error);
+      throw new Error('Unable to delete report');
     }
   }
 
@@ -67,12 +75,12 @@ export class ReportService {
 
   private async processReport(reportId: string): Promise<void> {
     try {
-      const batches = await this.storageService.getBatchRecords();
-      if (!batches.length) {
-        throw new Error('No batch records available for report');
+      const transactions = await this.nmkr.getTransactions();
+      if (!transactions.length) {
+        throw new Error('No transactions available for report');
       }
 
-      const { csvData } = await this.prepareData(batches);
+      const csvData = await this.prepareData(transactions);
       const csvPath = await this.generateCsv(reportId, csvData);
 
       await this.storageService.updateStatus({
@@ -96,23 +104,27 @@ export class ReportService {
     }
   }
 
-  private async prepareData(batches: BatchRecord[]) {
+  private async prepareData(transactions: ProjectTransaction[]) {
     try {
       const results = await Promise.all(
-        batches.map(async (batch) => {
-          const nfts = batch.success
-            ? (batch.result.sendedNft ?? []).filter((nft) => nft.name)
-            : [];
+        transactions.map(async (tx) => {
+          if (!tx.transactionNfts?.length) return [];
 
           const nftDetails = await Promise.all(
-            nfts.map(async (nft) => {
+            tx.transactionNfts.map(async (nft) => {
               try {
-                const details = await this.nmkr.getNftDetailsThrottled(nft.uid);
+                if (!nft.assetName) {
+                  throw new Error('NFT is missing assetName');
+                }
+
+                const tokenName = this.hexToString(nft.assetName);
+                const details = await this.nmkr.getNftDetailsByTokennameThrottled(tokenName);
+                const parsedMetadata = this.parseMetadata(details.metadata);
 
                 return {
                   success: true,
                   csvRecord: {
-                    fieldID: nft.name || 'Unknown NFT',
+                    fieldID: this.extractFieldId(parsedMetadata),
                     tokenID: details.uid,
                     txID: details.initialminttxhash || 'Pending',
                     explorerURL: details.initialminttxhash
@@ -124,11 +136,11 @@ export class ReportService {
                   },
                 };
               } catch (error) {
-                console.error(`Error fetching NFT details for ${nft.name}:`, error);
+                console.error(`Error fetching NFT details for asset ${nft.assetName}:`, error);
                 return {
                   success: false,
                   csvRecord: {
-                    fieldID: nft.name || 'Unknown NFT',
+                    fieldID: 'Error',
                     tokenID: 'Error',
                     txID: 'Error',
                     explorerURL: 'N/A',
@@ -138,15 +150,11 @@ export class ReportService {
             })
           );
 
-          return {
-            csvRecords: nftDetails.map((d) => d.csvRecord),
-          };
+          return nftDetails.map((data) => data.csvRecord);
         })
       );
 
-      return {
-        csvData: results.flatMap((r) => r.csvRecords),
-      };
+      return results.flat();
     } catch (error) {
       throw error;
     }
@@ -172,5 +180,45 @@ export class ReportService {
       console.error('Error generating CSV:', error);
       throw new Error('Failed to generate CSV report');
     }
+  }
+
+  private hexToString(hex: string): string {
+    return decodeURIComponent(hex.replace(/(..)/g, '%$1'));
+  }
+
+  private parseMetadata(jsonString: string): Record<string, unknown> | null {
+    try {
+      const parsed = JSON.parse(jsonString);
+
+      if (!parsed['721']) return null;
+      const block721 = parsed['721'];
+
+      const policyIdKey = Object.keys(block721).find((key) => key !== 'version');
+      if (!policyIdKey) return null;
+
+      const metadataObj = block721[policyIdKey];
+      const nftKey = Object.keys(metadataObj)[0];
+      if (!nftKey) return null;
+
+      const raw = metadataObj[nftKey];
+      if (!raw) return null;
+
+      return raw;
+    } catch (e) {
+      console.error('Failed to parse or normalize metadata:', e);
+      return null;
+    }
+  }
+
+  private extractFieldId(parsedMetadata: Record<string, unknown> | null): string {
+    if (typeof parsedMetadata?.id_long === 'string') {
+      return parsedMetadata.id_long;
+    }
+
+    if (typeof parsedMetadata?.id === 'string') {
+      return parsedMetadata.id;
+    }
+
+    return 'N/A';
   }
 }

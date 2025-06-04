@@ -1,9 +1,13 @@
+import { ConfigService } from '@/config/config.service';
 import { ValidationError } from '@/modules/core/errors';
 import { NmkrClient } from '@/modules/core/nmkr.client';
 import { BatchMintParams, BatchMintRequest, GetNftsParams } from '@/types';
 
 export class ValidationService {
-  constructor(private readonly nmkrClient = new NmkrClient()) {}
+  constructor(
+    private readonly nmkrClient = new NmkrClient(),
+    private readonly configService = new ConfigService()
+  ) {}
 
   validateRequired(value: unknown, field: string): void {
     if (!value) throw new ValidationError(`${field} is required`);
@@ -23,13 +27,6 @@ export class ValidationService {
     return num;
   }
 
-  validateCSVHeaders(headers: string[], requiredHeaders: string[]): void {
-    const missingHeaders = requiredHeaders.filter((h) => !headers.includes(h));
-    if (missingHeaders.length) {
-      throw new ValidationError(`Missing required CSV headers: ${missingHeaders.join(', ')}`);
-    }
-  }
-
   validateGetNftsParams({ projectUid, state, count, page }: GetNftsParams): void {
     [projectUid, state].forEach((field, idx) =>
       this.validateRequired(field, idx === 0 ? 'projectUid' : 'state')
@@ -44,6 +41,7 @@ export class ValidationService {
       this.validateRequired(field, ['projectUid', 'receiver', 'blockchain'][idx])
     );
     this.validatePositiveNumber(count, 'count');
+    this.validateMaxMintLimit(count);
     if (blockchain !== 'Cardano') throw new ValidationError('Unsupported blockchain type');
   }
 
@@ -72,5 +70,12 @@ export class ValidationService {
 
   validateReportRequest(reportId: string): void {
     if (!reportId?.trim()) throw new ValidationError('Invalid report ID');
+  }
+
+  validateMaxMintLimit(countToMint: number): void {
+    const maxMintLimit = this.configService.maxMintLimit;
+    if (countToMint > maxMintLimit) {
+      throw new ValidationError(`Minting count exceeds total allowed limit (${maxMintLimit}).`);
+    }
   }
 }

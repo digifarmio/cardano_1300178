@@ -1,115 +1,55 @@
-import { Button, Card, Flex, message, Space, Table, Tag, Tooltip, Typography } from 'antd';
+import { Button, Card, Flex, Space, Table, Tag, Tooltip, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import pRetry from 'p-retry';
-import { useState } from 'react';
+import { CloudDownloadOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons';
 import type { ReportStatus } from '../../../lib/types';
-import { CloudDownloadOutlined } from '@ant-design/icons';
+import { getStatusColor } from '../../../lib/utils';
 
 const { Text, Title } = Typography;
 
-const MAX_RETRIES = 5;
-const DELAY = 1000; // 1 second delay for retries
-const MAX_TIMEOUT = 3000; // 3 seconds max timeout for each status check
-
 interface AdminReportsProps {
+  reports: ReportStatus[];
+  loading: {
+    list: boolean;
+    generate: boolean;
+    delete: boolean;
+    download: boolean;
+  };
+  deletingId: string | null;
+  downloadingId: string | null;
   onGenerateReport: () => Promise<{ reportId: string; statusUrl: string }>;
-  onDownloadReport: (reportId: string, type: 'csv' | 'pdf') => Promise<void>;
-  onGetStatus: (reportId: string) => Promise<ReportStatus>;
+  onDownloadReport: (reportId: string, type: 'csv') => Promise<void>;
+  onDeleteReport: (reportId: string) => Promise<void>;
+  onRefresh: () => Promise<void>;
 }
 
-const AdminReports = ({ onGenerateReport, onDownloadReport, onGetStatus }: AdminReportsProps) => {
-  const [activeReports, setActiveReports] = useState<Record<string, ReportStatus>>({});
-  const [generating, setGenerating] = useState(false);
+const AdminReports = ({
+  reports,
+  loading,
+  deletingId,
+  downloadingId,
+  onGenerateReport,
+  onDownloadReport,
+  onDeleteReport,
+  onRefresh,
+}: AdminReportsProps) => {
+  const statusCounts = reports.reduce(
+    (acc, report) => {
+      acc[report.status as keyof typeof acc]++;
+      return acc;
+    },
+    { processing: 0, completed: 0, failed: 0 }
+  );
 
-  // Poll status with retry + exponential backoff
-  const pollReportStatus = async (reportId: string) => {
-    const fetchStatus = async () => {
-      const status = await onGetStatus(reportId);
-      setActiveReports((prev) => ({
-        ...prev,
-        [reportId]: status,
-      }));
-
-      if (status.status === 'completed' || status.status === 'failed') {
-        // Completed or failed → stop retrying by resolving
-        return status;
-      }
-
-      // Otherwise throw to retry after backoff delay
-      throw new Error('Report not ready yet');
-    };
-
-    return pRetry(fetchStatus, {
-      retries: MAX_RETRIES,
-      factor: 2, // exponential backoff multiplier
-      minTimeout: DELAY,
-      maxTimeout: MAX_TIMEOUT,
-      onFailedAttempt: (error) => {
-        console.log(`Attempt ${error.attemptNumber} failed for report ${reportId}. Retrying...`);
-      },
-    }).catch((error) => {
-      console.error(`Polling failed for report ${reportId}:`, error);
-      setActiveReports((prev) => ({
-        ...prev,
-        [reportId]: {
-          ...prev[reportId],
-          status: 'failed',
-        },
-      }));
-    });
-  };
-
-  const handleGenerate = async () => {
-    try {
-      setGenerating(true);
-      const { reportId } = await onGenerateReport();
-
-      setActiveReports((prev) => ({
-        ...prev,
-        [reportId]: {
-          id: reportId,
-          status: 'pending',
-          progress: 0,
-          createdAt: new Date().toISOString(),
-        },
-      }));
-
-      // Start polling status with retry logic (no concurrency limit needed)
-      await pollReportStatus(reportId);
-    } catch (error) {
-      console.error('Error generating report:', error);
-      message.error('Failed to generate report');
-    } finally {
-      setGenerating(false);
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'green';
-      case 'failed':
-        return 'red';
-      case 'processing':
-        return 'blue';
-      case 'pending':
-        return 'orange';
-      default:
-        return 'gray';
-    }
-  };
-
-  const columns: ColumnsType<ReportStatus & { reportId: string }> = [
+  const columns: ColumnsType<ReportStatus> = [
     {
       title: 'Report ID',
-      dataIndex: 'reportId',
-      key: 'reportId',
+      dataIndex: 'id',
+      key: 'id',
       fixed: 'left',
-      width: 300,
       render: (id: string) => (
         <Tooltip title={id}>
-          <Text copyable className="block max-w-full truncate whitespace-nowrap">
-            {id}
+          <Text copyable={{ text: id }} className="block max-w-full truncate whitespace-nowrap">
+            {`${id.substring(0, 8)}...${id.substring(id.length - 8)}`}
           </Text>
         </Tooltip>
       ),
@@ -118,63 +58,76 @@ const AdminReports = ({ onGenerateReport, onDownloadReport, onGetStatus }: Admin
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
-      width: 100,
+      width: 150,
       render: (status: string) => (
-        <Tag className="min-w-[70px] text-center" color={getStatusColor(status)}>
+        <Tag className="min-w-[80px] text-center" color={getStatusColor(status)}>
           {status.toUpperCase()}
         </Tag>
       ),
     },
     {
-      title: 'Message',
-      dataIndex: 'message',
-      key: 'message',
+      title: 'Error Details',
+      key: 'error',
+      width: 300,
       ellipsis: true,
-      render: (_: unknown, record: ReportStatus) => {
-        if (record.status === 'failed' && record.error?.message) {
-          return (
-            <Tooltip title={record.error.message}>
-              <Text type="danger" className="block max-w-full truncate whitespace-nowrap">
-                {record.error.message}
-              </Text>
-            </Tooltip>
-          );
-        }
-        return '-';
+      render: (_, record) => {
+        if (!record.error) return '';
+
+        return (
+          <Tooltip title={record.error.message} placement="topLeft">
+            <Text type="danger" className="block text-xs">
+              {record.error.message.length > 100
+                ? `${record.error.message.substring(0, 100)}...`
+                : record.error.message}
+            </Text>
+          </Tooltip>
+        );
       },
     },
     {
       title: 'Created',
       dataIndex: 'createdAt',
       key: 'createdAt',
-      width: 150,
-      render: (date: string) => new Date(date).toLocaleString(),
+      render: (date: string) => (
+        <Flex vertical>
+          <Text>{new Date(date).toLocaleDateString()}</Text>
+          <Text type="secondary">{new Date(date).toLocaleTimeString()}</Text>
+        </Flex>
+      ),
     },
     {
       title: 'Actions',
       key: 'actions',
-      fixed: 'right',
       width: 150,
-      render: (_: unknown, record: ReportStatus & { reportId: string }) => (
-        <Space>
-          <Button
-            type="primary"
-            size="small"
-            onClick={() => onDownloadReport(record.reportId, 'csv')}
-            disabled={record.status !== 'completed'}
-            icon={<CloudDownloadOutlined />}
-          >
-            Download CSV
-          </Button>
-          {/* <Button
-            size="small"
-            onClick={() => onDownloadReport(record.reportId, 'pdf')}
-            disabled={record.status !== 'completed'}
-          >
-            Download PDF
-          </Button> */}
-        </Space>
-      ),
+      fixed: 'right',
+      render: (_, record) => {
+        const canDownload = record.status === 'completed' && record.csvPath;
+        const isDeleting = deletingId === record.id;
+        const isDownloading = downloadingId === record.id;
+
+        return (
+          <Flex align="center" justify="center" gap={8}>
+            <Button
+              danger
+              size="small"
+              onClick={() => onDeleteReport(record.id)}
+              loading={isDeleting}
+              icon={<DeleteOutlined />}
+            >
+              Delete
+            </Button>
+            <Button
+              size="small"
+              onClick={() => onDownloadReport(record.id, 'csv')}
+              disabled={!canDownload || loading.download}
+              loading={isDownloading}
+              icon={<CloudDownloadOutlined />}
+            >
+              CSV
+            </Button>
+          </Flex>
+        );
+      },
     },
   ];
 
@@ -182,30 +135,49 @@ const AdminReports = ({ onGenerateReport, onDownloadReport, onGetStatus }: Admin
     <Flex vertical gap={16}>
       <Card>
         <Flex vertical align="center" justify="center" gap={16}>
-          <Title level={4}>Generate New Report</Title>
-          <Text type="secondary">
-            Reports are generated asynchronously. You can track progress below.
-          </Text>
-          <Button
-            type="primary"
-            onClick={handleGenerate}
-            loading={generating}
-            icon={<CloudDownloadOutlined />}
-          >
-            Generate Full Report
-          </Button>
+          <Title level={4}>Minting Reports</Title>
+          <Text type="secondary">Generate and manage minting reports</Text>
+          <Space>
+            <Button
+              type="primary"
+              onClick={onGenerateReport}
+              loading={loading.generate}
+              icon={<CloudDownloadOutlined />}
+            >
+              Generate Report
+            </Button>
+            <Button onClick={onRefresh} loading={loading.list} icon={<ReloadOutlined />}>
+              Refresh
+            </Button>
+          </Space>
         </Flex>
       </Card>
 
-      <Table
-        columns={columns}
-        dataSource={Object.entries(activeReports).map(([reportId, status]) => ({
-          reportId,
-          ...status,
-        }))}
-        rowKey="reportId"
-        pagination={false}
-      />
+      <Card
+        title="Report History"
+        extra={
+          <Space>
+            <Tag color="blue">Processing: {statusCounts.processing}</Tag>
+            <Tag color="green">Completed: {statusCounts.completed}</Tag>
+            <Tag color="red">Failed: {statusCounts.failed}</Tag>
+            <Text type="secondary">Total: {reports.length}</Text>
+          </Space>
+        }
+      >
+        <Table
+          rowKey="id"
+          columns={columns}
+          dataSource={reports}
+          loading={loading.list}
+          bordered
+          scroll={{ x: 1000 }}
+          pagination={{
+            showSizeChanger: true,
+            showQuickJumper: true,
+            showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} reports`,
+          }}
+        />
+      </Card>
     </Flex>
   );
 };

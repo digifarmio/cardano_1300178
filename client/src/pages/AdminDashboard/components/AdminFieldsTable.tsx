@@ -100,9 +100,8 @@ const AdminFieldsTable = ({
       columns={columns}
       loading={loading}
       dataSource={dataSource}
-      sticky
       bordered
-      scroll={{ x: 1200 }}
+      scroll={{ x: 1000 }}
       pagination={false}
     />
   );
