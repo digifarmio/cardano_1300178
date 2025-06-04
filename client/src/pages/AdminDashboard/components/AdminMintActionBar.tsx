@@ -35,7 +35,7 @@ const AdminMintActionBar = ({
       <Flex align="center" justify="space-between" wrap gap={16}>
         <Checkbox checked={selectAll} onChange={(e) => onSelectAllChange(e.target.checked)}>
           <Flex align="center" gap={4}>
-            <Text>Select All Free</Text>
+            <Text>Select All Ready</Text>
             <Text type="secondary">({selectedCount})</Text>
           </Flex>
         </Checkbox>
