@@ -253,20 +253,18 @@ export interface AptosProjectDetails {
 // ==================== Report Interfaces ====================
 export interface ReportPaths {
   csvPath: string;
-  pdfPath: string;
 }
 
 export interface ReportStatus {
   id: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
+  status: 'queued' | 'processing' | 'completed' | 'failed';
+  progress?: number;
   createdAt: string;
   updatedAt?: string;
   csvPath?: string;
-  pdfPath?: string;
   error?: {
     message: string;
     code: string;
-    details?: unknown;
   };
 }
 
@@ -287,25 +285,6 @@ export interface CsvRecord {
   tokenID: string;
   txID: string;
   explorerURL: string;
-}
-
-export interface PdfRecord {
-  batchId: string;
-  status: string;
-  createdAt: string;
-  error?: string;
-  nfts: {
-    name: string;
-    assetName: string;
-    fingerprint: string;
-    txID: string;
-    explorerURL: string;
-    metadata: string;
-    policyId: string;
-    receiverAddress: string;
-    ipfsHash: string;
-    ipfsGatewayAddress: string;
-  }[];
 }
 
 // ==================== Error Interfaces ====================

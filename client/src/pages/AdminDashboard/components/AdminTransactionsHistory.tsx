@@ -1,4 +1,4 @@
-import { Space, Table, Tag, Typography } from 'antd';
+import { Space, Table, Tag, Tooltip, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import type { GetTransactionNfts, ProjectTransaction } from '../../../lib/types';
 import { lovelaceToAda } from '../../../lib/utils';
@@ -31,11 +31,22 @@ const AdminTransactionsHistory = ({ data, loading }: AdminTransactionsHistoryPro
         title: 'Fingerprint',
         dataIndex: 'fingerprint',
         key: 'fingerprint',
-        render: (fingerprint: string) => (
-          <Text copyable ellipsis className="max-w-[200px]">
-            {fingerprint}
-          </Text>
-        ),
+        render: (fingerprint: string | null | undefined) => {
+          if (!fingerprint) {
+            return <Text type="secondary">N/A</Text>;
+          }
+
+          return (
+            <Tooltip title={fingerprint}>
+              <Text
+                copyable={{ text: fingerprint }}
+                className="block max-w-full truncate whitespace-nowrap"
+              >
+                {`${fingerprint.substring(0, 8)}...${fingerprint.substring(fingerprint.length - 8)}`}
+              </Text>
+            </Tooltip>
+          );
+        },
       },
       {
         title: 'Token Count',
@@ -60,20 +71,24 @@ const AdminTransactionsHistory = ({ data, loading }: AdminTransactionsHistoryPro
         dataIndex: 'txHashSolanaTransaction',
         key: 'txHashSolanaTransaction',
         render: (hash: string) => (
-          <Text copyable ellipsis className="max-w-[150px]">
-            {hash}
-          </Text>
+          <Tooltip title={hash}>
+            <Text copyable={{ text: hash }} className="block max-w-full truncate whitespace-nowrap">
+              {`${hash.substring(0, 8)}...${hash.substring(hash.length - 8)}`}
+            </Text>
+          </Tooltip>
         ),
       },
     ];
 
     return (
       <Table
+        rowKey="assetName"
         columns={nftColumns}
         dataSource={transaction.transactionNfts}
-        rowKey="fingerprint"
+        loading={loading}
+        bordered
+        scroll={{ x: 1000 }}
         pagination={false}
-        size="small"
       />
     );
   };
@@ -91,9 +106,11 @@ const AdminTransactionsHistory = ({ data, loading }: AdminTransactionsHistoryPro
       dataIndex: 'transactionid',
       key: 'transactionid',
       render: (id: string) => (
-        <Text copyable ellipsis className="max-w-[150px] inline-block">
-          {id}
-        </Text>
+        <Tooltip title={id}>
+          <Text copyable={{ text: id }} className="block max-w-full truncate whitespace-nowrap">
+            {`${id.substring(0, 8)}...${id.substring(id.length - 8)}`}
+          </Text>
+        </Tooltip>
       ),
     },
     {
@@ -145,7 +162,13 @@ const AdminTransactionsHistory = ({ data, loading }: AdminTransactionsHistoryPro
       loading={loading}
       dataSource={data}
       bordered
+      scroll={{ x: 1000 }}
       expandable={{ expandedRowRender }}
+      pagination={{
+        showSizeChanger: true,
+        showQuickJumper: true,
+        showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} transactions`,
+      }}
     />
   );
 };

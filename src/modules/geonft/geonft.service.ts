@@ -46,7 +46,7 @@ export class GeoNftService {
    * Streams files from S3 directly to SQS as they're listed
    */
   private async streamFilesToSqs(bucketName: string): Promise<number> {
-    const queueUrl = this.configService.sqsQueueUrl;
+    const queueUrl = this.configService.sqsUploadsQueueUrl;
     let continuation: string | undefined;
     let totalEnqueued = 0;
     let batchNumber = 0;
@@ -109,7 +109,7 @@ export class GeoNftService {
 
   private async isQueueProcessing(): Promise<boolean> {
     try {
-      const queueUrl = this.configService.sqsQueueUrl;
+      const queueUrl = this.configService.sqsUploadsQueueUrl;
 
       const command = new GetQueueAttributesCommand({
         QueueUrl: queueUrl,

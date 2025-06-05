@@ -1,6 +1,6 @@
 import type { AxiosResponse } from 'axios';
 import { apiClient } from '../lib/apiClient';
-import type { MintRandomBatchResponse, ReportStatus } from '../lib/types';
+import type { MintBatchResult, ReportStatus } from '../lib/types';
 
 export const MintService = {
   getBalance: () => {
@@ -27,31 +27,39 @@ export const MintService = {
     return apiClient.get('/transactions');
   },
 
-  mintRandomBatch: (count: number): Promise<AxiosResponse<MintRandomBatchResponse>> => {
-    return apiClient.post('/mint/random-batch', { count });
+  mintRandom: (count: number): Promise<AxiosResponse<MintBatchResult>> => {
+    return apiClient.post('/mintRandom', { count });
   },
 
-  mintSpecificBatch: (
+  mintSpecific: (
     reserveNftsIds: (string | number | bigint)[]
-  ): Promise<AxiosResponse<MintRandomBatchResponse>> => {
+  ): Promise<AxiosResponse<MintBatchResult>> => {
     const reserveNfts = reserveNftsIds.map((uid) => ({
       nftUid: uid.toString(),
       lovelace: import.meta.env.VITE_MINT_PRICE || 0,
       tokencount: import.meta.env.VITE_MINT_COUNT || 1,
     }));
-    return apiClient.post('/mint/specific-batch', { reserveNfts });
+    return apiClient.post('/mintSpecific', { reserveNfts });
   },
 
   generateReport(): Promise<AxiosResponse<{ data: { reportId: string; statusUrl: string } }>> {
     return apiClient.post('/reports');
   },
 
-  getReportStatus(reportId: string): Promise<AxiosResponse<{ data: ReportStatus }>> {
+  getAllReports(): Promise<AxiosResponse<{ data: ReportStatus[] }>> {
+    return apiClient.get('/reports');
+  },
+
+  getReportById(reportId: string): Promise<AxiosResponse<{ data: ReportStatus }>> {
     return apiClient.get(`/reports/${reportId}`);
   },
 
-  getReportFile(reportId: string): Promise<AxiosResponse<{ data: string }>> {
+  downloadReport(reportId: string): Promise<AxiosResponse<{ data: string }>> {
     return apiClient.get(`/reports/${reportId}/download`);
+  },
+
+  deleteReport(reportId: string): Promise<AxiosResponse<{ data: { deleted: boolean } }>> {
+    return apiClient.delete(`/reports/${reportId}`);
   },
 
   generateUserToken: (uids: string[]): Promise<AxiosResponse<{ token: string }>> => {

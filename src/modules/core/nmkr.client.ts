@@ -64,7 +64,7 @@ export class NmkrClient extends HttpClient {
     }
   }
 
-  async mintRandomBatch(params: BatchMintParams): Promise<MintAndSendResult> {
+  async mintRandom(params: BatchMintParams): Promise<MintAndSendResult> {
     try {
       const { projectUid, count, receiver, blockchain } = params;
       const response = await this.instance.get<MintAndSendResult>(
@@ -77,7 +77,7 @@ export class NmkrClient extends HttpClient {
     }
   }
 
-  async mintSpecificBatch(
+  async mintSpecific(
     params: BatchMintParams,
     payload: BatchMintRequest
   ): Promise<MintAndSendResult> {
@@ -177,17 +177,6 @@ export class NmkrClient extends HttpClient {
     }
   }
 
-  async getNftDetailsByToken(projectUid: string, tokenName: string): Promise<NftDetailsResponse> {
-    try {
-      const response = await this.instance.get(
-        `/v2/GetNftDetailsByTokenname/${projectUid}/${tokenName}`
-      );
-      return response.data;
-    } catch (error: unknown) {
-      handleAxiosError(error);
-    }
-  }
-
   async getNftDetailsThrottled(nftUid: string) {
     return this.limit(() =>
       pRetry(() => this.getNftDetailsById(nftUid), {
@@ -195,6 +184,30 @@ export class NmkrClient extends HttpClient {
         onFailedAttempt: (error) => {
           console.log(
             `Retrying getNftDetails for ${nftUid}. Attempt ${error.attemptNumber} failed. ${error.retriesLeft} retries left.`
+          );
+        },
+      })
+    );
+  }
+
+  async getNftDetailsByTokenname(tokenName: string): Promise<NftDetailsResponse> {
+    try {
+      const response = await this.instance.get(
+        `/v2/GetNftDetailsByTokenname/${this.configService.projectUid}/${tokenName}`
+      );
+      return response.data;
+    } catch (error: unknown) {
+      handleAxiosError(error);
+    }
+  }
+
+  async getNftDetailsByTokennameThrottled(tokenName: string): Promise<NftDetailsResponse> {
+    return this.limit(() =>
+      pRetry(() => this.getNftDetailsByTokenname(tokenName), {
+        retries: this.retryCount,
+        onFailedAttempt: (error) => {
+          console.log(
+            `Retrying getNftDetailsByTokenname for ${tokenName}. Attempt ${error.attemptNumber} failed. ${error.retriesLeft} retries left.`
           );
         },
       })

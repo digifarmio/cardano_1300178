@@ -1,5 +1,4 @@
 import express from 'express';
-import { csvUpload } from '@/config/multer-config';
 import { authenticate } from '@/modules/auth/auth.middleware';
 import { requireRole } from '@/modules/auth/roles.middleware';
 import { MintController } from '@/modules/minting/mint.controller';
@@ -20,11 +19,13 @@ export const createMintRoutes = () => {
     .get('/nfts/:state/:count/:page', ...adminAuth, controller.getNfts)
     .get('/nfts/:uid', ...adminAuth, controller.getNftDetailsById)
     .get('/transactions', ...adminAuth, controller.getTransactions)
-    .post('/mint/random-batch', ...adminAuth, controller.mintRandomBatch)
-    .post('/mint/specific-batch', ...adminAuth, csvUpload, controller.mintSpecificBatch)
+    .post('/mintRandom', ...adminAuth, controller.mintRandom)
+    .post('/mintSpecific', ...adminAuth, controller.mintSpecific)
     .post('/reports', ...adminAuth, controller.generateReport)
-    .get('/reports/:reportId', ...adminAuth, controller.getReportStatus)
-    .get('/reports/:reportId/download', ...adminAuth, controller.downloadReport);
+    .get('/reports', ...adminAuth, controller.getAllReports)
+    .get('/reports/:reportId', ...adminAuth, controller.getReportById)
+    .get('/reports/:reportId/download', ...adminAuth, controller.downloadReport)
+    .delete('/reports/:reportId', ...adminAuth, controller.deleteReport);
 
   return router;
 };

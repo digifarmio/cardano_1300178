@@ -2,6 +2,20 @@ import type { Metadata } from './types';
 
 export const fieldStatuses = ['Ready', 'Pending', 'In Progress', 'Minted'];
 export const nftStatuses = ['Claimable', 'Owned', 'Locked'];
+export const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'queued':
+      return 'orange';
+    case 'processing':
+      return 'blue';
+    case 'completed':
+      return 'green';
+    case 'failed':
+      return 'red';
+    default:
+      return 'gray';
+  }
+};
 
 export const generateNftsRecords = (count: number) =>
   Array.from({ length: count }, (_, i) => ({

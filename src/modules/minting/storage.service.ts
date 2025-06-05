@@ -1,22 +1,26 @@
+import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import {
   DynamoDBClient,
-  GetItemCommand,
   PutItemCommand,
   ScanCommand,
   UpdateItemCommand,
+  GetItemCommand,
+  DeleteItemCommand,
 } from '@aws-sdk/client-dynamodb';
-import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
-import { v4 as uuidv4 } from 'uuid';
-import { AwsClientProvider, AwsClientType } from '../core/AwsClients';
-import { BatchRecord, ReportStatus } from '@/types';
+import {
+  S3Client,
+  DeleteObjectCommand,
+  PutObjectCommand,
+  GetObjectCommand,
+} from '@aws-sdk/client-s3';
+import { AwsClientProvider, AwsClientType } from '@/modules/core/AwsClients';
+import { ReportStatus } from '@/types';
 import { ConfigService } from '@/config/config.service';
 
 export class StorageService {
   private readonly s3: S3Client;
   private readonly dynamoDB: DynamoDBClient;
   private readonly bucketName: string;
-  private readonly batchTableName: string;
   private readonly statusTableName: string;
 
   constructor(private readonly config = new ConfigService()) {
@@ -24,40 +28,7 @@ export class StorageService {
     this.dynamoDB = AwsClientProvider.getClient(AwsClientType.DynamoDB) as DynamoDBClient;
 
     this.bucketName = this.config.awsS3Bucket;
-    this.batchTableName = this.config.awsDynamoBatchRecords;
     this.statusTableName = this.config.awsDynamoRecordsStatus;
-  }
-
-  async storeBatchRecord(record: BatchRecord): Promise<BatchRecord> {
-    const fullRecord: BatchRecord = {
-      ...record,
-      id: record.id ?? uuidv4(),
-      createdAt: record.createdAt ?? new Date().toISOString(),
-    };
-
-    await this.dynamoDB.send(
-      new PutItemCommand({
-        TableName: this.batchTableName,
-        Item: marshall(fullRecord),
-      })
-    );
-
-    return fullRecord;
-  }
-
-  async getBatchRecords(): Promise<BatchRecord[]> {
-    try {
-      const result = await this.dynamoDB.send(
-        new ScanCommand({
-          TableName: this.batchTableName,
-        })
-      );
-
-      return (result.Items || []).map((item) => unmarshall(item) as BatchRecord);
-    } catch (error) {
-      console.error('Error fetching batch records:', error);
-      throw new Error('Failed to fetch batch records');
-    }
   }
 
   async saveStatus(reportId: string, reportStatus: Partial<ReportStatus>): Promise<void> {
@@ -116,7 +87,21 @@ export class StorageService {
     );
   }
 
-  async getStatus(reportId: string): Promise<Partial<ReportStatus>> {
+  async getAllReports(): Promise<ReportStatus[]> {
+    const result = await this.dynamoDB.send(
+      new ScanCommand({
+        TableName: this.statusTableName,
+      })
+    );
+
+    if (!result.Items) {
+      return [];
+    }
+
+    return result.Items.map((item) => unmarshall(item) as ReportStatus);
+  }
+
+  async getReportById(reportId: string): Promise<ReportStatus> {
     const result = await this.dynamoDB.send(
       new GetItemCommand({
         TableName: this.statusTableName,
@@ -124,7 +109,54 @@ export class StorageService {
       })
     );
 
-    return result.Item ? (unmarshall(result.Item) as Partial<ReportStatus>) : {};
+    if (!result.Item) {
+      throw new Error(`Report with ID ${reportId} not found`);
+    }
+
+    const { status, createdAt, updatedAt, csvPath, error } = unmarshall(result.Item);
+
+    if (!status || !createdAt) {
+      throw new Error(`Incomplete report data for ID ${reportId}`);
+    }
+
+    return {
+      id: reportId,
+      status,
+      createdAt,
+      updatedAt,
+      csvPath,
+      error,
+    };
+  }
+
+  async deleteReport(reportId: string): Promise<boolean> {
+    const key = `reports/${reportId}.csv`;
+    try {
+      await this.s3.send(
+        new DeleteObjectCommand({
+          Bucket: this.bucketName,
+          Key: key,
+        })
+      );
+    } catch (err) {
+      console.warn(`Warning: Failed to delete S3 file for report ${reportId}:`, err);
+      // Proceed
+    }
+
+    try {
+      await this.dynamoDB.send(
+        new DeleteItemCommand({
+          TableName: this.statusTableName,
+          Key: marshall({ id: reportId }),
+        })
+      );
+      return true;
+    } catch (err) {
+      console.error(`Error deleting report ${reportId} from DynamoDB:`, err);
+      throw new Error(
+        `Failed to delete report: ${err instanceof Error ? err.message : 'Unknown error'}`
+      );
+    }
   }
 
   async storeReportFile(reportId: string, content: Buffer | string, type: 'csv'): Promise<string> {
@@ -141,6 +173,23 @@ export class StorageService {
     );
 
     return `https://${this.bucketName}.s3.amazonaws.com/${key}`;
+  }
+
+  async hasActiveReport(): Promise<boolean> {
+    const result = await this.dynamoDB.send(
+      new ScanCommand({
+        TableName: this.statusTableName,
+        FilterExpression: '#status IN (:queued, :processing)',
+        ExpressionAttributeNames: { '#status': 'status' },
+        ExpressionAttributeValues: marshall({
+          ':queued': 'queued',
+          ':processing': 'processing',
+        }),
+        Limit: 1,
+      })
+    );
+
+    return !!result.Items && result.Items.length > 0;
   }
 
   async getReportFileUrl(reportId: string, type: 'csv'): Promise<string> {

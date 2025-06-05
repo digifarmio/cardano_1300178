@@ -1,16 +1,15 @@
 import { NextFunction, Request, Response } from 'express';
 import { ConfigService } from '@/config/config.service';
-import { ValidationError } from '@/modules/core/errors';
-import { BatchProcessingService } from '@/modules/minting/batch-processing.service';
-import { MintService } from '@/modules/minting/mint.service';
 import { JwtService } from '@/modules/core/jwt.service';
+import { MintService } from '@/modules/minting/mint.service';
+import { ReportService } from '@/modules/minting/report.service';
 
 export class MintController {
   constructor(
     private readonly jwtService = new JwtService(),
     private readonly mintService = new MintService(),
-    private readonly configService = new ConfigService(),
-    private readonly batchService = new BatchProcessingService()
+    private readonly reportService = new ReportService(),
+    private readonly configService = new ConfigService()
   ) {
     this.getBalance = this.getBalance.bind(this);
     this.getCounts = this.getCounts.bind(this);
@@ -18,10 +17,12 @@ export class MintController {
     this.getUserNfts = this.getUserNfts.bind(this);
     this.getNftDetailsById = this.getNftDetailsById.bind(this);
     this.getTransactions = this.getTransactions.bind(this);
-    this.mintRandomBatch = this.mintRandomBatch.bind(this);
-    this.mintSpecificBatch = this.mintSpecificBatch.bind(this);
+    this.mintRandom = this.mintRandom.bind(this);
+    this.mintSpecific = this.mintSpecific.bind(this);
     this.generateReport = this.generateReport.bind(this);
-    this.getReportStatus = this.getReportStatus.bind(this);
+    this.getAllReports = this.getAllReports.bind(this);
+    this.getReportById = this.getReportById.bind(this);
+    this.deleteReport = this.deleteReport.bind(this);
     this.downloadReport = this.downloadReport.bind(this);
   }
 
@@ -96,41 +97,25 @@ export class MintController {
     }
   }
 
-  async mintRandomBatch(req: Request, res: Response, next: NextFunction) {
+  async mintRandom(req: Request, res: Response, next: NextFunction) {
     try {
-      const { projectUid, mintTotalCount, receiverAddress, blockchain } = this.configService;
-      const result = await this.mintService.mintRandomBatch({
-        projectUid,
-        count: parseInt(req.body.count) || mintTotalCount,
-        receiver: receiverAddress,
-        blockchain,
-      });
+      const { projectUid, receiverAddress, blockchain } = this.configService;
+      const count = Number(req.body.count);
+      const params = { projectUid, count, receiver: receiverAddress, blockchain };
+      const result = await this.mintService.mintRandom(params);
       res.json({ success: true, data: result });
     } catch (error) {
       next(error);
     }
   }
 
-  async mintSpecificBatch(req: Request, res: Response, next: NextFunction) {
+  async mintSpecific(req: Request, res: Response, next: NextFunction) {
     try {
-      const { projectUid, mintTotalCount, receiverAddress, blockchain } = this.configService;
-      let params = { projectUid, count: mintTotalCount, receiver: receiverAddress, blockchain };
-
-      let payload;
-
-      if (req.file) {
-        payload = await this.batchService.createMintRequestFromCSV(req.file.buffer.toString());
-      } else if (req.body.bulkTemplate) {
-        const { nftUid, count, lovelace } = req.body.bulkTemplate;
-        payload = this.batchService.createMintRequestFromTemplate(nftUid, count, lovelace);
-      } else if (req.body.reserveNfts) {
-        payload = req.body;
-        params.count = req.body.reserveNfts.length;
-      } else {
-        throw new ValidationError('Provide a CSV file, bulk template, or reserveNfts array');
-      }
-
-      const result = await this.mintService.mintSpecificBatch(params, payload);
+      const { projectUid, receiverAddress, blockchain } = this.configService;
+      const count = req.body.reserveNfts.length;
+      const params = { projectUid, count, receiver: receiverAddress, blockchain };
+      const payload = req.body;
+      const result = await this.mintService.mintSpecific(params, payload);
       res.json({ success: true, data: result });
     } catch (error) {
       next(error);
@@ -139,17 +124,35 @@ export class MintController {
 
   async generateReport(_: Request, res: Response, next: NextFunction) {
     try {
-      const { reportId, statusUrl } = await this.mintService.initiateReportGeneration();
+      const { reportId, statusUrl } = await this.reportService.generateReport();
       res.json({ success: true, data: { reportId, statusUrl } });
     } catch (error) {
       next(error);
     }
   }
 
-  async getReportStatus({ params }: Request, res: Response, next: NextFunction) {
+  async getAllReports(_: Request, res: Response, next: NextFunction) {
     try {
-      const status = await this.mintService.getReportStatus(params.reportId);
+      const reports = await this.reportService.getAllReports();
+      res.json({ success: true, data: reports });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getReportById({ params }: Request, res: Response, next: NextFunction) {
+    try {
+      const status = await this.reportService.getReportById(params.reportId);
       res.json({ success: true, data: status });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async deleteReport({ params }: Request, res: Response, next: NextFunction) {
+    try {
+      const success = await this.reportService.deleteReport(params.reportId);
+      res.json({ success, data: { deleted: success } });
     } catch (error) {
       next(error);
     }
@@ -157,7 +160,7 @@ export class MintController {
 
   async downloadReport({ params }: Request, res: Response, next: NextFunction) {
     try {
-      const fileUrl = await this.mintService.getReportFile(params.reportId, 'csv');
+      const fileUrl = await this.reportService.getReportFile(params.reportId, 'csv');
       res.redirect(fileUrl);
     } catch (error) {
       next(error);

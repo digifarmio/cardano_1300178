@@ -82,7 +82,7 @@ export class SqsLambdaHandler {
   }
 }
 
-export const handler = new SqsLambdaHandler();
-export const lambdaHandler = async (event: SQSEvent): Promise<void> => {
-  await handler.processSqsRecords(event.Records);
+export const lambdaHandler = new SqsLambdaHandler();
+export const handler = async (event: SQSEvent): Promise<void> => {
+  await lambdaHandler.processSqsRecords(event.Records);
 };

@@ -2,7 +2,13 @@ import { Button, Flex, Grid, Input, message, Modal, Tabs } from 'antd';
 import { useCallback, useEffect, useState } from 'react';
 import { getErrorMessage } from '../../lib/errorHandler';
 import { getStatLabel } from '../../lib/statusMapper';
-import type { AdminStatKey, NFT, NFTDetails, ProjectTransaction } from '../../lib/types';
+import type {
+  AdminStatKey,
+  NFT,
+  NFTDetails,
+  ProjectTransaction,
+  ReportStatus,
+} from '../../lib/types';
 import { MintService } from '../../services/mintService';
 import { useSelectionStore } from '../../stores/selectionStore';
 import AdminFieldsTable from './components/AdminFieldsTable';
@@ -51,6 +57,13 @@ const INITIAL_STATE = {
   transactions: [] as ProjectTransaction[],
   transactionsLoading: false,
   generatedToken: null as string | null,
+  reports: {
+    data: [] as ReportStatus[],
+    loading: false,
+    generating: false,
+    deleting: null as string | null,
+    downloading: null as string | null,
+  },
 };
 
 type AdminState = typeof INITIAL_STATE;
@@ -73,87 +86,94 @@ const AdminDashboard = () => {
   const modalWidth = screens.md ? '50%' : '90%';
 
   // ==================== Data Fetching ====================
-  const fetchBalance = useCallback(async () => {
+  const fetchAllData = useCallback(async () => {
     try {
-      const response = await MintService.getBalance();
+      setState((prev) => ({ ...prev, loading: true, transactionsLoading: true }));
+
+      const [balanceRes, countsRes, nftsRes, transactionsRes, reportsRes] = await Promise.all([
+        MintService.getBalance(),
+        MintService.getCounts(),
+        MintService.getNfts(state.stateFilter, state.page, Math.min(state.pageSize, MAX_PAGE_SIZE)),
+        MintService.getTransactions(),
+        MintService.getAllReports(),
+      ]);
+
       setState((prev) => ({
         ...prev,
-        balance: response.data.data.mintCouponBalanceCardano,
-      }));
-    } catch (error) {
-      const errorMessage = getErrorMessage(error);
-      messageApi.error(errorMessage);
-      console.error(errorMessage);
-    }
-  }, [messageApi]);
-
-  const fetchStats = useCallback(async () => {
-    try {
-      const response = await MintService.getCounts();
-      const { nftTotal, free, reserved, sold, error } = response.data.data;
-      setState((prev) => ({
-        ...prev,
-        stats: { total: nftTotal, free, reserved, sold, error },
-      }));
-    } catch (error) {
-      const errorMessage = getErrorMessage(error);
-      messageApi.error(errorMessage);
-      console.error(errorMessage);
-    }
-  }, [messageApi]);
-
-  const fetchNfts = useCallback(async () => {
-    try {
-      setState((prev) => ({ ...prev, loading: true }));
-      const limitedPageSize = Math.min(state.pageSize, MAX_PAGE_SIZE);
-      const response = await MintService.getNfts(state.stateFilter, state.page, limitedPageSize);
-      const data = response.data.data;
-      setState((prev) => ({ ...prev, nfts: data, loading: false }));
-    } catch (error) {
-      const errorMessage = getErrorMessage(error);
-      messageApi.error(errorMessage);
-      console.error(errorMessage);
-      setState((prev) => ({ ...prev, loading: false }));
-    }
-  }, [messageApi, state.page, state.pageSize, state.stateFilter]);
-
-  const fetchTransactions = useCallback(async () => {
-    try {
-      setState((prev) => ({ ...prev, transactionsLoading: true }));
-      const response = await MintService.getTransactions();
-      setState((prev) => ({
-        ...prev,
-        transactions: response.data.data,
+        balance: balanceRes.data.data.mintCouponBalanceCardano,
+        stats: {
+          total: countsRes.data.data.nftTotal,
+          free: countsRes.data.data.free,
+          reserved: countsRes.data.data.reserved,
+          sold: countsRes.data.data.sold,
+          error: countsRes.data.data.error,
+        },
+        nfts: nftsRes.data.data,
+        transactions: transactionsRes.data.data,
+        reports: {
+          ...prev.reports,
+          data: reportsRes.data.data,
+          loading: false,
+        },
+        loading: false,
         transactionsLoading: false,
       }));
     } catch (error) {
       const errorMessage = getErrorMessage(error);
       messageApi.error(errorMessage);
       console.error(errorMessage);
-      setState((prev) => ({ ...prev, transactionsLoading: false }));
+      setState((prev) => ({
+        ...prev,
+        loading: false,
+        transactionsLoading: false,
+      }));
     }
-  }, [messageApi]);
+  }, [messageApi, state.stateFilter, state.page, state.pageSize]);
 
   const refresh = async () => {
-    await Promise.all([fetchBalance(), fetchStats(), fetchNfts(), fetchTransactions()]);
+    await fetchAllData();
+  };
+
+  const refreshReports = async () => {
+    try {
+      setState((prev) => ({
+        ...prev,
+        reports: { ...prev.reports, loading: true },
+      }));
+
+      const reportsRes = await MintService.getAllReports();
+
+      setState((prev) => ({
+        ...prev,
+        reports: {
+          ...prev.reports,
+          data: reportsRes.data.data,
+          loading: false,
+        },
+      }));
+    } catch (error) {
+      const errorMessage = getErrorMessage(error);
+      messageApi.error(errorMessage);
+      console.error(errorMessage);
+      setState((prev) => ({
+        ...prev,
+        reports: { ...prev.reports, loading: false },
+      }));
+    }
   };
 
   // ==================== Effect Hooks ====================
   useEffect(() => {
-    fetchBalance();
-    fetchStats();
-    fetchTransactions();
-  }, [fetchBalance, fetchStats, fetchTransactions]);
-
-  useEffect(() => {
-    fetchNfts();
-  }, [fetchNfts]);
+    const loadData = async () => {
+      await fetchAllData();
+    };
+    loadData();
+  }, [fetchAllData]);
 
   // ==================== NFT Detail Handlers ====================
   const handleViewNft = async (uid: string) => {
-    setState((prev) => ({ ...prev, loading: true }));
-
     try {
+      setState((prev) => ({ ...prev, loading: true }));
       const response = await MintService.getNftDetailsById(uid);
       setState((prev) => ({
         ...prev,
@@ -174,17 +194,10 @@ const AdminDashboard = () => {
 
   // ==================== Minting Handlers ====================
   const handleRandomMint = async () => {
-    setState((prev) => ({ ...prev, loading: true }));
-
     try {
-      const result = await MintService.mintRandomBatch(state.fieldCount);
-      const { batches } = result.data.data;
-
-      const totalMinted = batches.reduce((sum: number, batch) => {
-        const sent = (batch.success && batch.result?.sendedNft?.length) || 0;
-        return sum + sent;
-      }, 0);
-
+      setState((prev) => ({ ...prev, loading: true }));
+      const result = await MintService.mintRandom(state.fieldCount);
+      const totalMinted = result.data.data.sendedNft.length;
       messageApi.success(`Successfully minted ${totalMinted} NFTs`);
       await refresh();
     } catch (error) {
@@ -210,10 +223,9 @@ const AdminDashboard = () => {
       return;
     }
 
-    setState((prev) => ({ ...prev, loading: true }));
-
     try {
-      await MintService.mintSpecificBatch(selectedRowKeys as string[]);
+      setState((prev) => ({ ...prev, loading: true }));
+      await MintService.mintSpecific(selectedRowKeys as string[]);
       messageApi.success(`Minted ${selectedRowKeys.length} NFTs`);
       clearSelection();
       await refresh();
@@ -227,10 +239,9 @@ const AdminDashboard = () => {
   };
 
   const handleSpecificMint = async (id: string) => {
-    setState((prev) => ({ ...prev, loading: true }));
-
     try {
-      await MintService.mintSpecificBatch([id]);
+      setState((prev) => ({ ...prev, loading: true }));
+      await MintService.mintSpecific([id]);
       messageApi.success('Minted 1 NFT');
       await refresh();
     } catch (error) {
@@ -304,15 +315,16 @@ const AdminDashboard = () => {
 
   // ==================== Field Count Handler ====================
   const handleFieldCountChange = (value: number | null) => {
-    setState((prev) => ({ ...prev, fieldCount: value || 1 }));
+    setState((prev) => ({ ...prev, fieldCount: Number(value) }));
   };
 
   // ==================== Report Handlers ====================
   const handleGenerateReport = async () => {
-    setState((prev) => ({ ...prev, loading: true }));
-
     try {
+      setState((prev) => ({ ...prev, reports: { ...prev.reports, generating: true } }));
       const response = await MintService.generateReport();
+      messageApi.success(`Report ${response.data.data.reportId} started`);
+      await refreshReports();
       return response.data.data;
     } catch (error) {
       const errorMessage = getErrorMessage(error);
@@ -320,51 +332,54 @@ const AdminDashboard = () => {
       console.error(errorMessage);
       throw error;
     } finally {
-      setState((prev) => ({ ...prev, loading: false }));
+      setState((prev) => ({ ...prev, reports: { ...prev.reports, generating: false } }));
     }
   };
 
-  const handleGetReportStatus = async (reportId: string) => {
-    setState((prev) => ({ ...prev, loading: true }));
-
+  const handleDownloadReport = async (reportId: string) => {
     try {
-      const response = await MintService.getReportStatus(reportId);
-      return response.data.data;
-    } catch (error) {
-      const errorMessage = getErrorMessage(error);
-      messageApi.error(errorMessage);
-      console.error(errorMessage);
-      throw error;
-    } finally {
-      setState((prev) => ({ ...prev, loading: false }));
-    }
-  };
-
-  const handleDownloadReport = async (reportId: string, type: 'csv' | 'pdf') => {
-    setState((prev) => ({ ...prev, loading: true }));
-
-    try {
-      const response = await MintService.getReportStatus(reportId);
-      const { status, pdfPath, csvPath } = response.data.data;
+      setState((prev) => ({ ...prev, reports: { ...prev.reports, downloading: reportId } }));
+      const response = await MintService.getReportById(reportId);
+      const { status, csvPath } = response.data.data;
 
       if (status !== 'completed') {
-        messageApi.warning(`The ${type.toUpperCase()} report is not ready yet.`);
+        messageApi.warning(`The report is not ready yet.`);
         return;
       }
 
-      const filePath = type === 'pdf' ? pdfPath : csvPath;
-      if (!filePath) {
-        messageApi.error(`No ${type.toUpperCase()} path found for this report.`);
+      if (!csvPath) {
+        messageApi.error(`No path found for this report.`);
         return;
       }
 
-      window.open(filePath, '_blank');
+      const link = document.createElement('a');
+      link.href = csvPath;
+      link.download = `${reportId}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      const errorMessage = getErrorMessage(error);
+      messageApi.error(errorMessage);
+      console.error(errorMessage);
+      throw error;
+    } finally {
+      setState((prev) => ({ ...prev, reports: { ...prev.reports, downloading: null } }));
+    }
+  };
+
+  const handleDeleteReport = async (reportId: string) => {
+    try {
+      setState((prev) => ({ ...prev, reports: { ...prev.reports, deleting: reportId } }));
+      await MintService.deleteReport(reportId);
+      messageApi.success('Report deleted successfully');
+      await refreshReports();
     } catch (error) {
       const errorMessage = getErrorMessage(error);
       messageApi.error(errorMessage);
       console.error(errorMessage);
     } finally {
-      setState((prev) => ({ ...prev, loading: false }));
+      setState((prev) => ({ ...prev, reports: { ...prev.reports, deleting: null } }));
     }
   };
 
@@ -374,9 +389,8 @@ const AdminDashboard = () => {
       return;
     }
 
-    setState((prev) => ({ ...prev, loading: true }));
-
     try {
+      setState((prev) => ({ ...prev, loading: true }));
       const response = await MintService.generateUserToken(selectedRowKeys as string[]);
       const { token } = response.data;
       setState((prev) => ({ ...prev, generatedToken: token }));
@@ -455,9 +469,19 @@ const AdminDashboard = () => {
 
   const renderReports = () => (
     <AdminReports
+      reports={state.reports.data}
+      loading={{
+        list: state.reports.loading,
+        generate: state.reports.generating,
+        download: state.reports.downloading !== null,
+        delete: state.reports.deleting !== null,
+      }}
+      deletingId={state.reports.deleting}
+      downloadingId={state.reports.downloading}
       onGenerateReport={handleGenerateReport}
       onDownloadReport={handleDownloadReport}
-      onGetStatus={handleGetReportStatus}
+      onDeleteReport={handleDeleteReport}
+      onRefresh={refreshReports}
     />
   );
 

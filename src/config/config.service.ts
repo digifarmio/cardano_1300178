@@ -29,13 +29,8 @@ export class ConfigService {
     return this.validateEnvVar('BLOCKCHAIN', process.env.BLOCKCHAIN) as Blockchain;
   }
 
-  get mintBatchSize(): number {
-    const size = this.validateEnvVar('MINT_BATCH_SIZE', process.env.MINT_BATCH_SIZE);
-    return parseInt(size || '10', 10);
-  }
-
-  get mintTotalCount(): number {
-    const size = this.validateEnvVar('MINT_TOTAL_COUNT', process.env.MINT_TOTAL_COUNT);
+  get maxMintLimit(): number {
+    const size = this.validateEnvVar('MAX_MINT_LIMIT', process.env.MAX_MINT_LIMIT);
     return parseInt(size || '500', 10);
   }
 
@@ -53,13 +48,6 @@ export class ConfigService {
     return this.validateEnvVar('AWS_S3_BUCKET', process.env.AWS_S3_BUCKET);
   }
 
-  get awsDynamoBatchRecords(): string {
-    return this.validateEnvVar(
-      'AWS_DYNAMO_TABLE_BATCH_RECORDS',
-      process.env.AWS_DYNAMO_TABLE_BATCH_RECORDS
-    );
-  }
-
   get awsDynamoRecordsStatus(): string {
     return this.validateEnvVar(
       'AWS_DYNAMO_TABLE_RECORDS_STATUS',
@@ -67,8 +55,12 @@ export class ConfigService {
     );
   }
 
-  get sqsQueueUrl(): string {
-    return this.validateEnvVar('AWS_SQS_QUEUE_URL', process.env.AWS_SQS_QUEUE_URL);
+  get sqsReportQueueUrl(): string {
+    return this.validateEnvVar('AWS_SQS_REPORT_QUEUE_URL', process.env.AWS_SQS_REPORT_QUEUE_URL);
+  }
+
+  get sqsUploadsQueueUrl(): string {
+    return this.validateEnvVar('AWS_SQS_UPLOADS_QUEUE_URL', process.env.AWS_SQS_UPLOADS_QUEUE_URL);
   }
 
   get sftpHost(): string {

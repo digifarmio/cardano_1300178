@@ -141,52 +141,21 @@ export interface GetTransactionNfts {
 
 export interface ReportStatus {
   id: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
+  status: 'queued' | 'processing' | 'completed' | 'failed';
+  progress?: number;
   createdAt: string;
   updatedAt?: string;
   csvPath?: string;
-  pdfPath?: string;
   error?: {
     message: string;
     code: string;
-    details?: unknown;
   };
 }
 
 export interface MintBatchResult {
   success: boolean;
-  result?: {
-    sendedNft: unknown[];
-  };
-}
-
-export interface MintRandomBatchResponse {
-  success: boolean;
   data: {
-    totalBatches: number;
-    successfulBatches: number;
-    failedBatches: number;
-    transactionIds: string[];
-    failedItems: string[];
-    batches: {
-      id: string;
-      size: number;
-      startIdx: number;
-      endIdx: number;
-      success: boolean;
-      result?: {
-        mintAndSendId: number;
-        sendedNft: {
-          id: number;
-          uid: string;
-          name: string;
-          ipfsLink: string;
-          gatewayLink: string;
-          [key: string]: unknown;
-        }[];
-      };
-      status: string;
-      createdAt: string;
-    }[];
+    mintAndSendId: number;
+    sendedNft: unknown[];
   };
 }

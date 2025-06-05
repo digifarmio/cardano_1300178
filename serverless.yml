@@ -34,14 +34,13 @@ provider:
     NMKR_PROJECT_UID: ${env:NMKR_PROJECT_UID} # NMKR Project id
     RECEIVER_ADDRESS: ${env:RECEIVER_ADDRESS} # Wallet address
     BLOCKCHAIN: ${env:BLOCKCHAIN, 'Cardano'} # Blockchain
-    MINT_BATCH_SIZE: ${env:MINT_BATCH_SIZE, 10} # Safe default batch size
-    MINT_TOTAL_COUNT: ${env:MINT_TOTAL_COUNT, 500} # Safe default batch total
+    MAX_MINT_LIMIT: ${env:MAX_MINT_LIMIT, 10} # Safe default batch total
     CONCURRENCY_LIMIT: ${env:CONCURRENCY_LIMIT, 5}
     RETRY_COUNT: ${env:RETRY_COUNT, 3}
     AWS_S3_BUCKET: ${env:AWS_S3_BUCKET}
-    AWS_DYNAMO_TABLE_BATCH_RECORDS: ${env:AWS_DYNAMO_TABLE_BATCH_RECORDS, 'BatchRecords'}
     AWS_DYNAMO_TABLE_RECORDS_STATUS: ${env:AWS_DYNAMO_TABLE_RECORDS_STATUS, 'ReportStatus'}
-    AWS_SQS_QUEUE_URL: ${env:AWS_SQS_QUEUE_URL, ''} # Default queue URL
+    AWS_SQS_UPLOADS_QUEUE_URL: ${env:AWS_SQS_UPLOADS_QUEUE_URL, ''} # Default queue URL
+    AWS_SQS_REPORT_QUEUE_URL: ${env:AWS_SQS_REPORT_QUEUE_URL, ''}
     SFTP_HOST: ${env:SFTP_HOST, ''} # Default SFTP host
     SFTP_PORT: ${env:SFTP_PORT, '22'} # Default SFTP port
     SFTP_USERNAME: ${env:SFTP_USERNAME, ''} # Default SFTP username
@@ -50,6 +49,7 @@ provider:
     JWT_SECRET: ${env:JWT_SECRET}
     JWT_ISSUER: ${env:JWT_ISSUER}
     JWT_EXPIRES_IN: ${env:JWT_EXPIRES_IN}
+
 plugins:
   - serverless-offline
 
@@ -61,12 +61,21 @@ build:
 
 functions:
   api:
-    handler: .build/src/handler.handler
+    handler: .build/src/api-handler.handler
     events:
       - httpApi: '*'
 
   processNfts:
-    handler: .build/src/SqsLambdaHandler.lambdaHandler
+    handler: .build/src/uploads-handler.handler
     events:
       - sqs:
-          arn: ${env:AWS_SQS_QUEUE_ARN}
+          arn: ${env:AWS_SQS_UPLOADS_QUEUE_ARN}
+
+  reportProcessor:
+    handler: .build/src/report-handler.handler
+    timeout: 900 # 15 minutes timeout for report processing
+    events:
+      - sqs:
+          arn: ${env:AWS_SQS_REPORT_QUEUE_ARN}
+          batchSize: 1 # Process one report at a time
+          visibilityTimeout: 360
