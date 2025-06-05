@@ -1,5 +1,6 @@
 import { createObjectCsvStringifier } from 'csv-writer';
 import { v4 as uuidv4 } from 'uuid';
+import { ReportGenerationError } from '../core/errors';
 import { NmkrClient } from '@/modules/core/nmkr.client';
 import { SqsService } from '@/modules/minting/sqs.service';
 import { ExplorerService } from '@/modules/minting/explorer.service';
@@ -16,6 +17,13 @@ export class ReportService {
 
   async generateReport(): Promise<{ reportId: string; statusUrl: string }> {
     try {
+      const activeReport = await this.storageService.hasActiveReport();
+      if (activeReport) {
+        throw new ReportGenerationError(
+          'A report is already being processed. Please wait until it completes.'
+        );
+      }
+
       const reportId = uuidv4();
       await this.storageService.saveStatus(reportId, {
         id: reportId,
@@ -24,11 +32,11 @@ export class ReportService {
       });
 
       await this.sqsService.sendReportGenerationMessage(reportId);
-
       return { reportId, statusUrl: `/reports/${reportId}` };
     } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to generate report';
       console.error('Failed to generate report:', error);
-      throw new Error('Unable to generate report');
+      throw new ReportGenerationError(message);
     }
   }
 

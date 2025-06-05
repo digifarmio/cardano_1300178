@@ -4,12 +4,14 @@ export const fieldStatuses = ['Ready', 'Pending', 'In Progress', 'Minted'];
 export const nftStatuses = ['Claimable', 'Owned', 'Locked'];
 export const getStatusColor = (status: string) => {
   switch (status) {
+    case 'queued':
+      return 'orange';
+    case 'processing':
+      return 'blue';
     case 'completed':
       return 'green';
     case 'failed':
       return 'red';
-    case 'processing':
-      return 'blue';
     default:
       return 'gray';
   }

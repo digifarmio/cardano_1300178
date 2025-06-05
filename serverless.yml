@@ -70,7 +70,6 @@ functions:
     events:
       - sqs:
           arn: ${env:AWS_SQS_UPLOADS_QUEUE_ARN}
-          batchSize: 1 # Process one message at a time
 
   reportProcessor:
     handler: .build/src/report-handler.handler
@@ -79,3 +78,4 @@ functions:
       - sqs:
           arn: ${env:AWS_SQS_REPORT_QUEUE_ARN}
           batchSize: 1 # Process one report at a time
+          visibilityTimeout: 360

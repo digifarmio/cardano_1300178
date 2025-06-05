@@ -37,7 +37,7 @@ const AdminReports = ({
       acc[report.status as keyof typeof acc]++;
       return acc;
     },
-    { processing: 0, completed: 0, failed: 0 }
+    { queued: 0, processing: 0, completed: 0, failed: 0 }
   );
 
   const columns: ColumnsType<ReportStatus> = [
@@ -70,12 +70,9 @@ const AdminReports = ({
       dataIndex: 'progress',
       key: 'progress',
       width: 150,
-      render: (progress: number | undefined) =>
-        typeof progress === 'number' ? (
-          <Progress percent={progress} size="small" status="active" />
-        ) : (
-          <Text type="secondary">0</Text>
-        ),
+      render: (progress: number | undefined) => (
+        <Progress percent={progress ?? 0} size="small" status="active" />
+      ),
     },
     {
       title: 'Error Details',
@@ -169,6 +166,7 @@ const AdminReports = ({
         title="Report History"
         extra={
           <Space>
+            <Tag color="orange">Queued: {statusCounts.queued}</Tag>
             <Tag color="blue">Processing: {statusCounts.processing}</Tag>
             <Tag color="green">Completed: {statusCounts.completed}</Tag>
             <Tag color="red">Failed: {statusCounts.failed}</Tag>

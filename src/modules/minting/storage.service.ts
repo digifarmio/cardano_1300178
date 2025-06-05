@@ -175,6 +175,23 @@ export class StorageService {
     return `https://${this.bucketName}.s3.amazonaws.com/${key}`;
   }
 
+  async hasActiveReport(): Promise<boolean> {
+    const result = await this.dynamoDB.send(
+      new ScanCommand({
+        TableName: this.statusTableName,
+        FilterExpression: '#status IN (:queued, :processing)',
+        ExpressionAttributeNames: { '#status': 'status' },
+        ExpressionAttributeValues: marshall({
+          ':queued': 'queued',
+          ':processing': 'processing',
+        }),
+        Limit: 1,
+      })
+    );
+
+    return !!result.Items && result.Items.length > 0;
+  }
+
   async getReportFileUrl(reportId: string, type: 'csv'): Promise<string> {
     const key = `reports/${reportId}.${type}`;
 
