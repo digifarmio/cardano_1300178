@@ -55,8 +55,12 @@ export class ConfigService {
     );
   }
 
-  get sqsQueueUrl(): string {
-    return this.validateEnvVar('AWS_SQS_QUEUE_URL', process.env.AWS_SQS_QUEUE_URL);
+  get sqsReportQueueUrl(): string {
+    return this.validateEnvVar('AWS_SQS_REPORT_QUEUE_URL', process.env.AWS_SQS_REPORT_QUEUE_URL);
+  }
+
+  get sqsUploadsQueueUrl(): string {
+    return this.validateEnvVar('AWS_SQS_UPLOADS_QUEUE_URL', process.env.AWS_SQS_UPLOADS_QUEUE_URL);
   }
 
   get sftpHost(): string {

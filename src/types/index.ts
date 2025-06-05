@@ -257,14 +257,14 @@ export interface ReportPaths {
 
 export interface ReportStatus {
   id: string;
-  status: 'processing' | 'completed' | 'failed';
+  status: 'queued' | 'processing' | 'completed' | 'failed';
+  progress?: number;
   createdAt: string;
   updatedAt?: string;
   csvPath?: string;
   error?: {
     message: string;
     code: string;
-    details?: unknown;
   };
 }
 

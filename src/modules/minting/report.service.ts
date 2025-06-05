@@ -1,6 +1,7 @@
 import { createObjectCsvStringifier } from 'csv-writer';
 import { v4 as uuidv4 } from 'uuid';
 import { NmkrClient } from '@/modules/core/nmkr.client';
+import { SqsService } from '@/modules/minting/sqs.service';
 import { ExplorerService } from '@/modules/minting/explorer.service';
 import { StorageService } from '@/modules/minting/storage.service';
 import { CsvRecord, ProjectTransaction, ReportStatus } from '@/types';
@@ -9,7 +10,8 @@ export class ReportService {
   constructor(
     private readonly nmkr: NmkrClient = new NmkrClient(),
     private readonly explorer: ExplorerService = new ExplorerService(),
-    private readonly storageService: StorageService = new StorageService()
+    private readonly storageService: StorageService = new StorageService(),
+    private readonly sqsService: SqsService = new SqsService()
   ) {}
 
   async generateReport(): Promise<{ reportId: string; statusUrl: string }> {
@@ -17,15 +19,16 @@ export class ReportService {
       const reportId = uuidv4();
       await this.storageService.saveStatus(reportId, {
         id: reportId,
-        status: 'processing',
+        status: 'queued',
         createdAt: new Date().toISOString(),
       });
 
-      await this.processReport(reportId);
+      await this.sqsService.sendReportGenerationMessage(reportId);
+
       return { reportId, statusUrl: `/reports/${reportId}` };
     } catch (error) {
-      console.error('Failed to fetch all report statuses:', error);
-      throw new Error('Unable to retrieve report statuses');
+      console.error('Failed to generate report:', error);
+      throw new Error('Unable to generate report');
     }
   }
 
@@ -73,23 +76,78 @@ export class ReportService {
     }
   }
 
-  private async processReport(reportId: string): Promise<void> {
+  async processReport(reportId: string): Promise<void> {
+    console.log(`[report:${reportId}] Starting report processing`);
+
     try {
+      console.log(`[report:${reportId}] Marking status as "processing"`);
+      await this.storageService.updateStatus({
+        id: reportId,
+        status: 'processing',
+        updatedAt: new Date().toISOString(),
+      });
+
+      console.log(`[report:${reportId}] Fetching transactions from NMKR`);
       const transactions = await this.nmkr.getTransactions();
+      console.log(`[report:${reportId}] Retrieved ${transactions.length} transactions`);
+
       if (!transactions.length) {
+        console.warn(`[report:${reportId}] No transactions available for report`);
         throw new Error('No transactions available for report');
       }
 
-      const csvData = await this.prepareData(transactions);
-      const csvPath = await this.generateCsv(reportId, csvData);
+      const batchSize = 10;
+      const progressUpdateInterval = 10;
+      const allRecords: CsvRecord[] = [];
+
+      let processedCount = 0;
+
+      for (let i = 0; i < transactions.length; i += batchSize) {
+        const batch = transactions.slice(i, i + batchSize);
+        console.log(
+          `[report:${reportId}] Processing batch ${Math.floor(i / batchSize) + 1}, size: ${batch.length}`
+        );
+
+        const batchRecords = await this.processBatch(batch);
+        allRecords.push(...batchRecords);
+
+        processedCount += batch.length;
+        console.log(
+          `[report:${reportId}] Batch ${Math.floor(i / batchSize) + 1} processed, records: ${batchRecords.length}`
+        );
+
+        if (
+          processedCount % progressUpdateInterval === 0 ||
+          processedCount === transactions.length
+        ) {
+          const progress = Math.min(100, Math.round((processedCount / transactions.length) * 100));
+          console.log(`[report:${reportId}] Updating progress to ${progress}%`);
+
+          await this.storageService.updateStatus({
+            id: reportId,
+            status: 'processing',
+            updatedAt: new Date().toISOString(),
+            progress,
+          });
+        }
+      }
+
+      console.log(`[report:${reportId}] All batches processed, generating CSV`);
+      const csvPath = await this.generateCsv(reportId, allRecords);
+      console.log(`[report:${reportId}] CSV generated at path: ${csvPath}`);
 
       await this.storageService.updateStatus({
         id: reportId,
         status: 'completed',
         updatedAt: new Date().toISOString(),
         csvPath,
+        progress: 100,
       });
+
+      console.log(`[report:${reportId}] Report processing completed successfully`);
     } catch (error) {
+      console.error(`[report:${reportId}] Error during processing:`, error);
+
       await this.storageService.updateStatus({
         id: reportId,
         status: 'failed',
@@ -104,60 +162,58 @@ export class ReportService {
     }
   }
 
-  private async prepareData(transactions: ProjectTransaction[]) {
-    try {
-      const results = await Promise.all(
-        transactions.map(async (tx) => {
-          if (!tx.transactionNfts?.length) return [];
+  private async processBatch(transactions: ProjectTransaction[]): Promise<CsvRecord[]> {
+    const batchResults = await Promise.allSettled(
+      transactions.map(async (tx) => {
+        if (!tx.transactionNfts?.length) return [];
 
-          const nftDetails = await Promise.all(
-            tx.transactionNfts.map(async (nft) => {
-              try {
-                if (!nft.assetName) {
-                  throw new Error('NFT is missing assetName');
-                }
-
-                const tokenName = this.hexToString(nft.assetName);
-                const details = await this.nmkr.getNftDetailsByTokennameThrottled(tokenName);
-                const parsedMetadata = this.parseMetadata(details.metadata);
-
-                return {
-                  success: true,
-                  csvRecord: {
-                    fieldID: this.extractFieldId(parsedMetadata),
-                    tokenID: details.uid,
-                    txID: details.initialminttxhash || 'Pending',
-                    explorerURL: details.initialminttxhash
-                      ? this.explorer.getExplorerUrl(
-                          details.mintedOnBlockchain,
-                          details.initialminttxhash
-                        )
-                      : 'N/A',
-                  },
-                };
-              } catch (error) {
-                console.error(`Error fetching NFT details for asset ${nft.assetName}:`, error);
-                return {
-                  success: false,
-                  csvRecord: {
-                    fieldID: 'Error',
-                    tokenID: 'Error',
-                    txID: 'Error',
-                    explorerURL: 'N/A',
-                  },
-                };
+        const nftResults = await Promise.allSettled(
+          tx.transactionNfts.map(async (nft) => {
+            try {
+              if (!nft.assetName) {
+                throw new Error('NFT is missing assetName');
               }
-            })
-          );
 
-          return nftDetails.map((data) => data.csvRecord);
-        })
-      );
+              const tokenName = this.hexToString(nft.assetName);
+              const details = await this.nmkr.getNftDetailsByTokennameThrottled(tokenName);
+              const parsedMetadata = this.parseMetadata(details.metadata);
 
-      return results.flat();
-    } catch (error) {
-      throw error;
-    }
+              return {
+                fieldID: this.extractFieldId(parsedMetadata),
+                tokenID: details.uid,
+                txID: details.initialminttxhash || 'Pending',
+                explorerURL: details.initialminttxhash
+                  ? this.explorer.getExplorerUrl(
+                      details.mintedOnBlockchain,
+                      details.initialminttxhash
+                    )
+                  : 'N/A',
+              };
+            } catch (error) {
+              console.error(`Error processing NFT:`, error);
+              return {
+                fieldID: 'Error',
+                tokenID: 'Error',
+                txID: 'Error',
+                explorerURL: 'N/A',
+              };
+            }
+          })
+        );
+
+        return nftResults
+          .filter(
+            (result): result is PromiseFulfilledResult<CsvRecord> => result.status === 'fulfilled'
+          )
+          .map((result) => result.value);
+      })
+    );
+
+    return batchResults
+      .filter(
+        (result): result is PromiseFulfilledResult<CsvRecord[]> => result.status === 'fulfilled'
+      )
+      .flatMap((result) => result.value);
   }
 
   private async generateCsv(reportId: string, data: CsvRecord[]): Promise<string> {

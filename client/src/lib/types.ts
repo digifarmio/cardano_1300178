@@ -141,16 +141,15 @@ export interface GetTransactionNfts {
 
 export interface ReportStatus {
   id: string;
-  status: 'processing' | 'completed' | 'failed';
+  status: 'queued' | 'processing' | 'completed' | 'failed';
+  progress?: number;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
   csvPath?: string;
   error?: {
-    code: string;
     message: string;
-    details?: unknown;
+    code: string;
   };
-  progress?: number;
 }
 
 export interface MintBatchResult {

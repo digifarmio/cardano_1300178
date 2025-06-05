@@ -106,8 +106,10 @@ Ensure the following are installed on your machine:
 
    AWS_S3_BUCKET=your-s3-bucket-name
    AWS_DYNAMO_TABLE_RECORDS_STATUS=your-dynamo-table
-   AWS_SQS_QUEUE_URL=http://your-sqs-url/queue/queue-name
-   AWS_SQS_QUEUE_ARN=arn:aws:sqs:us-east-1:202533530220:Digifarm.fifo
+   AWS_SQS_UPLOADS_QUEUE_URL="https://sqs.[REGION].amazonaws.com/[ACCOUNT-ID]/[QUEUE]"
+   AWS_SQS_UPLOADS_QUEUE_ARN="arn:aws:sqs:[REGION]:[ACCOUNT-ID]:[QUEUE]"
+   AWS_SQS_REPORT_QUEUE_URL="https://sqs.[REGION].amazonaws.com/[ACCOUNT-ID]/[QUEUE]"
+   AWS_SQS_REPORT_QUEUE_ARN="arn:aws:sqs:[REGION]:[ACCOUNT-ID]:[QUEUE]"
 
    SFTP_HOST=<host>
    SFTP_PORT=<port>

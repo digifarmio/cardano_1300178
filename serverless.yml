@@ -39,7 +39,8 @@ provider:
     RETRY_COUNT: ${env:RETRY_COUNT, 3}
     AWS_S3_BUCKET: ${env:AWS_S3_BUCKET}
     AWS_DYNAMO_TABLE_RECORDS_STATUS: ${env:AWS_DYNAMO_TABLE_RECORDS_STATUS, 'ReportStatus'}
-    AWS_SQS_QUEUE_URL: ${env:AWS_SQS_QUEUE_URL, ''} # Default queue URL
+    AWS_SQS_UPLOADS_QUEUE_URL: ${env:AWS_SQS_UPLOADS_QUEUE_URL, ''} # Default queue URL
+    AWS_SQS_REPORT_QUEUE_URL: ${env:AWS_SQS_REPORT_QUEUE_URL, ''}
     SFTP_HOST: ${env:SFTP_HOST, ''} # Default SFTP host
     SFTP_PORT: ${env:SFTP_PORT, '22'} # Default SFTP port
     SFTP_USERNAME: ${env:SFTP_USERNAME, ''} # Default SFTP username
@@ -60,12 +61,21 @@ build:
 
 functions:
   api:
-    handler: .build/src/handler.handler
+    handler: .build/src/api-handler.handler
     events:
       - httpApi: '*'
 
   processNfts:
-    handler: .build/src/SqsLambdaHandler.lambdaHandler
+    handler: .build/src/uploads-handler.handler
     events:
       - sqs:
-          arn: ${env:AWS_SQS_QUEUE_ARN}
+          arn: ${env:AWS_SQS_UPLOADS_QUEUE_ARN}
+          batchSize: 1 # Process one message at a time
+
+  reportProcessor:
+    handler: .build/src/report-handler.handler
+    timeout: 900 # 15 minutes timeout for report processing
+    events:
+      - sqs:
+          arn: ${env:AWS_SQS_REPORT_QUEUE_ARN}
+          batchSize: 1 # Process one report at a time

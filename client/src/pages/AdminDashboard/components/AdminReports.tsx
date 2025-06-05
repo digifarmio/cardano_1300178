@@ -1,4 +1,4 @@
-import { Button, Card, Flex, Space, Table, Tag, Tooltip, Typography } from 'antd';
+import { Button, Card, Flex, Progress, Space, Table, Tag, Tooltip, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { CloudDownloadOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons';
 import type { ReportStatus } from '../../../lib/types';
@@ -64,6 +64,18 @@ const AdminReports = ({
           {status.toUpperCase()}
         </Tag>
       ),
+    },
+    {
+      title: 'Progress',
+      dataIndex: 'progress',
+      key: 'progress',
+      width: 150,
+      render: (progress: number | undefined) =>
+        typeof progress === 'number' ? (
+          <Progress percent={progress} size="small" status="active" />
+        ) : (
+          <Text type="secondary">0</Text>
+        ),
     },
     {
       title: 'Error Details',
