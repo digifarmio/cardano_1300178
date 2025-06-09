@@ -94,6 +94,8 @@ Ensure the following are installed on your machine:
    JWT_SECRET=<your-very-secure-secret>
    JWT_ISSUER=<your-app-name>
    JWT_EXPIRES_IN=1d  # or 1d, or 3600 (as string if in seconds)
+   TEST_ADMIN_JWT=<your-test-admin-jwt>
+   TEST_USER_JWT=<your-test-user-jwt>
 
    NMKR_API_KEY=<your-nmkr-api-key>
    NMKR_BASE_URL=https://studio-api.preprod.nmkr.io

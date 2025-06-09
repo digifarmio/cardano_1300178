@@ -13,6 +13,7 @@ import {
   PutObjectCommand,
   GetObjectCommand,
 } from '@aws-sdk/client-s3';
+import { NotFoundError } from '../core/errors';
 import { AwsClientProvider, AwsClientType } from '@/modules/core/AwsClients';
 import { ReportStatus } from '@/types';
 import { ConfigService } from '@/config/config.service';
@@ -110,14 +111,10 @@ export class StorageService {
     );
 
     if (!result.Item) {
-      throw new Error(`Report with ID ${reportId} not found`);
+      throw new NotFoundError('Report', reportId);
     }
 
     const { status, createdAt, updatedAt, csvPath, error } = unmarshall(result.Item);
-
-    if (!status || !createdAt) {
-      throw new Error(`Incomplete report data for ID ${reportId}`);
-    }
 
     return {
       id: reportId,
@@ -194,18 +191,12 @@ export class StorageService {
 
   async getReportFileUrl(reportId: string, type: 'csv'): Promise<string> {
     const key = `reports/${reportId}.${type}`;
-
-    try {
-      await this.s3.send(
-        new GetObjectCommand({
-          Bucket: this.bucketName,
-          Key: key,
-        })
-      );
-      return `https://${this.bucketName}.s3.amazonaws.com/${key}`;
-    } catch (error) {
-      console.error('🚀 ~ StorageService ~ getReportFileUrl ~ error:', error);
-      throw new Error('Report file not found');
-    }
+    await this.s3.send(
+      new GetObjectCommand({
+        Bucket: this.bucketName,
+        Key: key,
+      })
+    );
+    return `https://${this.bucketName}.s3.amazonaws.com/${key}`;
   }
 }
