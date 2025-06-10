@@ -15,7 +15,7 @@ provider:
   httpApi:
     cors:
       allowedOrigins:
-        - ${env:DOMAIN}
+        - https://d200nvajpyujje.cloudfront.net
         - http://localhost:5173
       allowedHeaders:
         - Content-Type
