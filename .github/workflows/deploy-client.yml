@@ -8,9 +8,9 @@ on:
       - 'client/**'
 
 env:
-  VITE_API_URL=${{ secrets.VITE_API_URL }}
-  VITE_MINT_PRICE=${{ secrets.VITE_MINT_PRICE }}
-  VITE_MINT_COUNT=${{ secrets.VITE_MINT_COUNT }}
+  VITE_API_URL: ${{ secrets.VITE_API_URL }}
+  VITE_MINT_PRICE: ${{ secrets.VITE_MINT_PRICE }}
+  VITE_MINT_COUNT: ${{ secrets.VITE_MINT_COUNT }}
 
 jobs:
   deploy:
