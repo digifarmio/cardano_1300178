@@ -21,3 +21,4 @@ app.use('/', createMintRoutes());
 app.use(globalErrorHandler);
 
 export const handler = serverless(app);
+export default app;

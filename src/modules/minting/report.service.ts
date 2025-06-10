@@ -1,6 +1,6 @@
 import { createObjectCsvStringifier } from 'csv-writer';
 import { v4 as uuidv4 } from 'uuid';
-import { ReportGenerationError } from '../core/errors';
+import { NotFoundError, ReportGenerationError } from '../core/errors';
 import { NmkrClient } from '@/modules/core/nmkr.client';
 import { SqsService } from '@/modules/minting/sqs.service';
 import { ExplorerService } from '@/modules/minting/explorer.service';
@@ -78,9 +78,28 @@ export class ReportService {
     try {
       return await this.storageService.getReportFileUrl(id, type);
     } catch (error) {
-      throw new Error(
-        `Failed to get report file: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
+      if (error && typeof error === 'object') {
+        const errObj = error as {
+          name?: string;
+          $metadata?: { httpStatusCode?: number };
+          Code?: string;
+          message?: unknown;
+        };
+
+        const isNotFound =
+          errObj.name === 'NoSuchKey' ||
+          errObj.$metadata?.httpStatusCode === 404 ||
+          errObj.Code === 'NoSuchKey';
+
+        if (isNotFound) {
+          throw new NotFoundError('Report', id);
+        }
+
+        const message = typeof errObj.message === 'string' ? errObj.message : 'Unknown error';
+        throw new Error(`Failed to get report file: ${message}`);
+      }
+
+      throw new Error('Failed to get report file: Unknown error');
     }
   }
 
