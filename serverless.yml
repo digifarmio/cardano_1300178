@@ -65,7 +65,7 @@ build:
 
 functions:
   api:
-    handler: .build/src/handler.handler
+    handler: .build/src/api-handler.handler
     events:
       - httpApi: '*'
 
