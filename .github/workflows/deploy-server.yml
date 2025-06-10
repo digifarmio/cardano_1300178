@@ -9,6 +9,7 @@ on:
 
 env:
   NODE_ENV: ${{ secrets.NODE_ENV }}
+  SERVERLESS_ORG: ${{ secrets.SERVERLESS_ORG }}
   DOMAIN: ${{ secrets.DOMAIN }}
 
   JWT_SECRET: ${{ secrets.JWT_SECRET }}
