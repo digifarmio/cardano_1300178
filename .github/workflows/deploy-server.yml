@@ -39,6 +39,8 @@ env:
   SFTP_PASSWORD: ${{ secrets.SFTP_PASSWORD }}
   REMOTE_PATH: ${{ secrets.REMOTE_PATH }}
 
+  SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_ACCESS_KEY }}
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -61,6 +63,11 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
+
+      - name: Serverless login
+        run: npx serverless login --org ${{ secrets.SERVERLESS_ORG }}
+        env:
+          SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_ACCESS_KEY }}    
 
       - name: Build server
         run: npm run build
