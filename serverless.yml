@@ -62,6 +62,10 @@ build:
     bundle: true
     target: node20
     platform: node
+    external:
+      - ssh2
+      - cpu-features
+      - '@mapbox/node-pre-gyp'
 
 functions:
   api:
