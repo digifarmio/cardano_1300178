@@ -66,7 +66,6 @@ build:
       - ssh2
       - ssh2-sftp-client
       - cpu-features
-      - '@mapbox/node-pre-gyp'
 
 package:
   patterns:
@@ -74,7 +73,6 @@ package:
     - 'node_modules/ssh2/**'
     - 'node_modules/ssh2-sftp-client/**'
     - 'node_modules/cpu-features/**'
-    - 'node_modules/@mapbox/node-pre-gyp/**'
 
 functions:
   api:

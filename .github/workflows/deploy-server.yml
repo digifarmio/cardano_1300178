@@ -70,16 +70,6 @@ jobs:
 
       - name: Build server
         run: npm run build
-      
-      - name: Debug build output
-        run: |
-          echo "Checking build directory:"
-          ls -la .build/
-          ls -la .build/src/ || echo ".build/src/ doesn't exist"
-          echo "Looking for handler file:"
-          find . -name "handler.js" -o -name "handler.mjs" -o -name "handler.ts"
-          echo "Build directory contents:"
-          find .build -type f | head -20
 
       - name: Deploy serverless application
         run: npm run deploy
