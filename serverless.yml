@@ -97,14 +97,14 @@ functions:
             Fn::GetAtt:
               - ReportQueue
               - Arn
-          batchSize: 1          
+          batchSize: 1
 
 resources:
   Resources:
     UploadQueue:
       Type: AWS::SQS::Queue
       Properties:
-        QueueName: digifarm-blockia-upload-queue.fifo 
+        QueueName: digifarm-blockia-upload-queue.fifo
         FifoQueue: true
         VisibilityTimeout: 310
         ContentBasedDeduplication: true
@@ -147,12 +147,12 @@ resources:
         QueueName: digifarm-blockia-report-queue-dlq
         VisibilityTimeout: 310
         DelaySeconds: 60
-        MessageRetentionPeriod: 1209600    
+        MessageRetentionPeriod: 1209600
 
-    ReportsBucket: 
+    ReportsBucket:
       Type: AWS::S3::Bucket
       Properties:
-        BucketName: digifarm-blockia-reports
+        BucketName: digifarm-blockia-reports-1
         PublicAccessBlockConfiguration:
           BlockPublicAcls: false
           IgnorePublicAcls: false
@@ -164,19 +164,19 @@ resources:
       Properties:
         Bucket: !Ref ReportsBucket
         PolicyDocument:
-          Version: "2012-10-17"
+          Version: '2012-10-17'
           Statement:
-            - Sid: "Statement1"
-              Effect: "Allow"
-              Principal: "*"
-              Action: "s3:*"
+            - Sid: 'Statement1'
+              Effect: 'Allow'
+              Principal: '*'
+              Action: 's3:*'
               Resource:
-                - !Sub "arn:aws:s3:::${ReportsBucket}/*"      
+                - !Sub 'arn:aws:s3:::${ReportsBucket}/*'
 
     NftsBucket:
       Type: AWS::S3::Bucket
       Properties:
-        BucketName: digifarm-blockia-nfts
+        BucketName: digifarm-blockia-nfts-1
         PublicAccessBlockConfiguration:
           BlockPublicAcls: false
           IgnorePublicAcls: false
@@ -186,18 +186,18 @@ resources:
     FilesBucket:
       Type: AWS::S3::Bucket
       Properties:
-        BucketName: digifarm-blockia-files
+        BucketName: digifarm-blockia-files-1
         PublicAccessBlockConfiguration:
           BlockPublicAcls: false
           IgnorePublicAcls: false
           BlockPublicPolicy: false
           RestrictPublicBuckets: false
-    
+
     LambdaExecutionRole:
       Type: AWS::IAM::Role
       Properties:
         AssumeRolePolicyDocument:
-          Version: "2012-10-17"
+          Version: '2012-10-17'
           Statement:
             - Effect: Allow
               Principal:
@@ -209,17 +209,17 @@ resources:
           - arn:aws:iam::aws:policy/AmazonS3FullAccess
           - arn:aws:iam::aws:policy/AmazonSQSFullAccess
           - arn:aws:iam::aws:policy/CloudWatchFullAccess
-    
+
     ReportsTable:
       Type: AWS::DynamoDB::Table
       Properties:
         TableName: digifarm-blockia-records-status
-        BillingMode: PAY_PER_REQUEST  
+        BillingMode: PAY_PER_REQUEST
         AttributeDefinitions:
           - AttributeName: id
             AttributeType: S
         KeySchema:
           - AttributeName: id
-            KeyType: HASH 
+            KeyType: HASH
         PointInTimeRecoverySpecification:
           PointInTimeRecoveryEnabled: false

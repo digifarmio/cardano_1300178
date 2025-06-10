@@ -4,7 +4,7 @@ set -e
 
 # === Config ===
 REGION="us-east-1"
-BUCKET_NAME="digifarm-blockia-frontend"
+BUCKET_NAME="digifarm-blockia-frontend-1"
 CLOUDFRONT_COMMENT="Frontend Distribution with OAC"
 DEFAULT_ROOT_OBJECT="index.html"
 ERROR_PAGE="/index.html"
