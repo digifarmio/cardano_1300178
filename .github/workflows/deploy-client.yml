@@ -8,9 +8,9 @@ on:
       - 'client/**'
 
 env:
-  VITE_API_URL=https://aezwb7gp2b.execute-api.us-east-1.amazonaws.com
-  VITE_MINT_PRICE=0
-  VITE_MINT_COUNT=1
+  VITE_API_URL=${{ secrets.VITE_API_URL }}
+  VITE_MINT_PRICE=${{ secrets.VITE_MINT_PRICE }}
+  VITE_MINT_COUNT=${{ secrets.VITE_MINT_COUNT }}
 
 jobs:
   deploy:
