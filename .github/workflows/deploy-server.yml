@@ -9,7 +9,6 @@ on:
 
 env:
   NODE_ENV: ${{ secrets.NODE_ENV }}
-  SERVERLESS_ORG: ${{ secrets.SERVERLESS_ORG }}
   DOMAIN: ${{ secrets.DOMAIN }}
 
   JWT_SECRET: ${{ secrets.JWT_SECRET }}
@@ -39,7 +38,7 @@ env:
   SFTP_PASSWORD: ${{ secrets.SFTP_PASSWORD }}
   REMOTE_PATH: ${{ secrets.REMOTE_PATH }}
 
-jobs:
+jobs: 
   deploy:
     runs-on: ubuntu-latest
 
