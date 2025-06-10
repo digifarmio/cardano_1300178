@@ -15,7 +15,7 @@ provider:
   httpApi:
     cors:
       allowedOrigins:
-        - https://d200nvajpyujje.cloudfront.net
+        - ${env:DOMAIN}
         - http://localhost:5173
       allowedHeaders:
         - Content-Type
@@ -70,7 +70,7 @@ functions:
       - httpApi: '*'
 
   processNfts:
-    handler: .build/src/SqsLambdaHandler.lambdaHandler
+    handler: .build/src/uploads-handler.handler
     events:
       - sqs:
           arn:
