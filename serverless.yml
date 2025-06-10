@@ -1,9 +1,9 @@
 # "org" ensures this Service is used with the correct Serverless Framework Access Key.
 org: ${env:SERVERLESS_ORG}
 # "app" enables Serverless Framework Dashboard features and sharing them with other Services.
-app: api
+app: digifarm-blockia
 # "service" is the name of this project. This will also be added to your AWS resource names.
-service: api
+service: digifarm-blockia
 
 useDotenv: true
 
@@ -11,6 +11,7 @@ provider:
   name: aws
   runtime: nodejs20.x
   timeout: 300 # Add this line - global default timeout (5 minutes)
+  role: LambdaExecutionRole
   httpApi:
     cors:
       allowedOrigins:
@@ -37,10 +38,14 @@ provider:
     MAX_MINT_LIMIT: ${env:MAX_MINT_LIMIT, 10} # Safe default batch total
     CONCURRENCY_LIMIT: ${env:CONCURRENCY_LIMIT, 5}
     RETRY_COUNT: ${env:RETRY_COUNT, 3}
-    AWS_S3_BUCKET: ${env:AWS_S3_BUCKET}
-    AWS_DYNAMO_TABLE_RECORDS_STATUS: ${env:AWS_DYNAMO_TABLE_RECORDS_STATUS, 'ReportStatus'}
-    AWS_SQS_UPLOADS_QUEUE_URL: ${env:AWS_SQS_UPLOADS_QUEUE_URL, ''} # Default queue URL
-    AWS_SQS_REPORT_QUEUE_URL: ${env:AWS_SQS_REPORT_QUEUE_URL, ''}
+    AWS_S3_BUCKET:
+      Ref: ReportsBucket # Reference to the first S3 bucket
+    AWS_DYNAMO_TABLE_RECORDS_STATUS:
+      Ref: ReportsTable
+    AWS_SQS_UPLOADS_QUEUE_URL:
+      Ref: UploadQueue # Default queue URL
+    AWS_SQS_REPORT_QUEUE_URL:
+      Ref: ReportQueue # Default queue URL
     SFTP_HOST: ${env:SFTP_HOST, ''} # Default SFTP host
     SFTP_PORT: ${env:SFTP_PORT, '22'} # Default SFTP port
     SFTP_USERNAME: ${env:SFTP_USERNAME, ''} # Default SFTP username
@@ -49,10 +54,9 @@ provider:
     JWT_SECRET: ${env:JWT_SECRET}
     JWT_ISSUER: ${env:JWT_ISSUER}
     JWT_EXPIRES_IN: ${env:JWT_EXPIRES_IN}
-
 plugins:
   - serverless-offline
-
+    
 build:
   esbuild:
     bundle: true
@@ -61,20 +65,150 @@ build:
 
 functions:
   api:
-    handler: .build/src/api-handler.handler
+    handler: .build/src/handler.handler
     events:
       - httpApi: '*'
 
   processNfts:
-    handler: .build/src/uploads-handler.handler
+    handler: .build/src/SqsLambdaHandler.lambdaHandler
     events:
       - sqs:
-          arn: ${env:AWS_SQS_UPLOADS_QUEUE_ARN}
+          arn:
+            Fn::GetAtt:
+              - UploadQueue
+              - Arn
 
   reportProcessor:
     handler: .build/src/report-handler.handler
     events:
       - sqs:
-          arn: ${env:AWS_SQS_REPORT_QUEUE_ARN}
-          batchSize: 1 # Process one report at a time
-          visibilityTimeout: 360
+          arn:
+            Fn::GetAtt:
+              - ReportQueue
+              - Arn
+          batchSize: 1          
+
+resources:
+  Resources:
+    UploadQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: digifarm-blockia-upload-queue.fifo 
+        FifoQueue: true
+        VisibilityTimeout: 310
+        ContentBasedDeduplication: true
+        FifoThroughputLimit: perMessageGroupId
+        DeduplicationScope: messageGroup
+        DelaySeconds: 60
+        RedrivePolicy:
+          deadLetterTargetArn:
+            Fn::GetAtt:
+              - UploadDeadLetterQueue
+              - Arn
+          maxReceiveCount: 12
+
+    UploadDeadLetterQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: digifarm-blockia-upload-queue-dlq.fifo
+        FifoQueue: true
+        VisibilityTimeout: 310
+        DelaySeconds: 60
+        ContentBasedDeduplication: true
+        MessageRetentionPeriod: 1209600
+
+    ReportQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: digifarm-blockia-report-queue
+        VisibilityTimeout: 310
+        DelaySeconds: 60
+        RedrivePolicy:
+          deadLetterTargetArn:
+            Fn::GetAtt:
+              - ReportDeadLetterQueue
+              - Arn
+          maxReceiveCount: 12
+
+    ReportDeadLetterQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: digifarm-blockia-report-queue-dlq
+        VisibilityTimeout: 310
+        DelaySeconds: 60
+        MessageRetentionPeriod: 1209600    
+
+    ReportsBucket: 
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: digifarm-blockia-reports
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
+          IgnorePublicAcls: false
+          BlockPublicPolicy: false
+          RestrictPublicBuckets: false
+
+    ReportsBucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket: !Ref ReportsBucket
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Sid: "Statement1"
+              Effect: "Allow"
+              Principal: "*"
+              Action: "s3:*"
+              Resource:
+                - !Sub "arn:aws:s3:::${ReportsBucket}/*"      
+
+    NftsBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: digifarm-blockia-nfts
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
+          IgnorePublicAcls: false
+          BlockPublicPolicy: false
+          RestrictPublicBuckets: false
+
+    FilesBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: digifarm-blockia-files
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
+          IgnorePublicAcls: false
+          BlockPublicPolicy: false
+          RestrictPublicBuckets: false
+    
+    LambdaExecutionRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action: sts:AssumeRole
+        ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+          - arn:aws:iam::aws:policy/AmazonS3FullAccess
+          - arn:aws:iam::aws:policy/AmazonSQSFullAccess
+          - arn:aws:iam::aws:policy/CloudWatchFullAccess
+    
+    ReportsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: digifarm-blockia-records-status
+        BillingMode: PAY_PER_REQUEST  
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH 
+        PointInTimeRecoverySpecification:
+          PointInTimeRecoveryEnabled: false

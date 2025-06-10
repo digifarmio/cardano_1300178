@@ -39,8 +39,6 @@ env:
   SFTP_PASSWORD: ${{ secrets.SFTP_PASSWORD }}
   REMOTE_PATH: ${{ secrets.REMOTE_PATH }}
 
-  SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_ACCESS_KEY }}
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
