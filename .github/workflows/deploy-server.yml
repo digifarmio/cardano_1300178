@@ -1,0 +1,69 @@
+name: Deploy Server
+
+on: 
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+
+env:
+  NODE_ENV: ${{ secrets.NODE_ENV }}
+  SERVERLESS_ORG: ${{ secrets.SERVERLESS_ORG }}
+  DOMAIN: ${{ secrets.DOMAIN }}
+
+  JWT_SECRET: ${{ secrets.JWT_SECRET }}
+  JWT_ISSUER: ${{ secrets.JWT_ISSUER }}
+  JWT_EXPIRES_IN: ${{ secrets.JWT_EXPIRES_IN }}
+
+  NMKR_API_KEY: ${{ secrets.NMKR_API_KEY }}
+  NMKR_BASE_URL: ${{ secrets.NMKR_BASE_URL }}
+  NMKR_PROJECT_UID: ${{ secrets.NMKR_PROJECT_UID }}
+  RECEIVER_ADDRESS: ${{ secrets.RECEIVER_ADDRESS }}
+
+  BLOCKCHAIN: ${{ secrets.BLOCKCHAIN }}
+  MAX_MINT_LIMIT: ${{ secrets.MAX_MINT_LIMIT }}
+  CONCURRENCY_LIMIT: ${{ secrets.CONCURRENCY_LIMIT }}
+  RETRY_COUNT: ${{ secrets.RETRY_COUNT }}
+
+  AWS_DYNAMO_TABLE_RECORDS_STATUS: ${{ secrets.AWS_DYNAMO_TABLE_RECORDS_STATUS }}
+  AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+  AWS_SQS_UPLOADS_QUEUE_URL: ${{ secrets.AWS_SQS_UPLOADS_QUEUE_URL }}
+  AWS_SQS_UPLOADS_QUEUE_ARN: ${{ secrets.AWS_SQS_UPLOADS_QUEUE_ARN }}
+  AWS_SQS_REPORT_QUEUE_URL: ${{ secrets.AWS_SQS_REPORT_QUEUE_URL }}
+  AWS_SQS_REPORT_QUEUE_ARN: ${{ secrets.AWS_SQS_REPORT_QUEUE_ARN }}
+
+  SFTP_HOST: ${{ secrets.SFTP_HOST }}
+  SFTP_PORT: ${{ secrets.SFTP_PORT }}
+  SFTP_USERNAME: ${{ secrets.SFTP_USERNAME }}
+  SFTP_PASSWORD: ${{ secrets.SFTP_PASSWORD }}
+  REMOTE_PATH: ${{ secrets.REMOTE_PATH }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Build server
+        run: npm run build
+
+      - name: Deploy serverless application
+        run: npm run deploy

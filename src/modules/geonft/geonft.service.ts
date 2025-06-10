@@ -103,7 +103,9 @@ export class GeoNftService {
       return totalEnqueued;
     } catch (error) {
       console.error('Error streaming files to SQS:', error);
-      throw new Error('Failed to stream files to SQS');
+      throw new Error(
+        `Failed to stream files to SQS: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
