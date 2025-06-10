@@ -56,15 +56,19 @@ provider:
     JWT_EXPIRES_IN: ${env:JWT_EXPIRES_IN}
 plugins:
   - serverless-offline
-    
-build:
+  - serverless-esbuild
+
+custom:
   esbuild:
     bundle: true
+    minify: false
     target: node20
     platform: node
     external:
+      - ssh2
       - cpu-features
       - '@mapbox/node-pre-gyp'
+    packager: npm
 
 functions:
   api:
