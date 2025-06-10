@@ -2,8 +2,6 @@ import { Server } from 'http';
 import request from 'supertest';
 import app from '@/api-handler';
 
-process.env.NODE_ENV = 'test';
-
 describe('MintController Integration Tests', () => {
   let server: Server;
   let latestReportId: string;
