@@ -56,19 +56,25 @@ provider:
     JWT_EXPIRES_IN: ${env:JWT_EXPIRES_IN}
 plugins:
   - serverless-offline
-  - serverless-esbuild
 
-custom:
+build:
   esbuild:
     bundle: true
-    minify: false
     target: node20
     platform: node
     external:
       - ssh2
+      - ssh2-sftp-client
       - cpu-features
       - '@mapbox/node-pre-gyp'
-    packager: npm
+
+package:
+  patterns:
+    - '!node_modules/**'
+    - 'node_modules/ssh2/**'
+    - 'node_modules/ssh2-sftp-client/**'
+    - 'node_modules/cpu-features/**'
+    - 'node_modules/@mapbox/node-pre-gyp/**'
 
 functions:
   api:
