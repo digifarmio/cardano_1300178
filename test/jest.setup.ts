@@ -1,21 +1,27 @@
+import fs from 'fs';
+import path from 'path';
 import dotenv from 'dotenv';
-dotenv.config();
 
-// import { mockClient } from 'aws-sdk-client-mock';
-// import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-// import { S3Client } from '@aws-sdk/client-s3';
-// import { SQSClient } from '@aws-sdk/client-sqs';
+// Force NODE_ENV to 'test' unconditionally
+process.env.NODE_ENV = 'test';
 
-// // Global mocks
-// jest.mock('@/config/config.service');
-// jest.mock('@/modules/core/jwt.service');
-// jest.mock('@/modules/core/nmkr.client');
-// jest.mock('@/modules/core/http.client');
+// Always load .env.test file
+const testEnvPath = path.resolve(process.cwd(), '.env.test');
+console.log('Jest setup: Forcing NODE_ENV=test and loading .env.test');
 
-// // Reset all mocks before each test
-// beforeEach(() => {
-//   jest.clearAllMocks();
-//   mockClient(DynamoDBClient).reset();
-//   mockClient(S3Client).reset();
-//   mockClient(SQSClient).reset();
-// });
+if (fs.existsSync(testEnvPath)) {
+  const result = dotenv.config({ path: testEnvPath });
+  if (result.error) {
+    console.error('Jest setup: Error loading .env.test:', result.error);
+  } else {
+    console.log('Jest setup: Successfully loaded .env.test');
+  }
+} else {
+  console.warn('Jest setup: .env.test file not found at:', testEnvPath);
+}
+
+// Debug: Log key environment variables after load
+console.log('Jest setup complete:', {
+  NODE_ENV: process.env.NODE_ENV,
+  MAX_MINT_LIMIT: process.env.MAX_MINT_LIMIT,
+});
