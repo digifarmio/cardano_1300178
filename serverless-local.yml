@@ -1,0 +1,81 @@
+# "org" ensures this Service is used with the correct Serverless Framework Access Key.
+org: ${env:SERVERLESS_ORG}
+# "app" enables Serverless Framework Dashboard features and sharing them with other Services.
+app: api
+# "service" is the name of this project. This will also be added to your AWS resource names.
+service: api
+
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  timeout: 300 # Add this line - global default timeout (5 minutes)
+  httpApi:
+    cors:
+      allowedOrigins:
+        - ${env:DOMAIN}
+        - http://localhost:5173
+      allowedHeaders:
+        - Content-Type
+        - Authorization
+        - X-Requested-With
+      allowedMethods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        - OPTIONS
+      allowCredentials: true
+  environment:
+    NODE_ENV: ${env:NODE_ENV, 'development'} # Auto detect environment
+    NMKR_API_KEY: ${env:NMKR_API_KEY, 'key-local-dev'} # Default for local
+    NMKR_BASE_URL: ${env:NMKR_BASE_URL, 'https://studio-api.preprod.nmkr.io'} # NMKR staging URL
+    NMKR_PROJECT_UID: ${env:NMKR_PROJECT_UID} # NMKR Project id
+    RECEIVER_ADDRESS: ${env:RECEIVER_ADDRESS} # Wallet address
+    BLOCKCHAIN: ${env:BLOCKCHAIN, 'Cardano'} # Blockchain
+    MAX_MINT_LIMIT: ${env:MAX_MINT_LIMIT, 10} # Safe default batch total
+    CONCURRENCY_LIMIT: ${env:CONCURRENCY_LIMIT, 5}
+    RETRY_COUNT: ${env:RETRY_COUNT, 3}
+    AWS_S3_BUCKET: ${env:AWS_S3_BUCKET}
+    AWS_DYNAMO_TABLE_RECORDS_STATUS: ${env:AWS_DYNAMO_TABLE_RECORDS_STATUS, 'ReportStatus'}
+    AWS_SQS_UPLOADS_QUEUE_URL: ${env:AWS_SQS_UPLOADS_QUEUE_URL, ''} # Default queue URL
+    AWS_SQS_REPORT_QUEUE_URL: ${env:AWS_SQS_REPORT_QUEUE_URL, ''}
+    SFTP_HOST: ${env:SFTP_HOST, ''} # Default SFTP host
+    SFTP_PORT: ${env:SFTP_PORT, '22'} # Default SFTP port
+    SFTP_USERNAME: ${env:SFTP_USERNAME, ''} # Default SFTP username
+    SFTP_PASSWORD: ${env:SFTP_PASSWORD, ''} # Default SFTP password
+    REMOTE_PATH: ${env:REMOTE_PATH, ''} # Defau
+    JWT_SECRET: ${env:JWT_SECRET}
+    JWT_ISSUER: ${env:JWT_ISSUER}
+    JWT_EXPIRES_IN: ${env:JWT_EXPIRES_IN}
+
+plugins:
+  - serverless-offline
+
+build:
+  esbuild:
+    bundle: true
+    target: node20
+    platform: node
+
+functions:
+  api:
+    handler: .build/src/api-handler.handler
+    events:
+      - httpApi: '*'
+
+  processNfts:
+    handler: .build/src/uploads-handler.handler
+    events:
+      - sqs:
+          arn: ${env:AWS_SQS_UPLOADS_QUEUE_ARN}
+
+  reportProcessor:
+    handler: .build/src/report-handler.handler
+    timeout: 900 # 15 minutes timeout for report processing
+    events:
+      - sqs:
+          arn: ${env:AWS_SQS_REPORT_QUEUE_ARN}
+          batchSize: 1 # Process one report at a time
+          visibilityTimeout: 360
