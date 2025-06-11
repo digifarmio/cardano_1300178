@@ -294,8 +294,8 @@ export class ReportService {
   }
 
   private extractFieldId(parsedMetadata: Record<string, unknown> | null): string {
-    if (typeof parsedMetadata?.id_long === 'string') {
-      return parsedMetadata.id_long;
+    if (typeof parsedMetadata?.production_id === 'string') {
+      return parsedMetadata.production_id;
     }
 
     if (typeof parsedMetadata?.id === 'string') {

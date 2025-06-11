@@ -25,7 +25,8 @@ const UserFieldsTable = ({ dataSource, onClaim, onView, loading }: UserFieldsTab
     {
       title: 'Field ID',
       key: 'field_id',
-      render: (_, record) => record.parsedMetadata?.id_long || record.parsedMetadata?.id || 'N/A',
+      render: (_, record) =>
+        record.parsedMetadata?.production_id || record.parsedMetadata?.id || 'N/A',
     },
     {
       title: 'Area (m2)',
