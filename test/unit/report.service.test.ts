@@ -127,7 +127,7 @@ describe('ReportService', () => {
         721: {
           somePolicy: {
             token1: {
-              id_long: 'FIELD_001',
+              production_id: 'FIELD_001',
             },
           },
         },
@@ -171,7 +171,7 @@ describe('ReportService', () => {
         721: {
           somePolicyId: {
             someToken: {
-              id_long: 'FIELD_X',
+              production_id: 'FIELD_X',
             },
           },
         },

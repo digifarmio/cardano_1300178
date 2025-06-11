@@ -24,8 +24,8 @@ const AdminNftDetails = ({ nft }: AdminNftDetailsProps) => {
       {parsedMetadata && (
         <Text strong className="text-lg text-center">
           Field ID:{' '}
-          {typeof parsedMetadata.id_long === 'string'
-            ? parsedMetadata.id_long
+          {typeof parsedMetadata.production_id === 'string'
+            ? parsedMetadata.production_id
             : typeof parsedMetadata.id === 'string'
               ? parsedMetadata.id
               : 'N/A'}
