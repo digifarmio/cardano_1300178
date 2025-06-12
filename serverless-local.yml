@@ -1,16 +1,17 @@
 # "org" ensures this Service is used with the correct Serverless Framework Access Key.
 org: ${env:SERVERLESS_ORG}
 # "app" enables Serverless Framework Dashboard features and sharing them with other Services.
-app: api
+app: dev-digifarm-blockia
 # "service" is the name of this project. This will also be added to your AWS resource names.
-service: api
+service: dev-digifarm-blockia
 
 useDotenv: true
 
 provider:
   name: aws
   runtime: nodejs20.x
-  timeout: 300 # Add this line - global default timeout (5 minutes)
+  timeout: 300
+  role: LambdaExecutionRole
   httpApi:
     cors:
       allowedOrigins:
@@ -29,7 +30,7 @@ provider:
       allowCredentials: true
   environment:
     NODE_ENV: ${env:NODE_ENV, 'development'} # Auto detect environment
-    NMKR_API_KEY: ${env:NMKR_API_KEY, 'key-local-dev'} # Default for local
+    NMKR_API_KEY: ${env:NMKR_API_KEY} # Default for local
     NMKR_BASE_URL: ${env:NMKR_BASE_URL, 'https://studio-api.preprod.nmkr.io'} # NMKR staging URL
     NMKR_PROJECT_UID: ${env:NMKR_PROJECT_UID} # NMKR Project id
     RECEIVER_ADDRESS: ${env:RECEIVER_ADDRESS} # Wallet address
@@ -38,14 +39,14 @@ provider:
     CONCURRENCY_LIMIT: ${env:CONCURRENCY_LIMIT, 5}
     RETRY_COUNT: ${env:RETRY_COUNT, 3}
     AWS_S3_BUCKET: ${env:AWS_S3_BUCKET}
-    AWS_DYNAMO_TABLE_RECORDS_STATUS: ${env:AWS_DYNAMO_TABLE_RECORDS_STATUS, 'ReportStatus'}
-    AWS_SQS_UPLOADS_QUEUE_URL: ${env:AWS_SQS_UPLOADS_QUEUE_URL, ''} # Default queue URL
-    AWS_SQS_REPORT_QUEUE_URL: ${env:AWS_SQS_REPORT_QUEUE_URL, ''}
-    SFTP_HOST: ${env:SFTP_HOST, ''} # Default SFTP host
-    SFTP_PORT: ${env:SFTP_PORT, '22'} # Default SFTP port
-    SFTP_USERNAME: ${env:SFTP_USERNAME, ''} # Default SFTP username
-    SFTP_PASSWORD: ${env:SFTP_PASSWORD, ''} # Default SFTP password
-    REMOTE_PATH: ${env:REMOTE_PATH, ''} # Defau
+    AWS_DYNAMO_TABLE_RECORDS_STATUS: ${env:AWS_DYNAMO_TABLE_RECORDS_STATUS}
+    AWS_SQS_UPLOADS_QUEUE_URL: ${env:AWS_SQS_UPLOADS_QUEUE_URL}
+    AWS_SQS_REPORT_QUEUE_URL: ${env:AWS_SQS_REPORT_QUEUE_URL}
+    SFTP_HOST: ${env:SFTP_HOST}
+    SFTP_PORT: ${env:SFTP_PORT}
+    SFTP_USERNAME: ${env:SFTP_USERNAME}
+    SFTP_PASSWORD: ${env:SFTP_PASSWORD}
+    REMOTE_PATH: ${env:REMOTE_PATH}
     JWT_SECRET: ${env:JWT_SECRET}
     JWT_ISSUER: ${env:JWT_ISSUER}
     JWT_EXPIRES_IN: ${env:JWT_EXPIRES_IN}
@@ -58,6 +59,17 @@ build:
     bundle: true
     target: node20
     platform: node
+    external:
+      - ssh2
+      - ssh2-sftp-client
+      - cpu-features
+
+package:
+  patterns:
+    - '!node_modules/**'
+    - 'node_modules/ssh2/**'
+    - 'node_modules/ssh2-sftp-client/**'
+    - 'node_modules/cpu-features/**'
 
 functions:
   api:
@@ -69,13 +81,147 @@ functions:
     handler: .build/src/uploads-handler.handler
     events:
       - sqs:
-          arn: ${env:AWS_SQS_UPLOADS_QUEUE_ARN}
+          arn:
+            Fn::GetAtt:
+              - UploadQueue
+              - Arn
 
   reportProcessor:
     handler: .build/src/report-handler.handler
-    timeout: 900 # 15 minutes timeout for report processing
     events:
       - sqs:
-          arn: ${env:AWS_SQS_REPORT_QUEUE_ARN}
-          batchSize: 1 # Process one report at a time
-          visibilityTimeout: 360
+          arn:
+            Fn::GetAtt:
+              - ReportQueue
+              - Arn
+
+resources:
+  Resources:
+    UploadQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: dev-digifarm-blockia-upload-queue.fifo
+        FifoQueue: true
+        VisibilityTimeout: 310
+        ContentBasedDeduplication: true
+        FifoThroughputLimit: perMessageGroupId
+        DeduplicationScope: messageGroup
+        DelaySeconds: 60
+        RedrivePolicy:
+          deadLetterTargetArn:
+            Fn::GetAtt:
+              - UploadDeadLetterQueue
+              - Arn
+          maxReceiveCount: 12
+
+    UploadDeadLetterQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: dev-digifarm-blockia-upload-queue-dlq.fifo
+        FifoQueue: true
+        VisibilityTimeout: 310
+        DelaySeconds: 60
+        ContentBasedDeduplication: true
+        MessageRetentionPeriod: 1209600
+
+    ReportQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: dev-digifarm-blockia-report-queue.fifo
+        FifoQueue: true
+        VisibilityTimeout: 310
+        ContentBasedDeduplication: true
+        FifoThroughputLimit: perMessageGroupId
+        DeduplicationScope: messageGroup
+        # DelaySeconds: 0
+        RedrivePolicy:
+          deadLetterTargetArn:
+            Fn::GetAtt:
+              - ReportDeadLetterQueue
+              - Arn
+          maxReceiveCount: 1
+
+    ReportDeadLetterQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: dev-digifarm-blockia-report-queue-dlq.fifo
+        FifoQueue: true
+        VisibilityTimeout: 310
+        # DelaySeconds: 60
+        ContentBasedDeduplication: true
+        MessageRetentionPeriod: 1209600
+
+    ReportsBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: dev-digifarm-blockia-reports-1
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
+          IgnorePublicAcls: false
+          BlockPublicPolicy: false
+          RestrictPublicBuckets: false
+
+    ReportsBucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket: !Ref ReportsBucket
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Sid: 'Statement1'
+              Effect: 'Allow'
+              Principal: '*'
+              Action: 's3:*'
+              Resource:
+                - !Sub 'arn:aws:s3:::${ReportsBucket}/*'
+
+    NftsBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: dev-digifarm-blockia-nfts-1
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
+          IgnorePublicAcls: false
+          BlockPublicPolicy: false
+          RestrictPublicBuckets: false
+
+    FilesBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: dev-digifarm-blockia-files-1
+        PublicAccessBlockConfiguration:
+          BlockPublicAcls: false
+          IgnorePublicAcls: false
+          BlockPublicPolicy: false
+          RestrictPublicBuckets: false
+
+    LambdaExecutionRole:
+      Type: AWS::IAM::Role
+      Properties:
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service:
+                  - lambda.amazonaws.com
+              Action: sts:AssumeRole
+        ManagedPolicyArns:
+          - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+          - arn:aws:iam::aws:policy/AmazonS3FullAccess
+          - arn:aws:iam::aws:policy/AmazonSQSFullAccess
+          - arn:aws:iam::aws:policy/CloudWatchFullAccess
+
+    ReportsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: dev-digifarm-blockia-records-status
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        PointInTimeRecoverySpecification:
+          PointInTimeRecoveryEnabled: false
