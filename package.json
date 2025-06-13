@@ -4,6 +4,7 @@
   "scripts": {
     "build": "tsc && tsc-alias",
     "deploy": "serverless deploy",
+    "deploy:dev": "serverless deploy --config serverless-local.yml",
     "lint": "eslint src --ext .ts --config eslint.config.cjs",
     "lint:fix": "eslint src --ext .ts --fix --config eslint.config.cjs",
     "format": "prettier --write src/**/*.ts",

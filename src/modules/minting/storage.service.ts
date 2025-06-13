@@ -15,7 +15,7 @@ import {
 } from '@aws-sdk/client-s3';
 import { NotFoundError } from '../core/errors';
 import { AwsClientProvider, AwsClientType } from '@/modules/core/AwsClients';
-import { ReportStatus } from '@/types';
+import { CsvRecord, ReportStatus } from '@/types';
 import { ConfigService } from '@/config/config.service';
 
 export class StorageService {
@@ -30,6 +30,49 @@ export class StorageService {
 
     this.bucketName = this.config.awsS3Bucket;
     this.statusTableName = this.config.awsDynamoRecordsStatus;
+  }
+
+  async addRecordsWithProgress(
+    reportId: string,
+    records: CsvRecord[],
+    processedNfts: number,
+    progress: number
+  ): Promise<{ shouldFinalize: boolean; totalNfts: number }> {
+    if (records.length === 0) return { shouldFinalize: false, totalNfts: 0 };
+
+    const updateParams = {
+      TableName: this.statusTableName,
+      Key: marshall({ id: reportId }),
+      UpdateExpression: `
+        SET records = list_append(if_not_exists(records, :emptyList), :newRecords),
+            processedNfts = :processedNfts,
+            progress = :progress,
+            updatedAt = :now
+      `,
+      ExpressionAttributeValues: marshall({
+        ':newRecords': records,
+        ':emptyList': [],
+        ':processedNfts': processedNfts,
+        ':progress': progress,
+        ':now': new Date().toISOString(),
+      }),
+      ReturnValues: 'ALL_NEW',
+    } as const;
+
+    const result = await this.dynamoDB.send(new UpdateItemCommand(updateParams));
+
+    if (!result.Attributes) {
+      throw new Error('Failed to get updated report status after update');
+    }
+
+    const updated = unmarshall(result.Attributes) as ReportStatus;
+    const shouldFinalize =
+      updated.processedNfts >= updated.totalNfts && updated.status === 'processing';
+
+    return {
+      shouldFinalize,
+      totalNfts: updated.totalNfts,
+    };
   }
 
   async saveStatus(reportId: string, reportStatus: Partial<ReportStatus>): Promise<void> {
@@ -114,7 +157,17 @@ export class StorageService {
       throw new NotFoundError('Report', reportId);
     }
 
-    const { status, createdAt, updatedAt, csvPath, error } = unmarshall(result.Item);
+    const {
+      status,
+      createdAt,
+      updatedAt,
+      csvPath,
+      error,
+      records,
+      totalNfts,
+      processedNfts,
+      progress,
+    } = unmarshall(result.Item);
 
     return {
       id: reportId,
@@ -123,6 +176,10 @@ export class StorageService {
       updatedAt,
       csvPath,
       error,
+      records,
+      totalNfts,
+      processedNfts,
+      progress,
     };
   }
 
@@ -137,7 +194,7 @@ export class StorageService {
       );
     } catch (err) {
       console.warn(`Warning: Failed to delete S3 file for report ${reportId}:`, err);
-      // Proceed
+      // Proceed with DynamoDB deletion
     }
 
     try {
@@ -173,7 +230,7 @@ export class StorageService {
   }
 
   async hasActiveReport(): Promise<boolean> {
-    const result = await this.dynamoDB.send(
+    const activeInDb = await this.dynamoDB.send(
       new ScanCommand({
         TableName: this.statusTableName,
         FilterExpression: '#status IN (:queued, :processing)',
@@ -186,7 +243,22 @@ export class StorageService {
       })
     );
 
-    return !!result.Items && result.Items.length > 0;
+    const finalizingInDb = await this.dynamoDB.send(
+      new ScanCommand({
+        TableName: this.statusTableName,
+        FilterExpression: '#status = :finalizing',
+        ExpressionAttributeNames: { '#status': 'status' },
+        ExpressionAttributeValues: marshall({
+          ':finalizing': 'finalizing',
+        }),
+        Limit: 1,
+      })
+    );
+
+    return (
+      (!!activeInDb.Items && activeInDb.Items.length > 0) ||
+      (!!finalizingInDb.Items && finalizingInDb.Items.length > 0)
+    );
   }
 
   async getReportFileUrl(reportId: string, type: 'csv'): Promise<string> {
