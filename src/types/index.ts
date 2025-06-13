@@ -259,9 +259,12 @@ export interface ReportStatus {
   id: string;
   status: 'queued' | 'processing' | 'completed' | 'failed';
   progress?: number;
+  totalNfts: number;
+  processedNfts: number;
+  records: CsvRecord[];
+  csvPath?: string;
   createdAt: string;
   updatedAt?: string;
-  csvPath?: string;
   error?: {
     message: string;
     code: string;
