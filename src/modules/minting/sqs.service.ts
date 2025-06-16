@@ -39,12 +39,20 @@ export class SqsService {
       const result = await this.sqs.send(
         new GetQueueAttributesCommand({
           QueueUrl: this.queueUrl,
-          AttributeNames: ['ApproximateNumberOfMessages'],
+          AttributeNames: [
+            'ApproximateNumberOfMessages',
+            'ApproximateNumberOfMessagesNotVisible',
+            'ApproximateNumberOfMessagesDelayed',
+          ],
         })
       );
 
-      const messageCount = parseInt(result.Attributes?.ApproximateNumberOfMessages || '0');
-      return messageCount > 0;
+      const attributes = result.Attributes || {};
+      const visible = parseInt(attributes.ApproximateNumberOfMessages || '0');
+      const notVisible = parseInt(attributes.ApproximateNumberOfMessagesNotVisible || '0');
+      const delayed = parseInt(attributes.ApproximateNumberOfMessagesDelayed || '0');
+
+      return visible > 0 || notVisible > 0 || delayed > 0;
     } catch (error) {
       console.error('Failed to check queue status:', error);
       return true;
