@@ -447,6 +447,7 @@ const AdminDashboard = () => {
         onFirstPage={handleFirstPage}
         onPreviousPage={handlePreviousPage}
         onNextPage={handleNextPage}
+        onPageChange={handlePageChange}
         onPageSizeChange={handlePageSizeChange}
         onStateFilterChange={handleStateFilterChange}
         onRefresh={refresh}
