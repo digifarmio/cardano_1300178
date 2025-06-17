@@ -43,9 +43,10 @@ const mockTransactions: ProjectTransaction[] = [
 ];
 const mockCsvRecord: CsvRecord = {
   fieldID: 'FIELD_001',
-  tokenID: 'uid1',
+  nmkrTokenID: 'uid1',
   txID: 'tx1',
   explorerURL: 'https://explorer/tx1',
+  poolPmURL: 'https://pool/asset1',
 };
 const mockReportStatus: ReportStatus = {
   id: mockReportId,
@@ -311,9 +312,10 @@ describe('ReportService', () => {
       const result = await service['processNfts'](batch);
       expect(result[0]).toEqual({
         fieldID: 'Error',
-        tokenID: 'Error',
+        nmkrTokenID: 'Error',
         txID: 'Error',
         explorerURL: 'N/A',
+        poolPmURL: 'N/A',
       });
     });
 

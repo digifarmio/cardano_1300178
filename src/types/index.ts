@@ -285,9 +285,10 @@ export interface BatchRecord {
 
 export interface CsvRecord {
   fieldID: string;
-  tokenID: string;
+  nmkrTokenID: string;
   txID: string;
   explorerURL: string;
+  poolPmURL: string;
 }
 
 // ==================== Error Interfaces ====================

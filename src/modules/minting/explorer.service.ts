@@ -19,6 +19,11 @@ export class ExplorerService {
     return `${explorer[this.getNetworkType()]}/${txHash}`;
   }
 
+  getPoolUrl(fingerprint?: string): string {
+    if (!fingerprint) return 'N/A';
+    return `https://pool.pm/${fingerprint}`;
+  }
+
   private getNetworkType(): 'mainnet' | 'testnet' {
     return this.configService.baseUrl.includes('studio-api.nmkr.io') ? 'mainnet' : 'testnet';
   }

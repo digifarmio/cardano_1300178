@@ -184,19 +184,22 @@ export class ReportService {
 
           return {
             fieldID: this.extractFieldId(parsedMetadata),
-            tokenID: details.uid,
+            nmkrTokenID: details.uid,
             txID: details.initialminttxhash || 'Pending',
-            explorerURL: details.initialminttxhash
-              ? this.explorer.getExplorerUrl(details.mintedOnBlockchain, details.initialminttxhash)
-              : 'N/A',
+            explorerURL: this.explorer.getExplorerUrl(
+              details.mintedOnBlockchain,
+              details.initialminttxhash
+            ),
+            poolPmURL: this.explorer.getPoolUrl(details.fingerprint),
           };
         } catch (error) {
           console.error(`[Report Service] Error processing NFT ${index + 1}:`, error);
           return {
             fieldID: 'Error',
-            tokenID: 'Error',
+            nmkrTokenID: 'Error',
             txID: 'Error',
             explorerURL: 'N/A',
+            poolPmURL: 'N/A',
           };
         }
       })
@@ -308,9 +311,10 @@ export class ReportService {
       const csvStringifier = createObjectCsvStringifier({
         header: [
           { id: 'fieldID', title: 'Field ID' },
-          { id: 'tokenID', title: 'Token ID' },
+          { id: 'nmkrTokenID', title: 'NMKR Token ID' },
           { id: 'txID', title: 'Transaction ID' },
           { id: 'explorerURL', title: 'Explorer URL' },
+          { id: 'poolPmURL', title: 'Pool.pm URL' },
         ],
       });
 
