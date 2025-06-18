@@ -8,24 +8,30 @@ export const createMintRoutes = () => {
   const router = express.Router();
   const controller = new MintController();
 
-  const adminAuth = [authenticate, requireRole(Role.admin)];
+  const userAuth = [authenticate, requireRole(Role.user)];
+  const minterOrAdminAuth = [authenticate, requireRole(Role.admin, Role.minter)];
+  const minterOnlyAuth = [authenticate, requireRole(Role.minter)];
 
-  router.get('/user/nfts', authenticate, controller.getUserNfts);
+  // User routes
+  router.get('/user/nfts', userAuth, controller.getUserNfts);
 
-  // Admin-only routes
+  // Admin + Minter routes (both can access)
   router
-    .get('/balance', ...adminAuth, controller.getBalance)
-    .get('/counts', ...adminAuth, controller.getCounts)
-    .get('/nfts/:state/:count/:page', ...adminAuth, controller.getNfts)
-    .get('/nfts/:uid', ...adminAuth, controller.getNftDetailsById)
-    .get('/transactions', ...adminAuth, controller.getTransactions)
-    .post('/mintRandom', ...adminAuth, controller.mintRandom)
-    .post('/mintSpecific', ...adminAuth, controller.mintSpecific)
-    .post('/reports', ...adminAuth, controller.generateReport)
-    .get('/reports', ...adminAuth, controller.getAllReports)
-    .get('/reports/:reportId', ...adminAuth, controller.getReportById)
-    .get('/reports/:reportId/download', ...adminAuth, controller.downloadReport)
-    .delete('/reports/:reportId', ...adminAuth, controller.deleteReport);
+    .get('/balance', ...minterOrAdminAuth, controller.getBalance)
+    .get('/counts', ...minterOrAdminAuth, controller.getCounts)
+    .get('/nfts/:state/:count/:page', ...minterOrAdminAuth, controller.getNfts)
+    .get('/nfts/:uid', ...minterOrAdminAuth, controller.getNftDetailsById)
+    .get('/transactions', ...minterOrAdminAuth, controller.getTransactions)
+    .post('/reports', ...minterOrAdminAuth, controller.generateReport)
+    .get('/reports', ...minterOrAdminAuth, controller.getAllReports)
+    .get('/reports/:reportId', ...minterOrAdminAuth, controller.getReportById)
+    .get('/reports/:reportId/download', ...minterOrAdminAuth, controller.downloadReport)
+    .delete('/reports/:reportId', ...minterOrAdminAuth, controller.deleteReport);
+
+  // Minting routes (minter-only)
+  router
+    .post('/mintRandom', ...minterOnlyAuth, controller.mintRandom)
+    .post('/mintSpecific', ...minterOnlyAuth, controller.mintSpecific);
 
   return router;
 };

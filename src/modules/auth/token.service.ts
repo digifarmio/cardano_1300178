@@ -12,6 +12,10 @@ export class TokenService {
     return this.jwtService.generate({ role: Role.admin });
   }
 
+  issueMinterToken(): string {
+    return this.jwtService.generate({ role: Role.minter });
+  }
+
   issueUserToken(fields: string[] = []): string {
     return this.jwtService.generate({ role: Role.user, fields });
   }

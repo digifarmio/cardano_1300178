@@ -325,8 +325,9 @@ export interface CsvHeaders {
 }
 
 export enum Role {
-  admin = 'admin',
   user = 'user',
+  admin = 'admin',
+  minter = 'minter',
 }
 
 export interface User {

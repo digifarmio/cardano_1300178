@@ -8,11 +8,11 @@ export const createTokenRoutes = () => {
   const router = express.Router();
   const controller = new TokenController();
 
-  const adminAuth = [authenticate, requireRole(Role.admin)];
+  const minterOrAdminAuth = [authenticate, requireRole(Role.admin, Role.minter)];
 
   router
-    .post('/tokens/admin', ...adminAuth, controller.issueAdminToken)
-    .post('/tokens/user', ...adminAuth, controller.issueUserToken);
+    .post('/tokens/admin', ...minterOrAdminAuth, controller.issueAdminToken)
+    .post('/tokens/user', ...minterOrAdminAuth, controller.issueUserToken);
 
   return router;
 };

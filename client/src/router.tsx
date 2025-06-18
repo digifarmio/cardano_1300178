@@ -16,7 +16,7 @@ const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <ProtectedRoute allowedRoles={['admin', 'user']} />,
+        element: <ProtectedRoute allowedRoles={['admin', 'minter', 'user']} />,
       },
       {
         path: 'login',
@@ -31,7 +31,7 @@ const router = createBrowserRouter([
         children: [
           {
             path: 'admin',
-            element: <ProtectedRoute allowedRoles={['admin']} />,
+            element: <ProtectedRoute allowedRoles={['admin', 'minter']} />,
             children: [{ index: true, element: <AdminDashboard /> }],
           },
           {

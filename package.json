@@ -17,7 +17,8 @@
     "test:api": "jest --testPathPattern=api",
     "test:coverage": "jest --coverage",
     "test:watch": "jest --watch",
-    "generate-admin-token": "npx ts-node -r tsconfig-paths/register scripts/generateAdminToken.ts"
+    "generate-admin-token": "npx ts-node -r tsconfig-paths/register scripts/generateAdminToken.ts",
+    "generate-minter-token": "npx ts-node -r tsconfig-paths/register scripts/generateMinterToken.ts"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.812.0",

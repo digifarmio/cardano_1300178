@@ -7,12 +7,20 @@ interface ErrorResponse {
 
 export function getErrorMessage(error: unknown): string {
   if (isAxiosError<ErrorResponse>(error)) {
-    return (
-      error.response?.data?.error?.message ||
-      error.response?.data?.message ||
-      error.message ||
-      'An unknown Axios error occurred'
-    );
+    const errorData = error.response?.data;
+    if (typeof errorData?.error?.message === 'string') {
+      return errorData.error.message;
+    }
+    if (typeof errorData?.message === 'string') {
+      return errorData.message;
+    }
+    if (typeof errorData?.error === 'string') {
+      return errorData.error;
+    }
+    if (typeof error.message === 'string') {
+      return error.message;
+    }
+    return 'An unknown Axios error occurred';
   }
 
   if (error instanceof Error) {

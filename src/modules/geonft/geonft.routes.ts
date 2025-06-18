@@ -8,9 +8,9 @@ export function createGeoNftRoutes() {
   const router = express.Router();
   const controller = new GeoNftController();
 
-  const adminAuth = [authenticate, requireRole(Role.admin)];
+  const minterOrAdminAuth = [authenticate, requireRole(Role.admin, Role.minter)];
 
-  router.post('/get-nft/process-csv', ...adminAuth, controller.handleGeoNftProcess);
+  router.post('/get-nft/process-csv', ...minterOrAdminAuth, controller.handleGeoNftProcess);
 
   return router;
 }

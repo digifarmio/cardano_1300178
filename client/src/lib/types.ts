@@ -11,7 +11,7 @@ export interface AuthContextType {
 }
 
 export interface DecodedToken extends JwtPayload {
-  role?: string | string[];
+  role?: string;
   [key: string]: unknown;
 }
 
