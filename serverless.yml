@@ -97,7 +97,6 @@ functions:
             Fn::GetAtt:
               - ReportQueue
               - Arn
-          batchSize: 1
 
 resources:
   Resources:
@@ -131,22 +130,28 @@ resources:
     ReportQueue:
       Type: AWS::SQS::Queue
       Properties:
-        QueueName: digifarm-blockia-report-queue
+        QueueName: digifarm-blockia-report-queue.fifo
+        FifoQueue: true
         VisibilityTimeout: 310
-        DelaySeconds: 60
+        ContentBasedDeduplication: true
+        FifoThroughputLimit: perMessageGroupId
+        DeduplicationScope: messageGroup
+        # DelaySeconds: 0
         RedrivePolicy:
           deadLetterTargetArn:
             Fn::GetAtt:
               - ReportDeadLetterQueue
               - Arn
-          maxReceiveCount: 12
+          maxReceiveCount: 1
 
     ReportDeadLetterQueue:
       Type: AWS::SQS::Queue
       Properties:
-        QueueName: digifarm-blockia-report-queue-dlq
+        QueueName: digifarm-blockia-report-queue-dlq.fifo
+        FifoQueue: true
         VisibilityTimeout: 310
-        DelaySeconds: 60
+        # DelaySeconds: 60
+        ContentBasedDeduplication: true
         MessageRetentionPeriod: 1209600
 
     ReportsBucket:
