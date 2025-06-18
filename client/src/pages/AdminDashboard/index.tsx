@@ -21,6 +21,7 @@ import PaginationControls from './components/PaginationControls';
 import { CopyOutlined } from '@ant-design/icons';
 import { UploadsService } from '../../services/uploadsService';
 import AdminUploads from './components/AdminUploads';
+import useDebounce from '../../hooks/useDebounce';
 
 const { useBreakpoint } = Grid;
 
@@ -71,6 +72,7 @@ type AdminState = typeof INITIAL_STATE;
 const AdminDashboard = () => {
   const [messageApi, contextHolder] = message.useMessage();
   const [state, setState] = useState<AdminState>(INITIAL_STATE);
+  const debouncedPage = useDebounce(state.page, 500);
 
   const {
     selectedRowKeys,
@@ -93,7 +95,11 @@ const AdminDashboard = () => {
       const [balanceRes, countsRes, nftsRes, transactionsRes, reportsRes] = await Promise.all([
         MintService.getBalance(),
         MintService.getCounts(),
-        MintService.getNfts(state.stateFilter, state.page, Math.min(state.pageSize, MAX_PAGE_SIZE)),
+        MintService.getNfts(
+          state.stateFilter,
+          debouncedPage,
+          Math.min(state.pageSize, MAX_PAGE_SIZE)
+        ),
         MintService.getTransactions(),
         MintService.getAllReports(),
       ]);
@@ -128,7 +134,7 @@ const AdminDashboard = () => {
         transactionsLoading: false,
       }));
     }
-  }, [messageApi, state.stateFilter, state.page, state.pageSize]);
+  }, [messageApi, debouncedPage, state.pageSize, state.stateFilter]);
 
   const refresh = async () => {
     await fetchAllData();
