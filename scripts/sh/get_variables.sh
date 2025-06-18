@@ -2,7 +2,7 @@
 
 STACK_NAME="digifarm-blockia-dev"
 SQS_UPLOADS_NAME="digifarm-blockia-upload-queue.fifo"
-SQS_REPORT_NAME="digifarm-blockia-report-queue"
+SQS_REPORT_NAME="digifarm-blockia-report-queue.fifo"
 CF_DIST_COMMENT="Frontend Distribution with OAC" 
 
 echo "Getting SQS uploads queue URL and ARN..."
