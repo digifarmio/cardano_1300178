@@ -1,4 +1,4 @@
-import { Button, Flex, Select } from 'antd';
+import { Button, Flex, InputNumber, Select, Space } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
 
 interface PaginationControlsProps {
@@ -15,6 +15,7 @@ interface PaginationControlsProps {
   onPageSizeChange: (value: number) => void;
   onStateFilterChange: (value: string) => void;
   onRefresh: () => void;
+  onPageChange: (page: number) => void;
 }
 
 const PaginationControls: React.FC<PaginationControlsProps> = ({
@@ -28,6 +29,7 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
   onFirstPage,
   onPreviousPage,
   onNextPage,
+  onPageChange,
   onPageSizeChange,
   onStateFilterChange,
   onRefresh,
@@ -38,31 +40,39 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
     <Flex wrap="wrap" align="center" justify="space-between" className="gap-4">
       <Flex wrap="wrap" align="center" className="gap-4">
         {/* First & Previous */}
-        <Flex className="gap-2">
-          <Button disabled={page === 1 || loading} onClick={onFirstPage}>
-            First Page
-          </Button>
-          <Button disabled={page === 1 || loading} onClick={onPreviousPage}>
-            Previous Page
-          </Button>
-        </Flex>
+        <Button disabled={page === 1 || loading} onClick={onFirstPage}>
+          First Page
+        </Button>
+        <Button disabled={page === 1 || loading} onClick={onPreviousPage}>
+          Previous Page
+        </Button>
 
-        {/* Page Info + Page Size */}
-        <Flex align="center" className="gap-2">
-          <span className="text-sm">Page {page}</span>
-          <span className="text-gray-400">|</span>
-          <span className="text-sm">Page Size:</span>
-          <Select
-            size="middle"
-            className="w-20"
-            value={pageSize}
-            onChange={onPageSizeChange}
-            options={pageSizeOptions.map((size) => ({
-              label: size,
-              value: size,
-            }))}
-            disabled={loading}
-          />
+        {/* Page Input and Size Selector */}
+        <Flex align="center" className="gap-2" wrap>
+          <Space>
+            <span className="text-sm">Page:</span>
+            <InputNumber
+              min={1}
+              value={page}
+              onChange={(value) => value && onPageChange(value)}
+              style={{ width: 70 }}
+              disabled={loading}
+            />
+          </Space>
+          <Space>
+            <span className="text-sm">Size:</span>
+            <Select
+              size="middle"
+              className="w-20"
+              value={pageSize}
+              onChange={onPageSizeChange}
+              options={pageSizeOptions.map((size) => ({
+                label: size,
+                value: size,
+              }))}
+              disabled={loading}
+            />
+          </Space>
         </Flex>
 
         {/* Next */}
@@ -72,7 +82,6 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
 
         {/* Filter */}
         <Flex align="center" className="gap-2">
-          <span className="text-gray-400">|</span>
           <span className="text-sm">Status:</span>
           <Select
             size="middle"
