@@ -64,7 +64,7 @@ apiClient.interceptors.response.use(
       message:
         responseData?.message ||
         responseData?.error?.message ||
-        responseData.error ||
+        responseData?.error ||
         error.message,
     });
 
