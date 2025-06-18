@@ -22,6 +22,16 @@ describe('TokenService (integration)', () => {
     });
   });
 
+  describe('issueMinterToken', () => {
+    it('should generate a valid JWT with minter role', () => {
+      const token = tokenService.issueMinterToken();
+      expect(typeof token).toBe('string');
+
+      const payload = tokenService['jwtService'].verify(token);
+      expect(payload).toMatchObject({ role: Role.minter });
+    });
+  });
+
   describe('issueUserToken', () => {
     it('should generate a valid JWT with user role and specified fields', () => {
       const fields = ['field1', 'field2'];

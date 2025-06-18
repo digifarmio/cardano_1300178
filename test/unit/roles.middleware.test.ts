@@ -23,40 +23,48 @@ describe('Roles Middleware', () => {
   });
 
   it('should return 403 if no user on request', () => {
-    const middleware = requireRole(Role.admin);
+    const middleware = requireRole(Role.admin, Role.minter);
 
     middleware(mockRequest as RequestWithUser, mockResponse as Response, nextFunction);
 
     expect(mockResponse.status).toHaveBeenCalledWith(403);
     expect(mockResponse.json).toHaveBeenCalledWith({
       success: false,
-      error: "Access denied: requires role 'admin'",
+      error: 'Access denied: authentication required',
     });
     expect(nextFunction).not.toHaveBeenCalled();
   });
 
   it('should return 403 if user has wrong role', () => {
     mockRequest.user = { role: Role.user, fields: [] };
-    const middleware = requireRole(Role.admin);
+    const middleware = requireRole(Role.admin, Role.minter);
 
     middleware(mockRequest as RequestWithUser, mockResponse as Response, nextFunction);
 
     expect(mockResponse.status).toHaveBeenCalledWith(403);
     expect(mockResponse.json).toHaveBeenCalledWith({
       success: false,
-      error: "Access denied: requires role 'admin'",
+      error: 'Access denied: requires one of these roles: admin, minter',
     });
     expect(nextFunction).not.toHaveBeenCalled();
   });
 
-  it('should call next if user has correct role', () => {
+  it('should call next if user has one of the allowed roles', () => {
+    // Test admin access
     mockRequest.user = { role: Role.admin, fields: [] };
-    const middleware = requireRole(Role.admin);
-
-    middleware(mockRequest as RequestWithUser, mockResponse as Response, nextFunction);
-
+    const adminMiddleware = requireRole(Role.admin, Role.minter);
+    adminMiddleware(mockRequest as RequestWithUser, mockResponse as Response, nextFunction);
     expect(nextFunction).toHaveBeenCalled();
-    expect(mockResponse.status).not.toHaveBeenCalled();
-    expect(mockResponse.json).not.toHaveBeenCalled();
+
+    // Reset mocks
+    nextFunction.mockClear();
+    (mockResponse.status as jest.Mock)?.mockClear();
+    (mockResponse.json as jest.Mock)?.mockClear();
+
+    // Test minter access
+    mockRequest.user = { role: Role.minter, fields: [] };
+    const minterMiddleware = requireRole(Role.admin, Role.minter);
+    minterMiddleware(mockRequest as RequestWithUser, mockResponse as Response, nextFunction);
+    expect(nextFunction).toHaveBeenCalled();
   });
 });

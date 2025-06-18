@@ -28,16 +28,14 @@ apiClient.interceptors.response.use(
     const isOwnApiRequest =
       !requestUrl?.startsWith('http') && (baseUrl === API_BASE_URL || !baseUrl);
 
-    const responseData = error.response?.data as
-      | {
-          message?: string;
-          error?: {
-            code?: string;
-            message?: string;
-            details?: unknown;
-          };
-        }
-      | undefined;
+    const responseData = error.response?.data as {
+      message?: string;
+      error?: {
+        code?: string;
+        message?: string;
+        details?: unknown;
+      };
+    };
 
     // Check if this is an external API error (like NMKR)
     const isExternalApiError = responseData?.error?.code === 'API_ERROR';
@@ -63,7 +61,11 @@ apiClient.interceptors.response.use(
       isExternalApiError: isExternalApiError,
       isOurAuthError: isOurAuthError,
       errorCode: responseData?.error?.code,
-      message: responseData?.message || responseData?.error?.message || error.message,
+      message:
+        responseData?.message ||
+        responseData?.error?.message ||
+        responseData.error ||
+        error.message,
     });
 
     // Only redirect to login if:

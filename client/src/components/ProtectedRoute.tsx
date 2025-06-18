@@ -1,10 +1,17 @@
 import { jwtDecode } from 'jwt-decode';
-import { Navigate, Outlet, useLocation } from 'react-router';
-
 import { useAuth } from '../hooks/useAuth';
 import PageSpinner from './PageSpinner';
+import { useLocation, Navigate, Outlet } from 'react-router';
+import type { ProtectedRouteProps, DecodedToken } from '../lib/types';
 
-import type { DecodedToken, ProtectedRouteProps } from '../lib/types';
+const getDefaultRoute = (role: string): string => {
+  const roleRoutes: Record<string, string> = {
+    admin: '/admin',
+    minter: '/admin',
+    user: '/user',
+  };
+  return roleRoutes[role] ?? '/login';
+};
 
 const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
   const { token, isLoading } = useAuth();
@@ -21,17 +28,18 @@ const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
   try {
     const { role } = jwtDecode<DecodedToken>(token);
 
-    if (typeof role !== 'string' || !allowedRoles.includes(role)) {
+    if (!role || !allowedRoles.includes(role)) {
       return <Navigate to="/unauthorized" replace />;
     }
 
     if (pathname === '/') {
-      return <Navigate to={role === 'admin' ? '/admin' : '/user'} replace />;
+      const targetRoute = getDefaultRoute(role);
+      return <Navigate to={targetRoute} replace />;
     }
 
     return <Outlet />;
   } catch (err) {
-    console.error('Token decoding failed:', err);
+    console.error('Token validation failed:', err);
     return <Navigate to="/login" replace />;
   }
 };
